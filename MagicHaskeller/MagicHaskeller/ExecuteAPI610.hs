@@ -1,4 +1,4 @@
--- 
+--
 -- (c) Susumu Katayama
 --
 {-# LANGUAGE TemplateHaskell, MagicHash, CPP #-}
@@ -44,7 +44,7 @@ import Outputable       (ppr, pprPanic, showSDocDebug, showSDoc)
 import Type             (pprType, Type)
 
 import CoreLint         (lintUnfolding)
-import VarSet           (varSetElems)
+--import VarSet           (varSetElems)
 import Panic            (panic)
 
 import Var              -- (Var(..))
@@ -118,8 +118,8 @@ prepareAPI :: [FilePath] -- ^ modules to be loaded (except package modules)
            -> IO HscEnv
 prepareAPI loadfss visfss
 {-
-prepareAPI :: [String] -- ^ visible modules (including package modules). 
-                       --   Supplying @[]@ here works without any problems within GHCi, and currently @prepareAPI@ does not work without --interactive, 
+prepareAPI :: [String] -- ^ visible modules (including package modules).
+                       --   Supplying @[]@ here works without any problems within GHCi, and currently @prepareAPI@ does not work without --interactive,
                        --   so this argument is actually of no use:(
            -> IO HscEnv
 prepareAPI fss
@@ -208,7 +208,7 @@ executeTHExp :: HscEnv -> TH.Exp -> IO a
 executeTHExp session the = unwrapCore session =<< compileCoreExpr session the
 
 
-compileCoreExpr ::  HscEnv -> TH.Exp -> IO CoreSyn.CoreExpr 
+compileCoreExpr ::  HscEnv -> TH.Exp -> IO CoreSyn.CoreExpr
 compileCoreExpr hscEnv the
     = -- defaultErrorHandler defaultDynFlags $ -- thread killed を表示させたい場合はこっち．
 {-
@@ -292,7 +292,7 @@ stmtToCore hscEnv pst = do let dfs  = hsc_dflags hscEnv
                                icxt = hsc_IC     hscEnv
 #if __GLASGOW_HASKELL__ >= 708
                            (tcmsgs, mbtc) <- tcRnStmt hscEnv pst
-#else                
+#else
                            (tcmsgs, mbtc) <- tcRnStmt hscEnv icxt pst
 #endif
                            case mbtc of Nothing             -> perror dfs tcmsgs
@@ -327,9 +327,9 @@ perror dfs msg = printErrorsAndWarnings dfs msg >> return Nothing
 thExpToStmt hscEnv = wrapLHsExpr . thExpToLHsExpr hscEnv
 -- wrapLHsExpr ::  HsExpr.LHsExpr RdrName.RdrName -> HsExpr.LStmt RdrName.RdrName
 wrapLHsExpr expr =
-  noLoc $ LetStmt $ 
+  noLoc $ LetStmt $
 #if __GLASGOW_HASKELL__ >= 800
-  noLoc $ 
+  noLoc $
 #endif
   HsValBinds (ValBindsIn (Bag.unitBag (HsUtils.mk_easy_FunBind noSrcSpan (Unqual $ mkOccName OccName.varName "__cmCompileExpr") [] expr)) [])
 thExpToLHsExpr :: HscEnv -> TH.Exp -> HsExpr.LHsExpr RdrName.RdrName
@@ -447,7 +447,7 @@ mkGlobalMap hscEnv tups =  do ces <- mapM (compileVar hscEnv) tups
 {-
 -- See Linker.linkDependencies
 linkDeps :: Session -> [Module] -> IO Bool
-linkDeps session mods = 
+linkDeps session mods =
 
 てゆーか最初に"([],(:),list_para,lines,take)"みたいなのをcompileExprしてしまえばprelinkされるのでは？
 
@@ -479,10 +479,10 @@ thExpToCSCE :: GlobalMap -> TH.Exp -> CoreSyn.CoreExpr
 thExpToCSCE gm ce = ctc [] ce
     where ctc pvs (TH.LamE pvars e)       = foldr CoreSyn.Lam (ctc (pvars++pvs) e) (map (mkStrVar . show . unVarP) pvars)
           ctc pvs (e0 `TH.AppE` e1)       = ctc pvs e0 `CoreSyn.App` ctc pvs e1
-          ctc pvs (InfixE (Just e0) e (Just e1)) = lup e `CoreSyn.App` ctc pvs e0 `CoreSyn.App` ctc pvs e1 
+          ctc pvs (InfixE (Just e0) e (Just e1)) = lup e `CoreSyn.App` ctc pvs e0 `CoreSyn.App` ctc pvs e1
           ctc pvs (TH.VarE name) | VarP name `elem` pvs = CoreSyn.Var $ mkStrVar $ show name
           -- VarEの場合，lambda boundの場合と，globalの場合とで扱いが異なる．
-          -- スコープをまじめに考えると，lambda boundかどうかをチェックしてからglobalにあるかどうかをみることになる． 
+          -- スコープをまじめに考えると，lambda boundかどうかをチェックしてからglobalにあるかどうかをみることになる．
           ctc pvs e                       = lup e
           lup e = case Map.lookup (thToBaseString e) gm of Nothing   -> error (show e ++ ", i.e.,\n" ++ TH.pprint e ++ " : could not convert to CoreSyn.CoreExpr")
                                                            Just csce -> csce
@@ -534,7 +534,7 @@ hdmnPreped m n = lambdas $ lets $ foldl CoreSyn.App (CoreSyn.Var hd) (map CoreSy
        mxs = take m xs
        nas = take n as
        lambdas = flip (foldr ($)) (map CoreSyn.Lam (hd : mes ++ nas))
-       lets = flip (foldr CoreSyn.Let) binds 
+       lets = flip (foldr CoreSyn.Let) binds
            where binds = zipWith CoreSyn.NonRec mxs $ map appa1an mes
                      where appa1an var = foldl CoreSyn.App (CoreSyn.Var var) $ map CoreSyn.Var nas
 -- CorePrep 前のものを生成する場合
@@ -561,7 +561,7 @@ aimnPreped i m n = lambdas $ foldl CoreSyn.App (CoreSyn.Var (as!!i)) (map CoreSy
        mxs = take m xs
        nas = take n as
        lambdas = flip (foldr ($)) (map CoreSyn.Lam (mes ++ nas))
-       lets = flip (foldr CoreSyn.Let) binds 
+       lets = flip (foldr CoreSyn.Let) binds
            where binds = zipWith CoreSyn.NonRec mxs $ map appa1an mes
                      where appa1an var = foldl CoreSyn.App (CoreSyn.Var var) $ map CoreSyn.Var nas
 -- CorePrep前のものを生成する場合

@@ -76,7 +76,7 @@ defaultDefault = "(Int,Integer, Double, Ratio Int, Char,(),String)" -- I guess i
 
 queryOut = "query.out"
 
-data Flag = Port PortNumber | Socket FilePath | Interactive | RunPSCommand | JustTraining 
+data Flag = Port PortNumber | Socket FilePath | Interactive | RunPSCommand | JustTraining
           | Depth Int
           | WithDoubleRatio | WithRatio | RatioOnly | WithDouble | Individual FilePath
           | WithAbsents
@@ -93,10 +93,10 @@ cmdOpts = [ Option ['p'] ["port-number"]          (ReqArg (Port . toEnum . readO
           , Option ['u'] ["unix-socket"]          (ReqArg Socket "SOCKET_FILEPATH")      "use socket file SOCKET_FILEPATH"
           , Option ['i'] ["interactive","stdio"]  (NoArg  Interactive)                   "use the standard I/O for query and printing results"
           , Option ['r'] ["run-ps-command"]       (NoArg  RunPSCommand)                  "(after training) run the ps command and exit"
-          , Option ['j'] ["just-training"]        (NoArg  JustTraining)                  "just training (usually for benchmarking)" 
-          , Option ['d'] ["depth"]                (ReqArg (Depth . readOrErr msgd) "SEARCH_DEPTH") $ 
+          , Option ['j'] ["just-training"]        (NoArg  JustTraining)                  "just training (usually for benchmarking)"
+          , Option ['d'] ["depth"]                (ReqArg (Depth . readOrErr msgd) "SEARCH_DEPTH") $
                                                                                          "search depth (" ++ shows (depth defaultQO) "by default)"
-          , Option ['q'] ["query-limit"]          (OptArg (MemoSize . fmap (readOrErr msgd)) "QUERY_TYPE_SIZE_LIMIT") $ 
+          , Option ['q'] ["query-limit"]          (OptArg (MemoSize . fmap (readOrErr msgd)) "QUERY_TYPE_SIZE_LIMIT") $
                                                                                          "only look up the memo entries when types with size less than this value are queried. Values for other types are recomputed every time. If no value is given (default), this means there is not limit and  all entry types are looked up when queried. Setting this value does not affect the time for looking up already substantiated entries. However, setting it to about 8 dramatically reduces the heap space usage, while increasing the time for training."
           , Option ['b'] ["with-double-ratio"]              (NoArg  WithDoubleRatio)                  "use the library with Double-related and (Ratio Int)-related functions. This requires more memory, but fractional numbers become available. This overrides --individual, -w, --ratio-only, and -2."
           , Option ['w'] ["with-ratio"]              (NoArg  WithRatio)                  "use the library with (Ratio Int)-related functions. This requires more memory, but fractional numbers become available. This overrides -b, --individual, --ratio-only, and -2."
@@ -104,14 +104,14 @@ cmdOpts = [ Option ['p'] ["port-number"]          (ReqArg (Port . toEnum . readO
           , Option ['2'] ["with-double"]              (NoArg  WithDouble)                  "use the library with Double-related functions. This requires more memory, but fractional numbers become available. This overrides -b, -w, --ratio-only, and --individual."
           , Option [] ["individual"]              (ReqArg Individual "FILEPATH")         "itemize library functions and their priorities in FILEPATH. This overrides -b, -w, --ratio-only, and -2. Note that only functions (and non-functions) appearing in the bundled primitives.txt can be used unless you hack the source."
           , Option [] ["dump-primitives"]         (NoArg DumpPrimitives)                 "dump a sample primitive file (to be used with --dump-primitives=...) to stdout and exit. The bundled primitives.txt is more user-friendly, but this option is useful if you hack the source and add some primitives."
-          , Option ['a'] ["absents"]              (NoArg  WithAbsents)                   "generate functions with unused arguments in addition to other useful ones" 
+          , Option ['a'] ["absents"]              (NoArg  WithAbsents)                   "generate functions with unused arguments in addition to other useful ones"
 #if __GLASGOW_HASKELL__ >= 706
           , Option []    ["default"]              (OptArg Default "DEFAULT_TYPES")       "default declaration for type defaulting (--default='(Int,Integer,Double, Ratio Int, Char,(),String)' by default). The outermost parens can be omitted."
 #endif
           , Option ['h'] ["html"]                 (NoArg  HTML)                          "force printing in HTML even in the interactive mode"
           , Option []    ["plain-text"]           (NoArg  PlainText)                     "force printing in plain text"
           , Option ['n'] ["no-training"]          (NoArg  NoTraining)                    "start service without training beforehand"
-          , Option ['s'] ["sequential-training"]  (ReqArg SequentialTraining "PREDICATES_FILEPATH") 
+          , Option ['s'] ["sequential-training"]  (ReqArg SequentialTraining "PREDICATES_FILEPATH")
                        "substantiate the memo table using the predicates in PREDICATES_FILEPATH. (Just setting this option would not disable parallel training. If you want to use only sequential training, use `-n -s PREDICATES_FILEPATH'.)"
           , Option ['t'] ["threaded-training",
                           "parallel-training"]    (ReqArg ParallelTraining   "PREDICATES_FILEPATH")
@@ -188,7 +188,7 @@ main'' versionString so = do
   beginCT <- getCurrentTime
   hPutStrLn stderr ("started at " ++ show beginCT)
 
-  pgf <- case (functionSet so, memoSize so) of 
+  pgf <- case (functionSet so, memoSize so) of
                                       (PGFull,      Nothing) -> liftIO mkPgFull
                                       (PGFull,      Just sz) -> return $ pgfulls !! sz
                                       (PGWithDoubleRatio, Nothing) -> return $ pgWithDoubleRatio
@@ -242,8 +242,8 @@ parsePrioritizedName str = case reads str of [] -> error "error while parsing th
 declareDefaults hscEnv str
   = runGhc (Just libdir) $ do
     setSession hscEnv
-    tupTy <- exprType $ "undefined :: (" ++ str ++ ")"
-    case splitTyConApp_maybe tupTy of 
+    tupTy <- exprType TM_Inst $ "undefined :: (" ++ str ++ ")"
+    case splitTyConApp_maybe tupTy of
       Nothing                     -> error $ str ++ " : invalid default type sequence"
       Just (_tuptc, defaultTypes) -> setSession hscEnv{hsc_IC = (hsc_IC hscEnv){ic_default = Just defaultTypes}} >> getSession
 
@@ -308,7 +308,7 @@ processTrainers stat h = do
 
 trainPara stat fp =
   tryOpening fp (\e -> hPutStrLn stderr ("An exception occurred while opening `"++fp++"'. The learner has not been trained in parallel beforehand."))
-                (\h -> do  
+                (\h -> do
                    cs <- hGetContents h
                    beginCT <- getCurrentTime
                    runParIO $ trainParaPar (preferPlain stat) $ lines cs
@@ -354,7 +354,7 @@ ghcTypeToType :: TyConLib -> GHC.Type -> MagicHaskeller.Types.Type
 ghcTypeToType _      (TyVarTy var)    = strToVarType $ show var
 ghcTypeToType tcl    (AppTy t0 t1)    = ghcTypeToType tcl t0 `TA` ghcTypeToType tcl t1
 ghcTypeToType tcl    (TyConApp tc ts) = let nstr = showSDoc (pprParenSymName tc)
-                                            tc'  = case Data.Map.lookup nstr (fst tcl) of 
+                                            tc'  = case Data.Map.lookup nstr (fst tcl) of
                                               Nothing -> TC $ (-1 - bakaHash nstr) -- error "nameToTyCon: unknown TyCon"
                                               Just c  -> TC c
                                         in foldl TA tc' $ map (thcTypeToType tcl) ts
@@ -386,20 +386,20 @@ answerSIO (_, _, so, pgf, hscEnv) pred = do
                                                     | otherwise  -> expSigToString (language so) pred sig
                           result <- funIO pgf $ absents $ queryOptions so
                           let ess = take (depth $ queryOptions so) result
-                                    
+
 --                          let ess = take (depth $ queryOptions so) $ fun pgf $ absents $ queryOptions so
-                          
+
                           return  (unlines $ map (concat . map e2s) ess,  length $ last ess)
                Right errstr -> return ('!' : encodeBR (stringToHtmlString errstr), length errstr) -- 本当はこれもhowToServeにあわせるべき
 
 compileOrFail :: String -> String -> Ghc (Either (ProgGenSF -> Bool -> IO [[Exp]], String) String)
 compileOrFail postproc predStr = handleSourceError (return . Right . show) $ do
-                          funIO <- filterCompileIO postproc predStr 
+                          funIO <- filterCompileIO postproc predStr
 #if __GLASGOW_HASKELL__ >= 706
     -- In this case, the type obtained by exprType is polymorphic, so there is no point in adding the type signature.
                           let sig = ""
 #else
-                          ty  <- exprType $ "\\f->("++predStr++")`asTypeOf`True" -- `asTypeOf` True をいれないと、 predStr = "f True True" のときにserverがpanic!になる。
+                          ty  <- exprType TM_Inst $ "\\f->("++predStr++")`asTypeOf`True" -- `asTypeOf` True をいれないと、 predStr = "f True True" のときにserverがpanic!になる。
                           let sig   = " :: " ++ removeQuantification (map crlfToSpace $ showPpr $ extractArgTy ty)
 #endif
                           return $ Left (funIO, sig)

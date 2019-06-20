@@ -4,7 +4,7 @@ import Language.Haskell.Syntax
 import Language.Haskell.Parser
 import Data.List
 
-import MagicHaskeller.ReadTHType(plainTV)
+import MagicHaskeller.ReadTHType as ReadTHType(plainTV)
 
 -- | @readHsTypeSigs@ reads a module string and returns an Exp that can be supplied to MagicHaskeller.p
 readHsTypeSigs :: String -> TH.Exp
@@ -16,8 +16,8 @@ mkSigE :: HsName -> HsQualType -> TH.Exp
 mkSigE hsname hsqty = SigE (VarE $ hsNameToTHName hsname) (hsQTypeToTHType hsqty)
 
 hsQTypeToTHType :: HsQualType -> TH.Type
--- hsQTypeToTHType (HsQualType cxt hsty) = ForallT (map (plainTV . hsNameToTHName) $ map head $ group $ sort $ varnames [] hsty) (map hsAsstToTHType cxt) (hsTypeToTHType hsty) -- This is incorrect since template-haskell-2.4*, so just forget the contexts. 
-hsQTypeToTHType (HsQualType [] hsty) = ForallT (map (plainTV . hsNameToTHName) $ map head $ group $ sort $ varnames [] hsty) [] (hsTypeToTHType hsty)
+-- hsQTypeToTHType (HsQualType cxt hsty) = ForallT (map (plainTV . hsNameToTHName) $ map head $ group $ sort $ varnames [] hsty) (map hsAsstToTHType cxt) (hsTypeToTHType hsty) -- This is incorrect since template-haskell-2.4*, so just forget the contexts.
+hsQTypeToTHType (HsQualType [] hsty) = ForallT (map (ReadTHType.plainTV . hsNameToTHName) $ map head $ group $ sort $ varnames [] hsty) [] (hsTypeToTHType hsty)
 hsQTypeToTHType (HsQualType _cxt _hsty) = error "Contexts are not supported yet."
 hsTypeToTHType (HsTyTuple hts)   = foldl AppT (TupleT (length hts)) (map hsTypeToTHType hts)
 hsTypeToTHType (HsTyFun ht0 ht1) = ArrowT `AppT` (hsTypeToTHType ht0) `AppT` (hsTypeToTHType ht1)

@@ -1,10 +1,10 @@
--- 
+--
 -- (c) Susumu Katayama
 --
 
 \begin{code}
 {-# OPTIONS -cpp #-}
-module MagicHaskeller.ReadTHType(thTypeToType, typeToTHType, showTypeName, plainTV, unPlainTV) where
+module MagicHaskeller.ReadTHType(thTypeToType, typeToTHType, showTypeName, MagicHaskeller.ReadTHType.plainTV, unPlainTV) where
 
 import MagicHaskeller.Types as Types
 import MagicHaskeller.TyConLib
@@ -34,7 +34,7 @@ thTypeToType' (fm,_) _ (ConT name) = let nstr = showTypeName name
                                           Nothing -> -- TC $ (-1 - bakaHash nstr)
                                                      error $ "thTypeToType' : "++nstr++" : unknown TyCon"
                                           Just c  -> TC c
-{- この辺は単なるコメントアウトでいいんだっけ？ 
+{- この辺は単なるコメントアウトでいいんだっけ？
 thTypeToType' tcl (HsTyCon (Special HsUnitCon)) = TC (unit tcl)
 thTypeToType' tcl (HsTyCon (Special HsListCon)) = TC (list tcl)
 -}
@@ -60,11 +60,11 @@ tvToName = TH.mkName . return . chr . (+ ord 'a') . tvID
 -}
 typeToTHType :: TyConLib -> Types.Type -> TH.Type
 typeToTHType tcl ty = (case tyvars ty of []  -> id
-                                         tvs -> TH.ForallT (map (plainTV . tvToName) $ nub tvs) [])
+                                         tvs -> TH.ForallT (map (MagicHaskeller.ReadTHType.plainTV . tvToName) $ nub tvs) [])
                                                                (typeToTHType' tcl 0 ty)
 typeToTHType' (_,ar) k (TC tc) | tc >= 0 = if name == "[]" then ListT else TH.ConT (TH.mkName name)
                              where name = if inRange (bounds ar) k then fst ((ar ! k) !! fromIntegral tc)
-                                                                   else 'K':shows k ('I':show tc) -- useful with defaultTCL 
+                                                                   else 'K':shows k ('I':show tc) -- useful with defaultTCL
 typeToTHType' tcl    _ (TV tv) = TH.VarT $ tvToName tv
 typeToTHType' tcl    k (TA t0 t1) = TH.AppT (typeToTHType' tcl (k+1) t0) (typeToTHType' tcl 0 t1)
 typeToTHType' tcl    0 (t0:->t1)  = TH.AppT (TH.AppT TH.ArrowT (typeToTHType' tcl 0 t0)) (typeToTHType' tcl 0 t1)

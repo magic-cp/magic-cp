@@ -1,4 +1,4 @@
--- 
+--
 -- (c) Susumu Katayama
 --
 MHTH used to consist of combinators which include quasi-quotes. They are moved from MagicHaskeller.lhs because Haddock dislikes quasi-quotes.
@@ -6,14 +6,14 @@ MHTH used to consist of combinators which include quasi-quotes. They are moved f
 -- #hide
 
 {-# OPTIONS -XTemplateHaskell -cpp #-}
-module MagicHaskeller.MHTH(expToExpExp, typeToExpType, decsToExpDecs) where 
+module MagicHaskeller.MHTH(expToExpExp, typeToExpType, decsToExpDecs) where
 import Language.Haskell.TH
 import System.IO.Unsafe(unsafePerformIO)
 import Data.IORef
 -- import Types
 import Control.Monad(liftM)
 
-import MagicHaskeller.ReadTHType(showTypeName, plainTV, unPlainTV)
+import MagicHaskeller.ReadTHType as ReadTHType(showTypeName, plainTV, unPlainTV)
 
 
 #ifdef __GLASGOW_HASKELL__
@@ -33,7 +33,7 @@ expToExpExp :: Exp -> ExpQ
 expToExpExp (VarE name) = [| VarE (mkName $(nameToNameStr showVarName name)) |]
 expToExpExp (ConE name) = [| ConE (mkName $(nameToNameStr showVarName name)) |]
 expToExpExp (AppE e0 e1) = [| AppE $(expToExpExp e0) $(expToExpExp e1) |]
-expToExpExp (LamE ps e) = [| LamE $(liftM ListE $ mapM patToExpPat ps) $(expToExpExp e) |]  
+expToExpExp (LamE ps e) = [| LamE $(liftM ListE $ mapM patToExpPat ps) $(expToExpExp e) |]
 expToExpExp (InfixE Nothing   e Nothing)   = [| InfixE Nothing                  $(expToExpExp e) Nothing |]
 expToExpExp (InfixE (Just e0) e Nothing)   = [| InfixE (Just $(expToExpExp e0)) $(expToExpExp e) Nothing |]
 expToExpExp (InfixE Nothing   e (Just e1)) = [| InfixE Nothing                  $(expToExpExp e) (Just $(expToExpExp e1)) |]
@@ -56,7 +56,7 @@ typeToExpType (TA t0 t1)          = [| TA $(typeToExpType t0) $(typeToExpType t1
 typeToExpType (t0 :-> t1)         = [| $(typeToExpType t0) :-> $(typeToExpType t1) |]
 -}
 typeToExpType :: Type -> ExpQ
-typeToExpType (ForallT ns [] t) = [| ForallT (map (plainTV . mkName) $(return $ ListE $ map (LitE . StringL . showTypeName . unPlainTV) ns)) [] $(typeToExpType t) |]
+typeToExpType (ForallT ns [] t) = [| ForallT (map (ReadTHType.plainTV . mkName) $(return $ ListE $ map (LitE . StringL . showTypeName . unPlainTV) ns)) [] $(typeToExpType t) |]
 typeToExpType (ForallT _ (_:_) _) = error "typeToExpType: Type classes are not implemented yet."
 typeToExpType (ConT name)      = [| ConT (mkName $(nameToNameStr showTypeName name)) |]
 typeToExpType (VarT name)      = [| VarT (mkName $(nameToNameStr showTypeName name)) |]

@@ -1,4 +1,4 @@
--- 
+--
 -- (c) Susumu Katayama
 --
 {-# LANGUAGE CPP #-}
@@ -63,7 +63,8 @@ trToType tcl tr = case splitTyConApp tr of
 funTyCon :: Data.Typeable.TyCon
 funTyCon = typeRepTyCon (mkFunTy undefTC undefTC)
 -- undef = error "funTyCon" -- Dunno why, but seemingly mkFunTy is strict.
-undefTC = mkTyConApp (mkTyCon3 "base" "Prelude" "Hoge") []
+--undefTC = mkTyConApp (mkTyCon3 "base" "Prelude" "Hoge") []
+undefTC = undefined
 
 trToTHType :: TypeRep -> TH.Type
 trToTHType tr = case splitTyConApp tr of
