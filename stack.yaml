@@ -1,14 +1,7 @@
 resolver: lts-10.0
+# first found lts-3.22
 
 # User packages to be built.
-# Various formats can be used as shown in the example below.
-#
-# packages:
-# - some-directory
-# - https://example.com/foo/bar/baz-0.0.2.tar.gz
-#   subdirs:
-#   - auto-update
-#   - wai
 packages:
 - MagicHaskeller
 
@@ -28,7 +21,3 @@ extra-deps:
 
 # Override default flag values for local packages and extra-deps
 flags: {}
-
-# Require a specific version of stack, using version ranges
-# require-stack-version: -any # Default
-# require-stack-version: ">=2.1"
