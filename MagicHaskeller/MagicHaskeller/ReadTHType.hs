@@ -1,8 +1,6 @@
 --
 -- (c) Susumu Katayama
 --
-
-\begin{code}
 {-# OPTIONS -cpp #-}
 module MagicHaskeller.ReadTHType(thTypeToType, typeToTHType, showTypeName, MagicHaskeller.ReadTHType.plainTV, unPlainTV) where
 
@@ -92,5 +90,3 @@ AppT (AppT (ConT GHC.Prim.(->)) (ConT GHC.Base.Int)) (ConT Char)
 Prelude Language.Haskell.TH> AppT (AppT ArrowT (ConT $ mkName "GHC.Base.Int")) (ConT $ mkName  "Char")
 AppT (AppT ArrowT (ConT GHC.Base.Int)) (ConT Char)
 -}
-
-\end{code}
