@@ -60,11 +60,13 @@ trToType tcl tr = case splitTyConApp tr of
                               unqualify = reverse . takeWhile (/='.') . reverse
 
 -- Do the following, because (mkTyCon "(->)") may or may not be equivalent to TyCon for functions in general.
+-- Here we only want to find the function TyCon
 funTyCon :: Data.Typeable.TyCon
-funTyCon = typeRepTyCon (mkFunTy undefTC undefTC)
+funTyCon = typeRepTyCon (mkFunTy hogeTypeRep hogeTypeRep)
+hogeTypeRep = typeOf ("Hoge" :: String)
+--funTyCon = typeRepTyCon (mkFunTy undefTC undefTC)
 -- undef = error "funTyCon" -- Dunno why, but seemingly mkFunTy is strict.
 --undefTC = mkTyConApp (mkTyCon3 "base" "Prelude" "Hoge") []
-undefTC = undefined
 
 trToTHType :: TypeRep -> TH.Type
 trToTHType tr = case splitTyConApp tr of
