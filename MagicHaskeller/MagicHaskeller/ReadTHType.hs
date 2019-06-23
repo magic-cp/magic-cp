@@ -19,7 +19,9 @@ showTypeName = TH.nameBase -- Use the unqualified name to avoid confusion becaus
 
 -- MyDynamicでしか使われていないので，ForallTは単に無視する．PolyDynamicのチェックがちょっと緩くなるだけ．
 thTypeToType :: TyConLib -> TH.Type -> Types.Type
-thTypeToType tcl t = normalize $ thTypeToType' tcl [] t
+thTypeToType tcl t = trace (show t ++ "\n ---------\n"
+                        ++ show tcl ++ "\n ----------\n") $
+                      normalize $ thTypeToType' tcl [] t
 
 thTypeToType' :: TyConLib -> [Name] -> TH.Type -> Types.Type
 thTypeToType' tcl vs (ForallT bs []    t) = thTypeToType' tcl (vs++map tyVarBndrToName bs) t
