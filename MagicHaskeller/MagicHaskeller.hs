@@ -1,8 +1,7 @@
--- 
+--
 -- (c) Susumu Katayama
 --
 
-\begin{code}
 
 {-# LANGUAGE TemplateHaskell, CPP, MagicHash, Rank2Types #-}
 module MagicHaskeller(
@@ -24,9 +23,9 @@ module MagicHaskeller(
 
        -- ** Functions for creating your program generator algorithm
        -- | You can set your primitives like, e.g., @'setPrimitives' $('p' [| ( (+) :: Int->Int->Int, 0 :: Int, \'A\', [] :: [a] ) |])@,
-       --   where the primitive set is consisted of @(+)@ specialized to type @Int->Int->Int@, @0@ specialized to type @Int@, 
+       --   where the primitive set is consisted of @(+)@ specialized to type @Int->Int->Int@, @0@ specialized to type @Int@,
        --   @ \'A\' @ which has monomorphic type @Char@, and @[]@ with polymorphic type @[a]@.
-       --   As primitive components one can include any variables and constructors within the scope. 
+       --   As primitive components one can include any variables and constructors within the scope.
        --   However, because currently ad hoc polymorphism is not supported by this library, you may not write
        --   @'setPrimitives' $('p' [| (+) :: Num a => a->a->a |])@.
        --   Also, you have to specify the type unless you are using a primitive component whose type is monomorphic and instance of 'Data.Typeable.Typeable'
@@ -47,13 +46,13 @@ module MagicHaskeller(
        mkPG075, mkMemo075,
 
        -- | 'mkPGOpt' can be used along with its friends instead of 'mkPG' when the search should be fine-tuned.
-       mkPGOpt, 
-       
-       -- | 'mkPGX' and 'mkPGXOpt' can be used instead of 'mkPG' and 'mkPGOpt' if you want to prioritize the primitives. 
-       --   They take a list of lists of primitives as an argument, whose first element is the list of primitives with the greatest priority, 
+       mkPGOpt,
+
+       -- | 'mkPGX' and 'mkPGXOpt' can be used instead of 'mkPG' and 'mkPGOpt' if you want to prioritize the primitives.
+       --   They take a list of lists of primitives as an argument, whose first element is the list of primitives with the greatest priority,
        --   second element the second greatest priority, and so on.
        mkPGX, mkPGXOpt,
-       
+
        mkPGXOpts, updatePGXOpts, updatePGXOptsFilt,
        Options, Opt(..), options, MemoType(..),
 
@@ -81,7 +80,7 @@ module MagicHaskeller(
        --
        --   Because the library generates all the expressions including those with non-linear recursions, you should note that there exist some expressions which take extraordinarily long time. (Imagine a function that takes an integer n and increments 0 for 2^(2^n) times.)
        --   For this reason, time out is taken after 0.02
-       --   second since each invocation of evaluation by default. This default behavior can 
+       --   second since each invocation of evaluation by default. This default behavior can
        --   be overridden by the following functions.
        setTimeout, unsetTimeout,
 
@@ -192,9 +191,7 @@ import Control.Concurrent.MVar
 import Control.Concurrent
 
 import Debug.Trace
-\end{code}
 
-\begin{code}
 mkCurriedDecls :: String -> ExpQ -> ExpQ -> DecsQ
 mkCurriedDecls tag funq eq = do e <- eq
                                 fun <- funq
@@ -210,11 +207,11 @@ mkCurriedDecls tag funq eq = do e <- eq
 
 -- "MemoDeb" name should be hidden, or maybe I could rename it.
 
--- | 'define' eases use of this library by automating some function definitions. For example, 
+-- | 'define' eases use of this library by automating some function definitions. For example,
 --
 -- > $( define ''ProgGen "Foo" (p [| (1 :: Int, (+) :: Int -> Int -> Int) |]) )
 --
--- is equivalent to 
+-- is equivalent to
 --
 -- > memoFoo :: ProgGen
 -- > memoFoo = mkPG (p [| (1 :: Int, (+) :: Int -> Int -> Int) |])
@@ -265,9 +262,9 @@ p1 (SigE e ty) = p1' (SigE e $ useArrowT ty) e ty
 p1 e@(ConE name)  = do
 #if __GLASGOW_HASKELL__ < 800
                        DataConI _ ty _ _ <- reify name
-#else                                            
+#else
                        DataConI _ ty _   <- reify name
-#endif                                            
+#endif
                        p1' e e ty
 p1 e@(VarE name)  = do
 #if __GLASGOW_HASKELL__ < 800
@@ -284,7 +281,7 @@ useArrowT :: TH.Type -> TH.Type
 useArrowT = everywhere (mkT uAT)
 uAT (ConT name) | nameBase name == "(->)" = ArrowT
 uAT t = t
-{- 
+{-
   Strangely enough, GHC-7.10 (at least, GHCi, version 7.10.2.20150906) rejects (ConT GHC.Prim.(->)), while reading "(->)" to (ConT GHC.Prim.(->))
 
 Prelude> :m +Language.Haskell.TH
@@ -305,7 +302,7 @@ Prelude Language.Haskell.TH> ((/=0) :: $([t| (->) Int|]) Bool) 3
 Prelude Language.Haskell.TH> ((/=0) :: $([t| Int -> Bool |])) 3
 True
 
-  This is as opposed to the description in 
+  This is as opposed to the description in
      https://downloads.haskell.org/~ghc/latest/docs/html/libraries/template-haskell-2.10.0.0/src/Language-Haskell-TH-Syntax.html#line-1414
   saying
      But if the original HsSyn used prefix application, we won't use
@@ -317,8 +314,8 @@ True
   So this may be a bug, introduced when making TH more pedantic.
 
   Reading "(->)" to (ConT GHC.Prim.(->)) is a good news for MagicHaskeller which abuses (->) to indicate constructor consumption.
-  In the case that the distinction between prefixed (->) and the infixed -> is obsoleted, we can still use   
-     type (:-->) = (->) 
+  In the case that the distinction between prefixed (->) and the infixed -> is obsoleted, we can still use
+     type (:-->) = (->)
   but then, we need to change more code.
 -}
 
@@ -429,8 +426,8 @@ mkPGSF,mkMemoSF :: ProgramGenerator pg =>
            StdGen
 #endif
         -> [Int] -- ^ number of random samples at each depth, for each type.
-        -> [Primitive] 
-        -> [Primitive] 
+        -> [Primitive]
+        -> [Primitive]
         -> [Primitive] -> pg
 mkPGSF   = mkPGSF' True
 mkMemoSF = mkPGSF' False
@@ -499,7 +496,7 @@ mkDepths = concat . zipWith (\i xs -> map (const i) xs) [0..]
 setPG :: ProgGen -> IO ()
 setPG = writeIORef refmemodeb
 
--- | @setPrimitives@ creates a @ProgGen@ from the given set of primitives using the current set of options, and sets it as the current program generator. 
+-- | @setPrimitives@ creates a @ProgGen@ from the given set of primitives using the current set of options, and sets it as the current program generator.
 --   It used to be equivalent to @setPG . mkPG@ which overwrites the options with the default, but it is not now.
 setPrimitives :: [Primitive] -> [Primitive] -> IO ()
 setPrimitives classes tups = do PG (_,_,_,cmn) <- readIORef refmemodeb
@@ -567,16 +564,16 @@ trsToTCstrs (tr:ts) = case splitTyConApp tr of (tc,trs) -> (length trs, tyConNam
 -- x ついでにいうと，1秒でのタイムアウトを表すPTO（のGLOBAL_VAR）もIOなしで用意できる．（unsafePerformIO使うけど）
 
 -- | 'getEverything' uses the \'global\' values set with @set*@ functions. 'getEverythingF' is its filtered version
-getEverything :: Typeable a => 
+getEverything :: Typeable a =>
                  Bool -- ^ whether to include functions with unused arguments
                   -> IO (Every a)
-getEverything withAbsents = do 
+getEverything withAbsents = do
                    memodeb <- readIORef refmemodeb
                    return (everything memodeb withAbsents)
-getEverythingF :: Typeable a => 
+getEverythingF :: Typeable a =>
                   Bool -- ^ whether to include functions with unused arguments
                   -> IO (Every a)
-getEverythingF withAbsents = do 
+getEverythingF withAbsents = do
                    memodeb <- readIORef refmemodeb
                    return (everythingF memodeb withAbsents)
 {-
@@ -612,7 +609,7 @@ noFilter :: ProgramGenerator pg => pg -> Types.Type -> a -> a
 noFilter _m _t = id
 
 matchPs True  = matchingPrograms
-matchPs False = matchingProgramsWOAbsents 
+matchPs False = matchingProgramsWOAbsents
 
 mxExprToEvery :: (Expression e, Search m, WithCommon pg, Typeable a) => String -> pg -> Types.Type -> m e -> m (Exp, a)
 mxExprToEvery   msg memodeb _  = fmap (unwrapAE (extractVL memodeb) msg memodeb . toAnnExpr (reducer $ extractCommon memodeb))
@@ -635,9 +632,9 @@ etup :: (ProgramGenerator pg, Typeable a) =>
                   -> pg   -- ^ program generator
                   -> Bool -- ^ whether to include functions with unused arguments
                   -> [[((Exp,a), (Exp,a))]]
-etup dmy memodeb withAbsents 
-  = unMx 
-    $ fmap (\e -> (unwrapAE (vl cmn) "MagicHaskeller.etup: type mismatch" memodeb $ toAnnExpr (execute (opt cmn) (vl cmn)) e, 
+etup dmy memodeb withAbsents
+  = unMx
+    $ fmap (\e -> (unwrapAE (vl cmn) "MagicHaskeller.etup: type mismatch" memodeb $ toAnnExpr (execute (opt cmn) (vl cmn)) e,
                    unwrapAE (pvl cmn) "MagicHaskeller.etup: type mismatch" memodeb $ toAnnExpr (execute (opt cmn) (pvl cmn)) $ toCE e))
     $  matchPs withAbsents ty memodeb
     where ty  = trToType (extractTCL memodeb) (typeOf dmy)
@@ -706,17 +703,17 @@ wrappit :: (Search m, Functor m, Typeable a) => m CoreExpr -> [[(TH.Exp,a)]]
 wrappit = unMx . toMx . fmap (\ e -> (exprToTHExp e, unsafeExecute e))
 -}
 
--- | @'findOne' pred@ finds an expression 'e' that satisfies @pred e == True@, and returns it in 'TH.Exp'. 
-findOne :: Typeable a => 
+-- | @'findOne' pred@ finds an expression 'e' that satisfies @pred e == True@, and returns it in 'TH.Exp'.
+findOne :: Typeable a =>
            Bool -- ^ whether to include functions with unused arguments
            -> (a->Bool) -> TH.Exp
 findOne withAbsents pred = unsafePerformIO $ findDo (\e _ -> return e) withAbsents pred
 
--- | 'printOne' prints the expression found first. 
-printOne :: Typeable a => 
+-- | 'printOne' prints the expression found first.
+printOne :: Typeable a =>
             Bool -- ^ whether to include functions with unused arguments
             -> (a->Bool) -> IO TH.Exp
-printOne withAbsents pred = do 
+printOne withAbsents pred = do
                    expr <- findDo (\e _ -> return e) withAbsents pred
                    putStrLn $ pprintUC expr
                    return expr
@@ -730,16 +727,16 @@ printAll = findDo (\e r -> putStrLn (pprintUC e) >> r)
 printAllF :: (Typeable a, Filtrable a) =>
              Bool -- ^ whether to include functions with unused arguments
              ->  (a->Bool) -> IO ()
-printAllF withAbsents pred = do 
+printAllF withAbsents pred = do
                     et  <- getEverything withAbsents
                     fet <- filterThenF pred et
                     pprs fet
 
-findDo :: Typeable a => 
-          (TH.Exp -> IO b -> IO b) 
+findDo :: Typeable a =>
+          (TH.Exp -> IO b -> IO b)
           -> Bool -- ^ whether to include functions with unused arguments
           -> (a->Bool) -> IO b
-findDo op withAbsents pred = do 
+findDo op withAbsents pred = do
                      et <- getEverything withAbsents
                      md <- readIORef refmemodeb
                      let mpto = timeout $ opt $ extractCommon md
@@ -751,18 +748,18 @@ findDo op withAbsents pred = do
                                                  Nothing    -> hPutStrLn stderr ("timeout on "++pprintUC e) >> fp mpto ts
 -- x 本当はrecompのままでやった方が速いはず．
 
--- | 'filterFirst' is like 'printAll', but by itself it does not print anything. Instead, it creates a stream of expressions represented in tuples of 'TH.Exp' and the expressions themselves. 
+-- | 'filterFirst' is like 'printAll', but by itself it does not print anything. Instead, it creates a stream of expressions represented in tuples of 'TH.Exp' and the expressions themselves.
 filterFirst :: Typeable a =>
                Bool -- ^ whether to include functions with unused arguments
                ->  (a->Bool) -> IO (Every a)
-filterFirst withAbsents pred = do 
+filterFirst withAbsents pred = do
                       et <- getEverything withAbsents
                       filterThen pred et
 -- randomTestFilter should be applied after filterThen, because it's slower
-filterFirstF :: (Typeable a, Filtrable a) => 
+filterFirstF :: (Typeable a, Filtrable a) =>
                 Bool -- ^ whether to include functions with unused arguments
                 -> (a->Bool) -> IO (Every a)
-filterFirstF withAbsents pred = do 
+filterFirstF withAbsents pred = do
                        et <- getEverything withAbsents
                        filterThenF pred et
 filterThenF pred et = do
@@ -785,7 +782,7 @@ getType ty memodeb = trToType (extractTCL memodeb) (typeOf ty)
 everyF :: (Typeable a, Filtrable a) =>
           Opt b
               -> [[(e,a)]] -> [[(e,a)]]
-everyF o = unMx . unsafeRandomTestFilter (timeout o) (fcnrand o) . Mx 
+everyF o = unMx . unsafeRandomTestFilter (timeout o) (fcnrand o) . Mx
 
 -- | 'filterThen' may be used to further filter the results.
 filterThen :: Typeable a => (a->Bool) -> Every a -> IO (Every a)
@@ -809,13 +806,13 @@ fpart mpto pred (ea@(_,a),eap@(_,ap))
   = case unsafePerformIO (maybeWithTO seq mpto (return $! (pred ap))) of
                                     Just True  -> Just eap
                                     Just False -> Nothing
-                                    Nothing -> case unsafePerformIO (maybeWithTO seq mpto (return  $!(pred a))) of 
+                                    Nothing -> case unsafePerformIO (maybeWithTO seq mpto (return  $!(pred a))) of
                                       Just True -> Just ea
                                       _         -> Nothing
 
 {-
 fpartial _    pred []            = []
-fpartial mpto pred ((ea@(_,a),eap@(_,ap)):ts) 
+fpartial mpto pred ((ea@(_,a),eap@(_,ap)):ts)
   = case unsafePerformIO (maybeWithTO seq mpto (return (pred ap))) of
                                     Just True  -> eap : fpartial mpto pred ts
                                     Just False -> fpartial mpto pred ts
@@ -836,19 +833,19 @@ fpartialParIO mpto pred ts = do mbs <- mapParIO (liftIO . fpartIO mpto pred) ts
 #endif
 fpartIO :: Typeable a => Maybe Int -> (a->Bool) -> ((e, a),(e,a)) -> IO (Maybe (e, a))
 fpartIO mpto pred (ea, eap@(_,ap))
-  = do mbb <- maybeWithTO seq mpto $ return $! pred ap 
+  = do mbb <- maybeWithTO seq mpto $ return $! pred ap
        case mbb of
          Just True  -> return $ Just eap
          Just False -> return Nothing
          Nothing    -> ftotIO mpto pred ea
 {- これだとinterleaveできない．
 fpartialIO _    pred []            = return []
-fpartialIO mpto pred ((ea@(_,a),eap@(_,ap)):ts) 
-  = do mbb <- (maybeWithTO seq mpto (return $! pred ap)) 
+fpartialIO mpto pred ((ea@(_,a),eap@(_,ap)):ts)
+  = do mbb <- (maybeWithTO seq mpto (return $! pred ap))
        case mbb of
          Just True  -> fmap (eap :) $ fpartialIO mpto pred ts
          Just False -> fpartialIO mpto pred ts
-         Nothing    -> do mbb2 <- maybeWithTO seq mpto (return (pred a)) 
+         Nothing    -> do mbb2 <- maybeWithTO seq mpto (return (pred a))
                           case mbb2 of
                                                      Just True  -> fmap (ea :) $ fpartialIO mpto pred ts
                                                      _          -> fpartialIO mpto pred ts
@@ -861,7 +858,7 @@ ftotalIO :: Typeable a => Maybe Int -> (a->Bool) -> [(e, a)] -> IO [(e, a)]
 ftotalIO mpto pred ts = filterIO (ftotIO mpto pred) ts
 ftotIO :: Typeable a => Maybe Int -> (a->Bool) -> (e,a) -> IO (Maybe (e, a))
 ftotIO mpto pred (ea@(_,a))
-  = do mbb <- maybeWithTO seq mpto $ return $! pred a 
+  = do mbb <- maybeWithTO seq mpto $ return $! pred a
        case mbb of
          Just True  -> return $ Just ea
          _          -> return Nothing
@@ -876,7 +873,7 @@ fpIO mpto pred ts = do mbs <- {-interleaveActions -}sequence {- parallelInterlea
                        return [ tup | Just tup <- mbs ]
 fIO :: Typeable a => Maybe Int -> (a->Bool) -> ((Exp, a),(Exp,a)) -> Int -> IO (Maybe (Exp, a))
 fIO mpto pred (ea@(e,a),eap@(_,ap)) i
-  = do hPutStrLn stderr (shows i " trying "++pprint e) 
+  = do hPutStrLn stderr (shows i " trying "++pprint e)
        mbb <- maybeWithTO seq mpto $ return $! pred a
        case mbb of
          Just True  -> return $ Just ea
@@ -908,7 +905,7 @@ pprs = mapM_ (putStrLn . pprintUC . fst) . concat
 -- | 'pprsIO' is the 'EveryIO' version of pprs
 pprsIO  ::        EveryIO a -> IO ()
 pprsIO        eio = mapM_ (\d -> eio d >>= mapM_ (putStrLn . pprintUC . fst)) [0..]
--- | @pprsIOn depth eio@ is the counterpart of @pprs (take depth eio)@, while @pprsIO eio@ is the counterpart of @pprs eio@. 
+-- | @pprsIOn depth eio@ is the counterpart of @pprs (take depth eio)@, while @pprsIO eio@ is the counterpart of @pprs eio@.
 --   Example: @pprsIOn 5 (everythingIO (mlist::ProgGen) :: EveryIO ([Char]->[Char]))@
 pprsIOn :: Int -> EveryIO a -> IO ()
 pprsIOn depth eio = mapM_ (\d -> eio d >>= mapM_ (putStrLn . pprintUC . fst)) [0..depth-1]
@@ -929,5 +926,3 @@ lengthsIOnLn depth eio = lengthsIOn depth eio >> putStrLn ""
 
 printQ :: (Ppr a, Data a) => Q a -> IO ()
 printQ q = runQ q >>= putStrLn . pprintUC
-
-\end{code}
