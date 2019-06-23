@@ -7,10 +7,12 @@ module MagicHaskeller.ReadTHType(thTypeToType, typeToTHType, showTypeName, Magic
 import MagicHaskeller.Types as Types
 import MagicHaskeller.TyConLib
 import Language.Haskell.TH as TH
-import Data.Array((!), inRange, bounds)
+import Data.Array(Array, (!), inRange, bounds)
 import Data.Char(ord,chr)
 import Data.List(nub)
 import Data.Map(lookup)
+
+import Debug.Trace
 
 showTypeName = TH.nameBase -- Use the unqualified name to avoid confusion because Data.Typeable.tyConString shows the unqualified name for types defined in the Standard Hierarchical Library (though the qualified name is shown when Typeable is derived).
 -- showTypeName = show -- maybe in future, when TypeRep can be shown qualified.
@@ -18,6 +20,8 @@ showTypeName = TH.nameBase -- Use the unqualified name to avoid confusion becaus
 -- MyDynamicでしか使われていないので，ForallTは単に無視する．PolyDynamicのチェックがちょっと緩くなるだけ．
 thTypeToType :: TyConLib -> TH.Type -> Types.Type
 thTypeToType tcl t = normalize $ thTypeToType' tcl [] t
+
+thTypeToType' :: TyConLib -> [Name] -> TH.Type -> Types.Type
 thTypeToType' tcl vs (ForallT bs []    t) = thTypeToType' tcl (vs++map tyVarBndrToName bs) t
 thTypeToType' tcl _  (ForallT _ (_:_) t) = error "Type classes are not supported yet."
 thTypeToType' tcl _  (TupleT n)      = TC (tuple tcl n)
@@ -37,8 +41,9 @@ thTypeToType' tcl (HsTyCon (Special HsUnitCon)) = TC (unit tcl)
 thTypeToType' tcl (HsTyCon (Special HsListCon)) = TC (list tcl)
 -}
 thTypeToType' _  _ ArrowT = error "Partially applied (->)."
-thTypeToType' _  vs (VarT name) = TV $ case Prelude.lookup name $ zip vs [0..] of Nothing -> error "thTypeToType : unbound type variable"
-                                                                                  Just i  -> i
+thTypeToType' _  vs (VarT name) = trace ("thTypeToType' looking " ++ show name ++ "\n" ++ show vs ++ "\n") $
+                                   TV $ case Prelude.lookup name $ zip vs [0..] of Nothing -> error "thTypeToType : unbound type variable"
+                                                                                   Just i  -> i
 -- thTypeToType' _   hst = error ("thTypeToType': "++show hst)
 
 tyVarBndrToName (PlainTV name)    = name

@@ -242,7 +242,7 @@ parsePrioritizedName str = case reads str of [] -> error "error while parsing th
 declareDefaults hscEnv str
   = runGhc (Just libdir) $ do
     setSession hscEnv
-    tupTy <- exprType TM_Inst $ "undefined :: (" ++ str ++ ")"
+    tupTy <- exprType TM_Default $ "undefined :: (" ++ str ++ ")"
     case splitTyConApp_maybe tupTy of
       Nothing                     -> error $ str ++ " : invalid default type sequence"
       Just (_tuptc, defaultTypes) -> setSession hscEnv{hsc_IC = (hsc_IC hscEnv){ic_default = Just defaultTypes}} >> getSession
@@ -399,7 +399,7 @@ compileOrFail postproc predStr = handleSourceError (return . Right . show) $ do
     -- In this case, the type obtained by exprType is polymorphic, so there is no point in adding the type signature.
                           let sig = ""
 #else
-                          ty  <- exprType TM_Inst $ "\\f->("++predStr++")`asTypeOf`True" -- `asTypeOf` True をいれないと、 predStr = "f True True" のときにserverがpanic!になる。
+                          ty  <- exprType TM_Default $ "\\f->("++predStr++")`asTypeOf`True" -- `asTypeOf` True をいれないと、 predStr = "f True True" のときにserverがpanic!になる。
                           let sig   = " :: " ++ removeQuantification (map crlfToSpace $ showPpr $ extractArgTy ty)
 #endif
                           return $ Left (funIO, sig)
