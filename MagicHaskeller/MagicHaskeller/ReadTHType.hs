@@ -7,6 +7,7 @@ module MagicHaskeller.ReadTHType(thTypeToType, typeToTHType, showTypeName, Magic
 import MagicHaskeller.Types as Types
 import MagicHaskeller.TyConLib
 import Language.Haskell.TH as TH
+import Control.Monad.State.Lazy
 import Data.Array(Array, (!), inRange, bounds)
 import Data.Char(ord,chr)
 import Data.List(nub)
@@ -21,31 +22,48 @@ showTypeName = TH.nameBase -- Use the unqualified name to avoid confusion becaus
 thTypeToType :: TyConLib -> TH.Type -> Types.Type
 thTypeToType tcl t = trace (show t ++ "\n ---------\n"
                         ++ show tcl ++ "\n ----------\n") $
-                      normalize $ thTypeToType' tcl [] t
+                      normalize $ evalState (thTypeToType' tcl t) []
 
-thTypeToType' :: TyConLib -> [Name] -> TH.Type -> Types.Type
-thTypeToType' tcl vs (ForallT bs []    t) = thTypeToType' tcl (vs++map tyVarBndrToName bs) t
-thTypeToType' tcl _  (ForallT _ (_:_) t) = error "Type classes are not supported yet."
-thTypeToType' tcl _  (TupleT n)      = TC (tuple tcl n)
-thTypeToType' tcl _ ListT           = TC (list tcl)
+thTypeToType' :: TyConLib -> TH.Type -> State [Name] Types.Type
+thTypeToType' tcl (ForallT bs []    t) = do
+  modify (\vs -> vs++map tyVarBndrToName bs)
+  thTypeToType' tcl t
+thTypeToType' tcl (ForallT _ (_:_) t) = error "Type classes are not supported yet."
+thTypeToType' tcl (TupleT n)      = return $ TC (tuple tcl n)
+thTypeToType' tcl ListT           = return $ TC (list tcl)
 -- thTypeToType' tcl (HsTyFun ht0 ht1)
 --     = thTypeToType' tcl ht0 :-> thTypeToType' tcl ht1
-thTypeToType' tcl vs (AppT (AppT ArrowT      ht0) ht1)                           = thTypeToType' tcl vs  ht0 :-> thTypeToType' tcl vs  ht1
-thTypeToType' tcl vs (AppT (AppT (ConT name) ht0) ht1) | nameBase name == "(->)" = thTypeToType' tcl vs  ht0 :>  thTypeToType' tcl vs  ht1
-thTypeToType' tcl vs (AppT ht0 ht1)                                              = TA (thTypeToType' tcl vs  ht0) (thTypeToType' tcl vs  ht1)
-thTypeToType' (fm,_) _ (ConT name) = let nstr = showTypeName name
-                                     in case Data.Map.lookup nstr fm of
+thTypeToType' tcl (AppT (AppT ArrowT      ht0) ht1) = do
+  t1 <- thTypeToType' tcl ht0
+  t2 <- thTypeToType' tcl ht1
+  return $ t1 :-> t2
+thTypeToType' tcl (AppT (AppT (ConT name) ht0) ht1) | nameBase name == "(->)" = do
+  t1 <- thTypeToType' tcl ht0
+  t2 <- thTypeToType' tcl ht1
+  return $ t1 :> t2
+thTypeToType' tcl (AppT ht0 ht1) = do
+  t1 <- thTypeToType' tcl ht0
+  t2 <- thTypeToType' tcl ht1
+  return $ TA t1 t2
+thTypeToType' (fm,_) (ConT name) = let nstr = showTypeName name
+                                   in case Data.Map.lookup nstr fm of
                                           Nothing -> -- TC $ (-1 - bakaHash nstr)
                                                      error $ "thTypeToType' : "++nstr++" : unknown TyCon"
-                                          Just c  -> TC c
+                                          Just c  -> return $ TC c
 {- この辺は単なるコメントアウトでいいんだっけ？
 thTypeToType' tcl (HsTyCon (Special HsUnitCon)) = TC (unit tcl)
 thTypeToType' tcl (HsTyCon (Special HsListCon)) = TC (list tcl)
 -}
-thTypeToType' _  _ ArrowT = error "Partially applied (->)."
-thTypeToType' _  vs (VarT name) = trace ("thTypeToType' looking " ++ show name ++ "\n" ++ show vs ++ "\n") $
-                                   TV $ case Prelude.lookup name $ zip vs [0..] of Nothing -> error "thTypeToType : unbound type variable"
-                                                                                   Just i  -> i
+thTypeToType' _  ArrowT = error "Partially applied (->)."
+thTypeToType' _  (VarT name) = do
+                                  modify $ \vs -> case Prelude.lookup name $ zip vs [0..] of
+                                                    Nothing -> name : vs
+                                                    _ -> vs
+                                  vs <- get
+                                  trace (show vs) (return ())
+                                  return $ TV $ case Prelude.lookup name $ zip vs [0..] of
+                                                Nothing -> error "thTypeToType : unbound type variable"
+                                                Just i  -> i
 -- thTypeToType' _   hst = error ("thTypeToType': "++show hst)
 
 tyVarBndrToName (PlainTV name)    = name
