@@ -1,5 +1,5 @@
-# resolver: lts-10.0
-resolver: lts-9.21
+resolver: lts-10.0
+# resolver: lts-9.21
 # first found lts-3.22
 
 # User packages to be built.
