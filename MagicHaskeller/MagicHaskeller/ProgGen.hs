@@ -1,7 +1,6 @@
--- 
+--
 -- (c) Susumu Katayama
 --
-\begin{code}
 {-# LANGUAGE FlexibleInstances #-}
 {-# OPTIONS -cpp #-}
 module MagicHaskeller.ProgGen(ProgGen(PG), mkCL, ClassLib(..), mguPrograms) where
@@ -177,4 +176,3 @@ lookupListrie opt rec memodeb avail t
                                        when (null args') mzero
                                        return args'
 
-\end{code}

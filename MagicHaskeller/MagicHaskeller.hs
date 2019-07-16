@@ -742,8 +742,8 @@ findDo op withAbsents pred = do
                      let mpto = timeout $ opt $ extractCommon md
                      fp mpto (concat et)
     where fp mpto ((e,a):ts) = do -- hPutStrLn stderr ("trying" ++ pprintUC e)
-                                  putStrLn $ "TH.Expression in findDo: "
-                                  putStrLn $ show e
+                                  --putStrLn "TH.Expression in findDo: "
+                                  --print e
                                   result <- maybeWithTO seq mpto (return (pred a))
                                   case result of Just True  -> e `op` fp mpto ts
                                                  Just False -> fp mpto ts

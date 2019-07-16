@@ -1,8 +1,7 @@
--- 
+--
 -- (c) Susumu Katayama
 --
 
-\begin{code}
 {-# OPTIONS -cpp #-}
 
 module MagicHaskeller.ProgramGenerator where
@@ -47,7 +46,7 @@ type Prim = (Int, Int, Type, TyVar, Typed [CoreExpr])
 class WithCommon a where
     extractCommon :: a -> Common
 
--- | ProgramGenerator is a generalization of the old @Memo@ type. 
+-- | ProgramGenerator is a generalization of the old @Memo@ type.
 class WithCommon a => ProgramGenerator a where
     -- | |mkTrie| creates the generator with the default parameters.
     mkTrie :: Common -> [Typed [CoreExpr]] -> [[Typed [CoreExpr]]] -> a
@@ -68,7 +67,7 @@ class WithCommon a => ProgramGeneratorIO a where
     -- | Use memoization requiring IO
     matchingProgramsIO, unifyingProgramsIO :: Type -> a -> RecompT IO AnnExpr -- Should I define SearchT?
     matchingProgramsIO ty memodeb = unifyingProgramsIO (quantify ty) memodeb
-    -- Another option might be to create @newtype MemoToFile = NT (RecompT (StateT Params IO))@, and define @instance Search MemoToFile@. One drawback of this approach is that @Params@ is separated from @Options@.  
+    -- Another option might be to create @newtype MemoToFile = NT (RecompT (StateT Params IO))@, and define @instance Search MemoToFile@. One drawback of this approach is that @Params@ is separated from @Options@.
 extractTCL :: WithCommon a => a -> TyConLib
 extractTCL = tcl . extractCommon
 extractVL :: WithCommon a => a -> VarLib
@@ -115,7 +114,7 @@ splitPrimss pss = case unzip $ map splitPrims pss of (pssf, psss) -> (fromMx $ M
 -}
 
 mapSum :: (MonadPlus m, Delay m) => (a -> m b) -> [[a]] -> m b
-mapSum f = foldr (\xs y -> msum (map f xs) `mplus` delay y) mzero 
+mapSum f = foldr (\xs y -> msum (map f xs) `mplus` delay y) mzero
 
 
 -- availにしろTypeにしろapplyされている．
@@ -184,7 +183,7 @@ funApSubOp op clbehalf lltbehalf behalf = faso
           faso (t:> ts) funs
               = do args <- lltbehalf t
                    faso ts (liftM2 op funs args)
-          -- original. 
+          -- original.
           faso (t:->ts) funs
               = do args <- behalf t
                    faso ts (liftM2 op funs args)
@@ -470,7 +469,4 @@ combs 0 xs = [[]]
 combs n xs = []  : [ y:zs | y:ys <- tails xs, zs <- combs (n-1) ys ]
 tails []        = []
 tails xs@(_:ys) = xs : tails ys
-
-
-\end{code}
 

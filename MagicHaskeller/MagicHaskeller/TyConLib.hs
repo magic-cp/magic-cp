@@ -1,4 +1,4 @@
--- 
+--
 -- (c) Susumu Katayama
 --
 module MagicHaskeller.TyConLib where
@@ -10,19 +10,26 @@ import Data.List(nub)
 
 type Map = Map.Map
 
+{- From Types.lhs
+type TypeName = String
+type TyVar = Int8
+type TyCon = TyVar -- TyCon should be the same or bigger than TyVar, because the quantify function converts TyVar into TyCon
+-}
 type TyConLib = (Map TypeName TyCon, Array Kind [(TypeName,TyCon)])
 
 defaultTCL = tyConsToTCL defaultTyCons
 
+-- |Note that the in the built TyConLib, the same TyCon can occur for TypeNames
+-- with different kinds.
 tyConsToTCL :: [(Kind, TypeName)] -> TyConLib
 tyConsToTCL tcs
     = (Map.fromListWith (\new old -> old) [ tup | k <- [0..7], tup <- tcsByK ! k ], tcsByK)
-    where tnsByK :: Array Kind [TypeName]
-          tnsByK = accumArray (flip (:)) [] (0,7) (reverse (nub tcs))
-          tcsByK :: Array Kind [(TypeName,TyCon)]
+    where tcsByK :: Array Kind [(TypeName,TyCon)]
           tcsByK = listArray (0,7) [ tnsToTCs (tnsByK ! k) | k <- [0..7] ]
+          tnsByK :: Array Kind [TypeName]
+          tnsByK = accumArray (flip (:)) [] (0,7) (reverse (nub tcs))
           tnsToTCs :: [TypeName] -> [(TypeName,TyCon)]
-          tnsToTCs tns = zipWith (\ i tn -> (tn, i)) [0..] tns
+          tnsToTCs tns = zip tns [0..]
 
 
  -- other info is used when adding type constructors as functions
@@ -34,7 +41,12 @@ defaultTyCons 1 = ["[]", "IO"]
 defaultTyCons i | i<=7 = tuplename i
 -}
 defaultTyCons :: [(Kind, TypeName)]
-defaultTyCons = [(0, "()"), (1, "[]")] ++ [ (i, tuplename i) | i<-[2..tupleMax] ] ++ [(0, "Int"), (0, "Char"), (0, "Bool"), (0, "Integer"), (0, "Double"), (0, "Float"), (1,"Maybe"), (1,"IO"), (2,"Either"), (0,"Ordering"), (1,"Ratio"), (1,"Gen")]
+defaultTyCons = [(0, "()"), (1, "[]")] ++
+                [ (i, tuplename i) | i<-[2..tupleMax] ] ++
+                [ (0, "Int"), (0, "Char"), (0, "Bool"), (0, "Integer")
+                , (0, "Double"), (0, "Float"), (1,"Maybe"), (1,"IO")
+                , (2,"Either"), (0,"Ordering"), (1,"Ratio"), (1,"Gen")
+                ]
 tupleMax = 7
 {- can be used at least with lthprof
 defaultTyCons = []

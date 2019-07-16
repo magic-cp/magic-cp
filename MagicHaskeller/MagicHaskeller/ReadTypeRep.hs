@@ -1,6 +1,7 @@
 --
 -- (c) Susumu Katayama
 --
+{-# LANGUAGE PatternGuards #-}
 {-# LANGUAGE CPP #-}
 module MagicHaskeller.ReadTypeRep where
 import Data.Typeable
@@ -40,24 +41,25 @@ typeToTR tcl  (a :-> r) = mkFunTy (typeToTR tcl a) (typeToTR tcl r)
 -}
 
 trToType :: TyConLib -> TypeRep -> Types.Type
-trToType tcl tr = case splitTyConApp tr of
-                    (tc,trs) -> (if tc == funTyCon || show tc == show funTyCon -- dunno why, but sometimes |tc==funTyCon| is not enough.
-                                   then trToType tcl (head trs) :-> trToType tcl (head (tail trs))
-                                   else foldl TA (TC $ fromJust $ Data.Map.lookup (tyConString' tc) (fst tcl)) (map (trToType tcl) trs))
-                        where fromJust (Just x) = x
-                              fromJust Nothing  = error (tyConString' tc ++ " does not appear in the component library. (This is a known bug.) For now, please use a type variable instead of "++show tc
+trToType tcl tr | (tc,trs) <- splitTyConApp tr =
+  if tc == funTyCon || show tc == show funTyCon -- dunno why, but sometimes |tc==funTyCon| is not enough.
+     then let [arg1, arg2] = trs -- tr is arg1 -> arg2
+           in trToType tcl arg1 :-> trToType tcl arg2
+     else foldl TA (TC $ fromJust tc $ Data.Map.lookup (tyConString' tc) (fst tcl)) (map (trToType tcl) trs)
+  where fromJust _ (Just x) = x
+        fromJust tc Nothing  = error (tyConString' tc ++ " does not appear in the component library. (This is a known bug.) For now, please use a type variable instead of " ++ show tc
                                                                  ++ " and use `matching :: Int -> Memo -> TH.Type -> [[TH.Exp]]'.\n(or maybe you forgot to set a component library?)")
---                              fromJust Nothing = error ("tyConString = "++show (tyConString' tc) ++ ", and fst tcl = "++show (fst tcl))
---                              fromJust Nothing  = error (show tc ++ " does not appear in the component library. Forgot to set one? BTW tc==funTyCon is "++show (tc==funTyCon)++" and funTyCon is "++show funTyCon)
-                              tyConString' tc = case tyConName tc of
-                                                                         str@(',':_) -> '(':str++")" -- tyConString mistakenly prints "," instead of "(,)".
-                                                                         str         -> unqualify str
-                                                                         -- Use the unqualified name to avoid confusion
-                                                                         -- because Data.Typeable.tyConString shows the unqualified name
-                                                                         -- for types defined in the Standard Hierarchical Library
-                                                                         -- (though the qualified name is shown when Typeable is derived).
-                              unqualify :: String -> String
-                              unqualify = reverse . takeWhile (/='.') . reverse
+--      fromJust Nothing = error ("tyConString = "++show (tyConString' tc) ++ ", and fst tcl = "++show (fst tcl))
+--      fromJust Nothing  = error (show tc ++ " does not appear in the component library. Forgot to set one? BTW tc==funTyCon is "++show (tc==funTyCon)++" and funTyCon is "++show funTyCon)
+        tyConString' tc = case tyConName tc of
+            str@(',':_) -> '(':str++")" -- tyConString mistakenly prints "," instead of "(,)".
+            str         -> unqualify str
+            -- Use the unqualified name to avoid confusion
+            -- because Data.Typeable.tyConString shows the unqualified name
+            -- for types defined in the Standard Hierarchical Library
+            -- (though the qualified name is shown when Typeable is derived).
+        unqualify :: String -> String
+        unqualify = reverse . takeWhile (/='.') . reverse
 
 -- Do the following, because (mkTyCon "(->)") may or may not be equivalent to TyCon for functions in general.
 -- Here we only want to find the function TyCon
@@ -69,10 +71,11 @@ hogeTypeRep = typeOf ("Hoge" :: String)
 --undefTC = mkTyConApp (mkTyCon3 "base" "Prelude" "Hoge") []
 
 trToTHType :: TypeRep -> TH.Type
-trToTHType tr = case splitTyConApp tr of
-                  (tc,trs) -> if tc == funTyCon || show tc == show funTyCon -- dunno why, but sometimes |tc==funTyCon| is not enough.
-                                   then TH.AppT TH.ArrowT (trToTHType (head trs)) `TH.AppT` trToTHType (head (tail trs))
-                                   else foldl TH.AppT (TH.ConT (TH.mkName (tyConName tc))) (map trToTHType trs)
-                        where tyConToName str = case tyConName str of   "[]"        -> TH.ListT
-                                                                        str@(',':_) -> TH.TupleT (length str) -- tyConString mistakenly prints "," instead of "(,)".
-                                                                        str         -> TH.ConT $ TH.mkName str
+trToTHType tr | (tc,trs) <- splitTyConApp tr =
+   if tc == funTyCon || show tc == show funTyCon -- dunno why, but sometimes |tc==funTyCon| is not enough.
+     then TH.AppT TH.ArrowT (trToTHType (head trs)) `TH.AppT` trToTHType (head (tail trs))
+     else foldl TH.AppT (TH.ConT (TH.mkName (tyConName tc))) (map trToTHType trs)
+  where tyConToName str = case tyConName str of
+          "[]"        -> TH.ListT
+          str@(',':_) -> TH.TupleT (length str) -- tyConString mistakenly prints "," instead of "(,)".
+          str         -> TH.ConT $ TH.mkName str

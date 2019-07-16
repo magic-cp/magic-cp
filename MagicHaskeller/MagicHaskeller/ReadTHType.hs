@@ -20,10 +20,10 @@ showTypeName = TH.nameBase -- Use the unqualified name to avoid confusion becaus
 
 -- MyDynamicでしか使われていないので，ForallTは単に無視する．PolyDynamicのチェックがちょっと緩くなるだけ．
 thTypeToType :: TyConLib -> TH.Type -> Types.Type
-thTypeToType tcl t = trace (show t ++ "\n ---------\n"
-                        ++ show tcl ++ "\n ----------\n") $
+thTypeToType tcl t = -- trace (show t ++ "\n ---------\n"
+                     --   ++ show tcl ++ "\n ----------\n") $
                         let ret = normalize $ evalState (thTypeToType' tcl t) []
-                         in trace (show ret) ret
+                         in {- trace (show ret) -} ret
 
 thTypeToType' :: TyConLib -> TH.Type -> State [Name] Types.Type
 thTypeToType' tcl (ForallT bs []    t) = do
@@ -61,7 +61,7 @@ thTypeToType' _  (VarT name) = do
                                                     Nothing -> name : vs
                                                     _ -> vs
                                   vs <- get
-                                  trace ("looking for " ++ show name ++ ": " ++ show vs) (return ())
+                                  --trace ("looking for " ++ show name ++ ": " ++ show vs) (return ())
                                   return $ TV $ case Prelude.lookup name $ zip vs [0..] of
                                                 Nothing -> error "thTypeToType : unbound type variable"
                                                 Just i  -> i

@@ -2,7 +2,7 @@ Name:            MagicHaskeller
 Version:         0.9.6.7
 Cabal-Version:   >= 1.8
 License:         BSD3
-License-file:	 LICENSE 
+License-file:	 LICENSE
 Author:	         Susumu Katayama
 Maintainer:      Susumu Katayama <skata@cs.miyazaki-u.ac.jp>
 Stability:       experimental
@@ -44,20 +44,75 @@ Flag NETWORKURI
 -- Flag Benchmark
 
 Library
-  Build-depends:   time, template-haskell, base >= 4 && < 5, syb, containers, array, random, directory, bytestring, mtl, html, pretty, hashable
-  Exposed-modules: MagicHaskeller, Control.Monad.Search.Combinatorial, Control.Monad.Search.Best, MagicHaskeller.ProgramGenerator, MagicHaskeller.ProgGen, MagicHaskeller.ProgGenSF,
-                   MagicHaskeller.ProgGenSFIORef, MagicHaskeller.Expression, MagicHaskeller.LibTH, MagicHaskeller.Analytical, MagicHaskeller.Options, MagicHaskeller.Classification, MagicHaskeller.GetTime, MagicHaskeller.Minimal, MagicHaskeller.IOGenerator, MagicHaskeller.FastRatio, MagicHaskeller.LibExcel, MagicHaskeller.CoreLang, MagicHaskeller.Individual, MagicHaskeller.PolyDynamic, MagicHaskeller.Instantiate, MagicHaskeller.TICE
-  Other-modules:   MagicHaskeller.MemoToFiles, MagicHaskeller.ShortString, 
-                   MagicHaskeller.Types, MagicHaskeller.PriorSubsts, Data.Memo, MagicHaskeller.ClassifyTr,
-                   MagicHaskeller.DebMT, MagicHaskeller.TyConLib,
-                   MagicHaskeller.FakeDynamic, MagicHaskeller.ReadTypeRep,
-                   MagicHaskeller.ReadTHType, MagicHaskeller.TimeOut, MagicHaskeller.Execute, MagicHaskeller.T10,
-                   MagicHaskeller.Classify, MagicHaskeller.MHTH, MagicHaskeller.MyCheck,
-                   MagicHaskeller.ExprStaged, MagicHaskeller.Combinators, MagicHaskeller.ReadDynamic,
-                   MagicHaskeller.MyDynamic, MagicHaskeller.ClassifyDM, MagicHaskeller.Analytical.FMExpr,
-                   MagicHaskeller.Analytical.Parser, MagicHaskeller.Analytical.Syntax, MagicHaskeller.Analytical.UniT, MagicHaskeller.Analytical.Synthesize,
-                   MagicHaskeller.ExpToHtml, MagicHaskeller.FMType, MagicHaskeller.NearEq, MagicHaskeller.ClassLib, MagicHaskeller.LibExcelStaged,
-                   Paths_MagicHaskeller, MagicHaskeller.VersionInfo
+  Build-depends: array
+               , base >= 4 && < 5
+               , bytestring
+               , containers
+               , directory
+               , hashable
+               , html
+               , mtl
+               , pretty
+               , random
+               , syb
+               , template-haskell
+               , time
+  Exposed-modules: Control.Monad.Search.Best
+                 , Control.Monad.Search.Combinatorial
+                 , MagicHaskeller
+                 , MagicHaskeller.ProgramGenerator
+                 , MagicHaskeller.ProgGen
+                 , MagicHaskeller.ProgGenSF
+                 , MagicHaskeller.ProgGenSFIORef
+                 , MagicHaskeller.Expression
+                 , MagicHaskeller.LibTH
+                 , MagicHaskeller.Analytical
+                 , MagicHaskeller.Options
+                 , MagicHaskeller.Classification
+                 , MagicHaskeller.GetTime
+                 , MagicHaskeller.Minimal
+                 , MagicHaskeller.IOGenerator
+                 , MagicHaskeller.FastRatio
+                 , MagicHaskeller.LibExcel
+                 , MagicHaskeller.CoreLang
+                 , MagicHaskeller.Individual
+                 , MagicHaskeller.PolyDynamic
+                 , MagicHaskeller.Instantiate
+                 , MagicHaskeller.TICE
+  Other-modules: MagicHaskeller.MemoToFiles
+               , MagicHaskeller.ShortString
+               , MagicHaskeller.Types
+               , MagicHaskeller.PriorSubsts
+               , Data.Memo
+               , MagicHaskeller.ClassifyTr
+               , MagicHaskeller.DebMT
+               , MagicHaskeller.TyConLib
+               , MagicHaskeller.FakeDynamic
+               , MagicHaskeller.ReadTypeRep
+               , MagicHaskeller.ReadTHType
+               , MagicHaskeller.TimeOut
+               , MagicHaskeller.Execute
+               , MagicHaskeller.T10
+               , MagicHaskeller.Classify
+               , MagicHaskeller.MHTH
+               , MagicHaskeller.MyCheck
+               , MagicHaskeller.ExprStaged
+               , MagicHaskeller.Combinators
+               , MagicHaskeller.ReadDynamic
+               , MagicHaskeller.MyDynamic
+               , MagicHaskeller.ClassifyDM
+               , MagicHaskeller.Analytical.FMExpr
+               , MagicHaskeller.Analytical.Parser
+               , MagicHaskeller.Analytical.Syntax
+               , MagicHaskeller.Analytical.UniT
+               , MagicHaskeller.Analytical.Synthesize
+               , MagicHaskeller.ExpToHtml
+               , MagicHaskeller.FMType
+               , MagicHaskeller.NearEq
+               , MagicHaskeller.ClassLib
+               , MagicHaskeller.LibExcelStaged
+               , Paths_MagicHaskeller
+               , MagicHaskeller.VersionInfo
   Extensions:    CPP, TemplateHaskell
   cpp-options:   -DCHTO -DCABAL
 
@@ -89,7 +144,7 @@ Executable MagicHaskeller
    GHC-options:    -threaded -feager-blackholing -rtsopts
    Extensions:     CPP, TemplateHaskell
    cpp-options:    -DCHTO -DCABAL
- 
+
    if !os(windows)
      Build-depends:   unix
      cpp-options:     -DUNIX
@@ -97,12 +152,12 @@ Executable MagicHaskeller
    if flag(TFRANDOM)
      Build-depends:   tf-random <= 0.3 || >= 0.5
      cpp-options:     -DTFRANDOM
- 
+
    -- just for avoiding rebuilding everything
    if flag(READFILE)
      Build-depends:   haskell-src
      cpp-options:     -DHASKELLSRC
- 
+
    if impl(ghc >= 7)
      GHC-options:     -with-rtsopts=-N
 
