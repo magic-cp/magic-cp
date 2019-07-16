@@ -1,11 +1,10 @@
--- 
+--
 -- (c) Susumu Katayama
 --
-CoreLang.lhs
-extracted haskell-src-free stuff that can be used with Hat.
-(This looks like Bindging.hs....)
+-- CoreLang.hs
+-- extracted haskell-src-free stuff that can be used with Hat.
+-- (This looks like Bindging.hs....)
 
-\begin{code}
 {-# LANGUAGE CPP, ExistentialQuantification, RankNTypes, TemplateHaskell #-}
 -- workaround Haddock invoked from Cabal unnecessarily chasing imports. (If cpp fails, haddock ignores the remaining part of the module.)
 #ifndef __GLASGOW_HASKELL__
@@ -48,8 +47,8 @@ data CoreExpr = S | K | I | B | C | S' | B' | C' | Y
                 | FunLambda CoreExpr | FunX Int8 -- different system of de Bruijn notation for functions, used by IOPairs.hs
                 | Tuple {-# UNPACK #-} !Int8
 --                | Tuple Int8
-{-                
-                | Primitive Int 
+{-
+                | Primitive Int
                             Bool   -- True if the primitive is a constructor expression
 -}
                 | Primitive {primId :: {-# UNPACK #-} !Var}  -- (This should be Var instead of Int8 because the number space is being exhausted!)
@@ -106,7 +105,7 @@ ceToInteger (Primitive n _) = 3 * toInteger n + 2
 0 `interleave` 0 = 0
 i `interleave` j = (j `interleave` (i `shiftR` 1)) * 2 + (i `mod` 2)
 -- IntegerでなくIntを使う場合，算術右シフトshiftRでなく論理右シフトを使う必要がある...のはいいけど，なぜライブラリに論理右シフトがない?
-logShiftR1 n = (n `clearBit` 0) `rotateR` 1 
+logShiftR1 n = (n `clearBit` 0) `rotateR` 1
 -}
 #if __GLASGOW_HASKELL__ < 710
 instance Ord Exp where
@@ -240,13 +239,13 @@ exprToTHExp vl e = exprToTHExp' True vl $ lightBeta e
 exprToTHExpLite vl e = exprToTHExp' False vl $ lightBeta e
 exprToTHExp' pretty vl e = x2hsx (fromIntegral $ ord 'a'-1 :: Int8) (fromIntegral $ ord 'a' -1) e
     where x2hsx :: Int8 -> Int8 -> CoreExpr -> Exp
-          x2hsx dep fdep (Lambda e) = 
+          x2hsx dep fdep (Lambda e) =
                        case x2hsx (dep+1) fdep e of LamE pvars expr -> LamE (pvar:pvars) expr
                                                     expr            -> LamE [pvar] expr
               where var  = mkName [chr $ fromIntegral (dep+1)]
                     pvar | not pretty || 0 `occursIn` e = VarP var
                          | otherwise                     = WildP
-          x2hsx dep fdep (FunLambda e) = 
+          x2hsx dep fdep (FunLambda e) =
                        case x2hsx dep (fdep+1) e of LamE pvars expr -> LamE (pvar:pvars) expr
                                                     expr            -> LamE [pvar] expr
               where var  = mkName ['f', chr $ fromIntegral (fdep+1)]
@@ -302,7 +301,7 @@ exprToTHExp' pretty vl e = x2hsx (fromIntegral $ ord 'a'-1 :: Int8) (fromIntegra
           x2hsx _   _ B'               = VarE $ mkName "bprime"
           x2hsx _   _ C'               = VarE $ mkName "cprime"
           x2hsx _   _ e                = error ("exprToTHExp: converting " ++ show e)
-          x2hsxPrim n = case PD.dynExp (vl ! n) of 
+          x2hsxPrim n = case PD.dynExp (vl ! n) of
                                          ConE name -> ConE $ mkName $ nameBase name
                                          VarE name -> actualVarName $ nameBase name
                                          e -> e
@@ -312,7 +311,7 @@ exprToTHExp' pretty vl e = x2hsx (fromIntegral $ ord 'a'-1 :: Int8) (fromIntegra
               = let hsx0 = x2hsx dep fdep e0
                     hsx1 = x2hsx dep fdep e1
                     n    = primId p
-                in case PD.dynExp (vl ! n) of 
+                in case PD.dynExp (vl ! n) of
                                       e@(VarE name) | head base `elem` "!@#$%&*+./<=>?\\^|-~"
                                                         -> InfixE (Just hsx0) (actualVarName base) (Just hsx1)
                                                     | otherwise -> (actualVarName base `AppE` hsx0) `AppE` hsx1
@@ -322,7 +321,7 @@ exprToTHExp' pretty vl e = x2hsx (fromIntegral $ ord 'a'-1 :: Int8) (fromIntegra
                                                                                           _                           -> InfixE (Just hsx0) (ConE $ mkName ":") (Just hsx1)
                                                     | head namestr == ':' -> InfixE (Just hsx0) (ConE $ mkName namestr) (Just hsx1)
                                                     | otherwise -> (ConE (mkName namestr) `AppE` hsx0) `AppE` hsx1
-                                                    where 
+                                                    where
                                                        namestr = nameBase name
                                       e             -> (e `AppE` hsx0) `AppE` hsx1
 
@@ -486,4 +485,3 @@ defaultPrimitives
 -- ... Uh, n+k pattern can not yet be handled by TH. (Try  @runQ [| case 3 of k+1 -> k |] >>= print@  in GHCi.)
 -- The above are dealt with by CoreLang.exprToTHExp.
 
-\end{code}
