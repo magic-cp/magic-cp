@@ -1,4 +1,4 @@
--- 
+--
 -- (c) Susumu Katayama
 --
 Combinators for Combinatorial Search:
@@ -76,8 +76,11 @@ instance MonadPlus Matrix where
     Mx xm `mplus` Mx ym = Mx (zipWith mappend xm ym)
 nils :: Stream (Bag a)
 nils = repeat mempty
-p /\ q = \x -> (q x >>= p)
-p \/ q = \x -> (p x `mplus` q x)
+(/\) :: Monad m => (c -> m b) -> (a -> m c) -> a -> m b
+-- p /\ q = \x -> (q x >>= p)
+p /\ q = p <=< q
+(\/) :: MonadPlus m => (b -> m a) -> (b -> m a) -> b -> m a
+p \/ q = \x -> p x `mplus` q x
 jOIN :: Stream (Bag (Stream (Bag a))) -> Stream (Bag a)
 jOIN = map (cat.cat) . diag . map trans
 
@@ -268,7 +271,7 @@ class (Delay m, MonadPlus m, Functor m) => Search m where
     fromDB :: DBound a -> m a
     fromDF :: [a] -> m a   -- NB: this gives everything the top priority.
     toDF   :: m a -> [a]   -- NB: this drops the info of priority.
-    -- | 'mapDepth' applies a function to the bag at each depth. 
+    -- | 'mapDepth' applies a function to the bag at each depth.
     mapDepth :: (Bag a -> Bag b) -> m a -> m b
     -- | 'catBags' flattens each bag.
     catBags :: m (Bag a) -> m a
@@ -334,7 +337,7 @@ instance Search Matrix where
 
 #ifdef QUICKCHECK
 instance Arbitrary a => Arbitrary (Matrix a) where
-    arbitrary = liftM fromRc arbitrary -- Converting from Recomp makes sure that the outer list is infinite. 
+    arbitrary = liftM fromRc arbitrary -- Converting from Recomp makes sure that the outer list is infinite.
 instance Arbitrary a => Arbitrary (Recomp a) where
     arbitrary = liftM Rc arbitrary
 instance Arbitrary a => Arbitrary (DBound a) where
@@ -479,7 +482,7 @@ newtype DBMemo a = DBM {unDBM :: Stream (Bag (a,Int))}
 instance Monad DBMemo where
     return x = tabulate $ return x -- コンパイル通る?
              -- = DBM $ map (\n->[(x,n)]) [0..]
-    DBM p >>= f = DBM $ 
+    DBM p >>= f = DBM $
 -}
 
 
