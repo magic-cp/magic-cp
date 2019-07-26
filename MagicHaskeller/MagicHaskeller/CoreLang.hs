@@ -484,4 +484,3 @@ defaultPrimitives
 -- ... but then, what if x is not actually a variable?
 -- ... Uh, n+k pattern can not yet be handled by TH. (Try  @runQ [| case 3 of k+1 -> k |] >>= print@  in GHCi.)
 -- The above are dealt with by CoreLang.exprToTHExp.
-
