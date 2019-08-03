@@ -1,12 +1,11 @@
 --
 -- (c) Susumu Katayama
 --
-Combinators for Combinatorial Search:
-The first part is a slight hack on Spivey 2000.
-The second part is my (Susumu's) original which by recomputation refrains producing thunks.
-The third part defines DBound, found in Spivey 2006.
+-- Combinators for Combinatorial Search:
+-- The first part is a slight hack on Spivey 2000.
+-- The second part is my (Susumu's) original which by recomputation refrains producing thunks.
+-- The third part defines DBound, found in Spivey 2006.
 
-\begin{code}
 {-# OPTIONS -cpp -XUndecidableInstances -XMultiParamTypeClasses -XTypeSynonymInstances #-}
 module Control.Monad.Search.Combinatorial(Matrix(..), (/\), (\/), Recomp(..), RecompT(..), rcToMx, mxToRc, Search(..), diag, Delay(..), msumMx, msumRc, listToRc, consMx, consRc, zipWithBF, printMx, printNMx, {- filterMx, -} mapDepthDB,
                                Bag, Stream, cat, toList, getDepth, scanl1BF, zipDepthMx, zipDepthRc, zipDepth3Mx, zipDepth3Rc, scanlRc,
@@ -119,9 +118,9 @@ listToRc l = Rc f where f 0 = l
 accumulate :: Monad m => Matrix (m a) -> m (Matrix a)
 accumulate (Mx xss) = fmap Mx (sequence (sequence xss))
 -}
-\end{code}
 
-\begin{code}
+{- ########################################################################## -}
+
 type    DepthFst = [] -- ghc6.8 does not like "type DepthFst = Stream"
 newtype Recomp a = Rc {unRc::Int->Bag a}
 newtype RecompT m a = RcT {unRcT::Int -> m (Bag a)}
@@ -352,9 +351,8 @@ instance Show (Recomp a) where
 instance Show (DBound a) where
     showsPrec _ _ = ("<DBound>"++)
 
-\end{code}
+{- ########################################################################## -}
 
-\begin{code}
 -- aはあらかじめannotateしたものを用いる
 categorizeDB :: DBound a -> Int -> Array Int [a]
 categorizeDB (DB f) b = categorize b $ f b -- この辺は不要
@@ -485,10 +483,8 @@ instance Monad DBMemo where
     DBM p >>= f = DBM $
 -}
 
+{- ########################################################################## -}
 
-\end{code}
-
-\begin{code}
 test'' = mconcat (unMx test')
 test' = do x <- Mx [return x | x<-[1..]]
            y <- Mx [return y | y<-[1..]]
@@ -496,4 +492,3 @@ test' = do x <- Mx [return x | x<-[1..]]
            return (x,y)
 
 main = print test''
-\end{code}
