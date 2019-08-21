@@ -1,4 +1,4 @@
--- 
+--
 -- (c) Susumu Katayama
 --
 {-# OPTIONS -XTemplateHaskell -XNoMonomorphismRestriction -cpp #-}
@@ -33,7 +33,7 @@ succOnlyForNumbers = False -- This is False, because we now use succ :: Char->Ch
 last' = (\x xs -> last (x:xs))
 tail = drop 1
 -- init xs = zipWith const xs (drop 1 xs)
--- gcd in the latest library is total, but with older versions gcd 0 0 causes an error. 
+-- gcd in the latest library is total, but with older versions gcd 0 0 causes an error.
 gcd x y =  gcd' (abs x) (abs y)
   where gcd' a 0  =  a
         gcd' a b  =  gcd' b (a `rem` b)
@@ -41,7 +41,7 @@ gcd x y =  gcd' (abs x) (abs y)
 -- This definition does not work correctly for Fractional numbers.
 -- Maybe @[l,m..n]@ could be used for other cases than 'EQ' even if the original enumFromThenTo is hidden. YMMV, though.
 enumFromThenTo l m n = map toEnum $
-                       case compare lint mint of 
+                       case compare lint mint of
                          EQ -> error "MagicHaskeller.LibTH.enumFromThenTo m m n"
                          LT -> takeWhile (<=nint) $ iterate (+(mint-lint)) lint
                          GT -> takeWhile (>=nint) $ iterate (+(mint-lint)) lint
@@ -49,11 +49,11 @@ enumFromThenTo l m n = map toEnum $
         mint = fromEnum m
         nint = fromEnum n
 initialize, init075, inittv1 :: IO ()
-initialize = do setPrimitives [] (list ++ nat ++ natural ++ mb ++ bool ++ $(p [| hd :: (->) [a] (Maybe a) |]) ++ plusInt ++ plusInteger)
+initialize = do setPrimitives (list ++ nat ++ natural ++ mb ++ bool ++ $(p [| hd :: (->) [a] (Maybe a) |]) ++ plusInt ++ plusInteger)
                 setDepth 10
 -- MagicHaskeller version 0.8 ignores the setDepth value and always memoizes.
 
-init075 = do setPG $ mkMemo075 [] (list ++ nat ++ natural ++ mb ++ bool ++ plusInt ++ plusInteger)
+init075 = do setPG $ mkMemo075 (list ++ nat ++ natural ++ mb ++ bool ++ plusInt ++ plusInteger)
              setDepth 10
 
 -- The @tv1@ option prevents type variable @a@ in @forall a. E1(a) -> E2(a) -> ... -> En(a) -> a@ from matching n-ary functions where n>=2.
@@ -61,7 +61,6 @@ init075 = do setPG $ mkMemo075 [] (list ++ nat ++ natural ++ mb ++ bool ++ plusI
 -- because @forall a b c. E1(a->b->c) -> E2(a->b->c) -> ... -> En(a->b->c) -> a -> b -> c@ and @forall a b c. E1((a,b)->c) -> E2((a,b)->c) -> ... -> En((a,b)->c) -> (a,b) -> c@ are isomorphic, and thus the latter can always be used instead of the former.
 
 inittv1 = do setPG $ mkPGOpt (options{primopt = Nothing, tv1 = True})
-                             []
                              (list ++ nat ++ natural ++ mb ++ bool ++ tuple ++ $(p [| (hd :: (->) [a] (Maybe a)) |]) ++ plusInt ++ plusInteger )
              setDepth 10
 
@@ -84,7 +83,7 @@ hd :: [a] -> Maybe a
 hd []    = Nothing
 hd (x:_) = Just x
 
--- Prefixed (->) means that the parameter can be matched as an assumption when 'constrL' option is True. Also, this info is used when 'guess' option is True. For example of maybe :: a -> (b->a) -> (->) (Maybe b) a, 
+-- Prefixed (->) means that the parameter can be matched as an assumption when 'constrL' option is True. Also, this info is used when 'guess' option is True. For example of maybe :: a -> (b->a) -> (->) (Maybe b) a,
 --   Gamma |- A   Gamma,B |- A
 --  ---------------------------maybe
 --   Gamma, Maybe B |- A
@@ -166,7 +165,7 @@ postprocess (AppE f@(AppE (VarE name) lj) e)
                             "filter" -> case ppe of AppE (VarE rev) e' | nameBase rev == "reverse" -> reverseE `AppE` ((VarE (mkName "filter") `AppE` pplj) `AppE` e')   -- filter p (reverse xs) ==> reverse (filter p xs)  This is useful in the case of (reverse . drop 1 . reverse) (filter p ((reverse . drop 1 . reverse) xs)). Also, there can be a case of last' x (filter p ((reverse . drop 1 . reverse) xs))
                                                     _ -> (VarE (mkName "filter") `AppE` pplj) `AppE` ppe
                             _            -> postprocess f `AppE` ppe
-  where pplj = postprocess lj 
+  where pplj = postprocess lj
         ppe  = postprocess e
 postprocess (AppE (InfixE m@(Just _) op Nothing)    e) = postprocess (InfixE m        op (Just e))
 postprocess (AppE (InfixE Nothing    op m@(Just _)) e) = postprocess (InfixE (Just e) op m)
@@ -226,15 +225,15 @@ postprocess (AppE v@(VarE name) e)
                        _         -> AppE productE ppe
         nb       -> case IM.lookup (hash nb) byMap of Just fun -> fun ppe $ AppE (ppv v) ppe
                                                       Nothing  -> AppE (ppv v) ppe
-  where ppe = postprocess e 
+  where ppe = postprocess e
 -- The following pattern is actually unnecessary if only eta-long normal expressions will be generated.
 postprocess e@(VarE _)          = ppv e
 postprocess (AppE f x)          = postprocess f `AppE` postprocess x
-postprocess (InfixE me1 op me2) 
+postprocess (InfixE me1 op me2)
   = let j1 = fmap postprocess me1
         j2 = fmap postprocess me2
-    in case op of 
-          VarE opname -> 
+    in case op of
+          VarE opname ->
             case (j1,j2) of
                        (Just (LitE (IntegerL i1)), Just (LitE (IntegerL i2))) ->
                                         case nameBase opname of "+" -> LitE $ IntegerL $ i1+i2
@@ -276,14 +275,14 @@ by1 name   = name
 -- For readability, we apply eta-reduction only when we can fully eta-reduce at the outermost lambda-abstraction.
 ppLambda [VarP n] (AppE e (VarE n')) | shown == show n' && not (shown `appearsIn` e) = e
                                                where shown = show n
-ppLambda [VarP n, VarP m, VarP l] (AppE (AppE (AppE e (VarE n')) (VarE m')) (VarE l')) 
+ppLambda [VarP n, VarP m, VarP l] (AppE (AppE (AppE e (VarE n')) (VarE m')) (VarE l'))
   | shown == show n' && showm == show m' && showl == show l' && free = e
   | shown == show m' && showm == show n' && showl == show l' && free = flipE `AppE` e
                                                where shown = show n
                                                      showm = show m
                                                      showl = show l
                                                      free  = not (shown `appearsIn` e) && not (showm `appearsIn` e) && not (showl `appearsIn` e)
-ppLambda [VarP n, VarP m] (AppE (AppE e (VarE n')) (VarE m')) 
+ppLambda [VarP n, VarP m] (AppE (AppE e (VarE n')) (VarE m'))
   | shown == show n' && showm == show m' && free = e
   | shown == show m' && showm == show n' && free = flipE `AppE` e
                                                where shown = show n
@@ -293,7 +292,7 @@ ppLambda [VarP n, VarP m] (AppE (AppE e (VarE n')) (VarE m'))
 ppLambda [VarP n, WildP] (VarE n') | show n == show n' = constE
 ppLambda [VarP n]        (VarE n') | show n == show n' = VarE (mkName "id")
 ppLambda [VarP n, VarP m] (InfixE (Just (VarE n')) op (Just (VarE m'))) | show n == show n' &&  show m == show m' = op
-ppLambda pats@[VarP n, VarP m] e@(InfixE (Just (VarE n')) op@(VarE opna) (Just (VarE m'))) 
+ppLambda pats@[VarP n, VarP m] e@(InfixE (Just (VarE n')) op@(VarE opna) (Just (VarE m')))
   = if show n == show m' &&  show m == show n'
     then case nameBase opna of "<"                                              -> VarE (mkName ">")
                                "<="                                             -> VarE (mkName ">=")
@@ -301,7 +300,7 @@ ppLambda pats@[VarP n, VarP m] e@(InfixE (Just (VarE n')) op@(VarE opna) (Just (
                                name | name `elem` ["==","/=","+","*","&&","||"] -> op
                                     | otherwise                                 -> flipE `AppE` op
     else LamE pats e
-ppLambda [VarP n]         (InfixE (Just (VarE n')) op (Just e))         
+ppLambda [VarP n]         (InfixE (Just (VarE n')) op (Just e))
   | shown == show n' && not (shown `appearsIn` e) = case op of VarE name | nameBase name == "-" -> VarE (mkName "subtract") `AppE` e
                                                                _                                -> InfixE Nothing op (Just e)
   where shown = show n
@@ -323,7 +322,7 @@ ppopn name = case nameModule name of Just mod | --  mod `elem` ["GHC.Base", "GHC
                                      _        -> name
 
 
-ppdrop m0j e 
+ppdrop m0j e
   = case postprocess e of
       AppE (AppE (VarE drn) (LitE (IntegerL i))) list | nameBase drn == "drop" -> droppy (m0j + i) list -- NB: m0j and i are both positive.
       ppe                                             -> droppy m0j ppe
@@ -371,7 +370,7 @@ postprocessQ (SigE e ty) = fmap (`SigE` ty) (postprocessQ e)
 postprocessQ e = return e
 
 
-exploit :: (Typeable a, Filtrable a) => 
+exploit :: (Typeable a, Filtrable a) =>
            Bool -- ^ whether to include functions with unused arguments
            -> (a -> Bool) -> IO ()
 exploit withAbsents pred = filterThenF pred (everything (reallyall::ProgGenSF) withAbsents) >>= pprs
@@ -398,20 +397,20 @@ eq = $(p [| ((==) :: Int->Int->Bool,   (/=) :: Int->Int->Bool,
 newtype Partial a = Part {undef :: a}
 undefs = map (\[a,b] -> (a,b)) $
          [-- Bool や Orderingのように、ありがちな値を返してしまうものは、採用すべきでない。$(p [| (Part False :: Partial Bool,     undefined :: Partial Bool) |]), $(p [| (Part EQ    :: Partial Ordering, undefined :: Partial Ordering) |]),
-          $(p [| (Part 53        :: Partial Int,      undefined :: Partial Int) |]), 
+          $(p [| (Part 53        :: Partial Int,      undefined :: Partial Int) |]),
           $(p [| (Part '\29'     :: Partial Char,     undefined :: Partial Char) |]),
-          $(p [| (Part [43]      :: Partial [Int],    undefined :: Partial [Int]) |]), 
+          $(p [| (Part [43]      :: Partial [Int],    undefined :: Partial [Int]) |]),
           $(p [| (Part "wleajkf" :: Partial [Char],   undefined :: Partial [Char]) |])]
 by1_head :: Partial a -> [a] -> a
 by1_head (Part u) [] = u
 by1_head _     (x:_) = x
 (--#!!) :: Partial a -> [a] -> Int -> a
 (--#!!) (Part u) []     n = u
-(--#!!) (Part u) (x:xs) n 
-  = case compare n 0 of 
+(--#!!) (Part u) (x:xs) n
+  = case compare n 0 of
      LT -> u
      EQ -> x
-     GT -> (--#!!) (Part u) xs (n-1) 
+     GT -> (--#!!) (Part u) xs (n-1)
 
 prelPartial = $(p [| ( by1_head :: Partial a -> (->) [a] a,
                        (--#!!) :: Partial a -> [a] -> (->) Int a) |] )
@@ -444,19 +443,19 @@ eqPairBy e1 e2 (x,y) (z,w) = e1 x z && e2 y w
 eqs = $(p [| (eq :: Equivalence Bool, eq :: Equivalence Ordering, eq :: Equivalence Int,  eq :: Equivalence Char, -- eq :: Equivalence (Ratio Int) is defined in ratioCls
               eq :: Equivalence [Int],  eq :: Equivalence [Char], by1_eqMaybe :: Equivalence a -> Equivalence (Maybe a), by1_eqList :: Equivalence a -> Equivalence [a],
               by2_eqEither :: Equivalence a -> Equivalence b -> Equivalence (Either a b), by2_eqPair :: Equivalence a -> Equivalence b -> Equivalence (a,b)) |])
-prelEqRelated = [$(p [| ((--#==) :: Equivalence a -> (->) a (a -> Bool), (--#/=) :: Equivalence a -> (->) a (a -> Bool)) |]), 
-                 $(p [|  by1_elem :: Equivalence a -> a -> [a] -> Bool |]), 
+prelEqRelated = [$(p [| ((--#==) :: Equivalence a -> (->) a (a -> Bool), (--#/=) :: Equivalence a -> (->) a (a -> Bool)) |]),
+                 $(p [|  by1_elem :: Equivalence a -> a -> [a] -> Bool |]),
                  []]
 dataListEqRelated = [[],
-                     $(p [| (by1_group :: Equivalence a -> [a] -> [[a]], 
-                             by1_nub :: Equivalence a -> [a] -> [a]) |]), 
-                     $(p [| (by1_isPrefixOf :: Equivalence a -> [a] -> [a] -> Bool, 
-                             by1_isSuffixOf :: Equivalence a -> [a] -> [a] -> Bool, 
-                             by1_isInfixOf  :: Equivalence a -> [a] -> [a] -> Bool, 
+                     $(p [| (by1_group :: Equivalence a -> [a] -> [[a]],
+                             by1_nub :: Equivalence a -> [a] -> [a]) |]),
+                     $(p [| (by1_isPrefixOf :: Equivalence a -> [a] -> [a] -> Bool,
+                             by1_isSuffixOf :: Equivalence a -> [a] -> [a] -> Bool,
+                             by1_isInfixOf  :: Equivalence a -> [a] -> [a] -> Bool,
                              by1_stripPrefix :: Equivalence a -> [a] -> [a] -> Maybe [a],
                              by1_lookup :: Equivalence a -> a -> (->) [(a, b)] (Maybe b)
                             ) |])]
-                      
+
 (--#/=) :: Equivalence a -> a -> a -> Bool
 (--#/=) (Eq e) x y = not $ e x y
 by1_elem :: Equivalence a -> a -> [a] -> Bool
@@ -488,8 +487,8 @@ cmp = Ord compare
 by1_cmpMaybe :: Ordered a -> Ordered (Maybe a)
 by1_cmpMaybe (Ord compare) = Ord $ compareMaybeBy compare
 compareMaybeBy _       Nothing  Nothing  = EQ
-compareMaybeBy _       Nothing  (Just _) = LT 
-compareMaybeBy _       (Just _) Nothing  = GT 
+compareMaybeBy _       Nothing  (Just _) = LT
+compareMaybeBy _       (Just _) Nothing  = GT
 compareMaybeBy compare (Just x) (Just y) = compare x y
 by1_cmpList :: Ordered a -> Ordered [a]
 by1_cmpList (Ord compare) = Ord $ compareListBy compare
@@ -529,7 +528,7 @@ by1_sort (Ord compare) = sortBy compare
 
 intinst = intinst1++intinst2
 intinst1 = $(p [| (
-                   {- 
+                   {-
                    (<=) :: Int->Int->Bool,
                    (<)  :: Int->Int->Bool,
                --    (>=) :: Int->Int->Bool,
@@ -543,7 +542,7 @@ intinst1 = $(p [| (
                --    mod  :: Int->Int->Int,
                --    (^)  :: Int->Int->Int
                   ) |])
-intpartials = $(p [| (               
+intpartials = $(p [| (
                       div  :: Int->Int->Int,
                       mod  :: Int->Int->Int,
                       (^)  :: Int->Int->Int
@@ -610,6 +609,7 @@ generator = mkStdGen 123456
 #endif
 
 -- Currently only the pg==ConstrLSF case makes sense.
+{-
 mix, poormix :: ProgramGenerator pg => pg
 mix = mkPGSF generator
               nrnds
@@ -617,6 +617,7 @@ mix = mkPGSF generator
               (list++bool)
               rich
 
+-}
 -- I think having both succ and pred is not good, and pred x can be synthesized as x - succ 0.
 -- Still, having both cons and tail is OK.
 soso =        (list'' ++
@@ -625,19 +626,21 @@ soso =        (list'' ++
                     boolean ++ intinst1 ++
                     list1' ++ list3')
 rich = soso ++ list2 ++ intinst2 ++ $(p [| init :: [a] -> [a] |])
-
+{-
 poormix = mkPGSF generator
               nrnds
               []
               $(p [| ([] :: [a], True) |] )
               rich
 
+-}
 -- just for debugging
 ra :: ProgramGenerator pg => pg
 ra = mkPG rich'
 rich' =      (list'++bool++boolean++
                     list1 ++ list3)
 
+{-
 mx :: ProgramGenerator pg => pg
 mx = mkPGSF generator
              nrnds
@@ -645,6 +648,7 @@ mx = mkPGSF generator
              (list++bool)
              rich'
 
+-}
 debug = $(p [| (list_para :: (->) [b] (a -> (b -> [b] -> a -> a) -> a), concatMap :: (a -> [b]) -> (->) [a] [b]) |] )
 
 -- | Library used by the program server backend
@@ -673,7 +677,7 @@ clspartialss :: [(Primitive,Primitive)]
 clspartialss = undefs
 tupartialss, tupartialssNormal :: [[(Primitive,Primitive)]]
 tupartialss
-  = map (map (\[a,b] -> (a,b))) 
+  = map (map (\[a,b] -> (a,b)))
                   [ [], -- [$(p [|(reverse . drop 1 . reverse :: [a] -> [a], init :: [a] -> [a])|])], -- An unnatural value cannot be returned in this case due to the polymorphism, unless the Partial class is used.
                     [$(p [| (chr . (`mod` 65536) . abs, chr . abs) |]),
                      $(p [| (chr . (`mod` 65536) . succ . ord :: Char->Char, succ :: Char -> Char) |])],
@@ -687,8 +691,8 @@ tupartialss
 -- tupartialssNormal is a variant of tupartialss, which make total functions from partial functions by making the latter return `natural' values for error cases.
 -- Returning natural values is good if MagicHaskeller.fpartial try total versions after failures of partial versions, and currently that is the case.
 tupartialssNormal
-  = map (map (\[a,b] -> (a,b))) 
-                  [ [], -- [$(p [|(reverse . drop 1 . reverse :: [a] -> [a], init :: [a] -> [a])|])], 
+  = map (map (\[a,b] -> (a,b)))
+                  [ [], -- [$(p [|(reverse . drop 1 . reverse :: [a] -> [a], init :: [a] -> [a])|])],
                     [$(p [| (chr . (`mod` 65536) . abs, chr . abs) |]),
                      $(p [| (chr . (`mod` 65536) . succ . ord :: Char->Char, succ :: Char -> Char) |])],
                     [$(p [| ((\m n -> if n==0 then 0 else div m n) :: Int->Int->Int,     div :: Int->Int->Int) |]),
@@ -702,15 +706,15 @@ tupartialssNormal
 literals = [$(p [|(1::Int, 2::Int, 3::Int, ' '::Char)|]), [], []]
 fromPrelude = [ -- prelPartial ++
                soso ++ $(p [| (null :: (->) [a] Bool, -- Without this, null is synthesized as all (\_ -> False).
-                               abs  :: (->) Int Int, -- compare :: Char->Char->Ordering, compare :: Int->Int->Ordering, 
-                               flip . flip foldl :: a -> (->) [b] ((a -> b -> a) -> a), 
-                               foldr const :: a -> (->) [a] a, 
+                               abs  :: (->) Int Int, -- compare :: Char->Char->Ordering, compare :: Int->Int->Ordering,
+                               flip . flip foldl :: a -> (->) [b] ((a -> b -> a) -> a),
+                               foldr const :: a -> (->) [a] a,
                                last' :: a -> [a] -> a,
                                reverse . drop 1 . reverse :: [a] -> [a],
                                enumFromTo :: Int->Int->[Int], enumFromTo :: Char->Char->[Char],
                                fmap :: (a -> b) -> (->) (Maybe a) (Maybe b),
                                flip (flip . either) :: (->) (Either a b) ((a -> c) -> (b -> c) -> c)) |])
-               ++ intinst2 ++ $(p [| (sum :: (->) [Int] Int, product :: (->) [Int] Int) |]), 
+               ++ intinst2 ++ $(p [| (sum :: (->) [Int] Int, product :: (->) [Int] Int) |]),
                list2 ++ $(p [| (scanl :: (a -> b -> a) -> a -> [b] -> [a], scanr :: (a -> b -> b) -> b -> [a] -> [b], scanl1 :: (a -> a -> a) -> [a] -> [a], scanr1 :: (a -> a -> a) -> [a] -> [a],
                -- until ::  (a -> Bool) -> (a -> a) -> a -> a) を入れてたが，どうもuntilがあると急に遅くなる．その割に，全く使われない．何じゃらホイ
                 show :: Int -> [Char]) |])++ $(p [| ((,) :: a -> b -> (a,b), flip uncurry :: (->) (a,b) ((a->b->c) -> c)) |]),
@@ -727,7 +731,7 @@ fromDataList = [$(p [| (sortBy, nubBy, deleteBy, dropWhileEnd, transpose -- , st
                        find :: (a -> Bool) -> [a] -> Maybe a, flip findIndex :: (->) [a] ((a -> Bool) -> Maybe Int), flip findIndices :: (->) [a] ((a -> Bool) -> [Int]), deleteFirstsBy, unionBy :: (a -> a -> Bool) -> (->) [a] ([a] -> [a]), intersectBy :: (a -> a -> Bool) -> (->) [a] ([a] -> [a]), groupBy, insertBy -- , maximumBy, minimumBy
                        ) |]),
                 $(p [| (intersperse, subsequences, permutations,
-                       inits, tails,                                
+                       inits, tails,
                        flip . flip mapAccumL :: acc -> (->) [x] ((acc -> x -> (acc, y)) -> (acc, [y])),
                        flip . flip mapAccumR :: acc -> (->) [x] ((acc -> x -> (acc, y)) -> (acc, [y]))
 
@@ -735,7 +739,7 @@ fromDataList = [$(p [| (sortBy, nubBy, deleteBy, dropWhileEnd, transpose -- , st
                        ) |])]
 fromDataChar = [$(p [| (toUpper :: (->) Char Char, toLower :: (->) Char Char) |])++
                 $(p [| (ord, isControl :: (->) Char Bool, isSpace :: (->) Char Bool, isLower :: (->) Char Bool, isUpper :: (->) Char Bool, isAlpha :: (->) Char Bool, isAlphaNum :: (->) Char Bool, isDigit :: (->) Char Bool, isSymbol :: (->) Char Bool, isPunctuation :: (->) Char Bool, isPrint :: (->) Char Bool) |]),
-                $(p [| (isOctDigit :: (->) Char Bool, isHexDigit :: (->) Char Bool) |]), 
+                $(p [| (isOctDigit :: (->) Char Bool, isHexDigit :: (->) Char Bool) |]),
                 []]
 fromDataMaybe = [[],
                  $(p [| (catMaybes, listToMaybe :: (->) [a] (Maybe a), maybeToList :: (->) (Maybe a) [a]) |]),
@@ -766,7 +770,7 @@ pgRatios = map pgWithRatioSized [0..]
 withRatio = foldr (zipWith (++)) full [fromPrelRatio, fromDataRatio]
 
 ratioCls = $(p [| (eq :: Equivalence (Ratio Int), cmp :: Ordered (Ratio Int)) |])
-fromPrelRatio = [ $(p [| (1      :: Ratio Int, 
+fromPrelRatio = [ $(p [| (1      :: Ratio Int,
                           10     :: Ratio Int,
                           100     :: Ratio Int,
                           1000     :: Ratio Int,
@@ -787,10 +791,10 @@ fromPrelRatio = [ $(p [| (1      :: Ratio Int,
                           (^^) :: Ratio Int -> Int -> Ratio Int) |]),
                   [],
                   [] ]
-fromDataRatio = [  
+fromDataRatio = [
                   $(p [| ((%)  :: Int -> Int -> Ratio Int,
                           numerator   :: (->) (Ratio Int) Int,
-                          denominator :: (->) (Ratio Int) Int) |]),                                            
+                          denominator :: (->) (Ratio Int) Int) |]),
                   [], [] ]
 
 pgWithDouble :: ProgGenSF
@@ -806,7 +810,7 @@ withDouble = zipWith (++) full fromPrelDouble
 
 doubleCls = $(p [| ( -- eq :: Equivalence Double,
                     cmp :: Ordered Double) |])
-fromPrelDouble= [ $(p [| (1      :: Double, 
+fromPrelDouble= [ $(p [| (1      :: Double,
                           10     :: Double,
                           100     :: Double,
                           1000     :: Double,
@@ -830,7 +834,7 @@ fromPrelDouble= [ $(p [| (1      :: Double,
                           (^^) :: Double -> Int -> Double,
                           pi :: Double
                           ) |]),
-                  $(p [| (          
+                  $(p [| (
                           exp :: Double -> Double,
                           log :: Double -> Double,
                           sqrt :: Double -> Double,

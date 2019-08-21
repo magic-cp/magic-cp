@@ -32,13 +32,13 @@ module MagicHaskeller(
        --   (just like when using the dynamic expression of Concurrent Clean), and thus
        --   you may write @'setPrimitives' $('p' [| \'A\' |])@,
        --   while you have to write @'setPrimitives' $('p' [| [] :: [a] |])@ instead of @'setPrimitives' $('p' [| [] |])@.
-       p, setPrimitives, mkPG, mkPGSF, setPG,
+       p, setPrimitives, mkPG, setPG,
 
        -- | Older versions prohibited data types holding functions such as @[a->b]@, @(Int->Char, Bool)@, etc. just for efficiency reasons.
        --   They are still available if you use 'mkMemo' and 'mkMemoSF' instead of 'mkPG' and 'mkPGSF' respectively, though actually this limitation does not affect the efficiency a lot.
        --   (NB: recently I noticed that use of 'mkMemo' or 'mkMemoSF' might not improve the efficiency of generating lambda terms at all, though when I generated combinatory expressions it WAS necessary.
        --   In fact, I mistakenly turned this limitation off, and 'mkMemo' and 'mkMemoSF' were equivalent to 'mkPG' and 'mkPGSF', but I did not notice that....)
-       mkMemo, mkMemoSF,
+       mkMemo,
 
        -- | @mkMemo075@ enables some more old good optimization options used until Version 0.7.5, including guess on the primitive functions.
        --   It is for you if you prefer speed, but the result can be non-exhaustive if you use it with your own LibTH.hs.
@@ -421,6 +421,7 @@ mkPG' cont classes tups =
 -- > mkPGSF   gen nrnds optups tups = mkPGOpt (options{primopt = Just optups, contain = True,  stdgen = gen, nrands = nrnds}) tups
 -- > mkMemoSF gen nrnds optups tups = mkPGOpt (options{primopt = Just optups, contain = False, stdgen = gen, nrands = nrnds}) tups
 
+{- This wasn't used
 mkPGSF,mkMemoSF :: ProgramGenerator pg =>
 #ifdef TFRANDOM
            TFGen
@@ -434,16 +435,17 @@ mkPGSF,mkMemoSF :: ProgramGenerator pg =>
 mkPGSF   = mkPGSF' True
 mkMemoSF = mkPGSF' False
 mkPGSF' cont gen nrnds classes optups tups = mkPGOpt (options{primopt = Just [optups], contain = cont, stdgen = gen, nrands = nrnds}) classes tups
+-}
 --   Currently only the pg==ConstrLSF case makes sense. ってのは，optupsのみに関する話で，rndsは関係ない．
 
-mkPG075 :: ProgramGenerator pg => [Primitive] -> [Primitive] -> pg
+mkPG075 :: ProgramGenerator pg => [Primitive] -> pg
 mkPG075 = mkPGOpt (options{primopt = Nothing, contain = True, guess = True})
-mkMemo075 :: ProgramGenerator pg => [Primitive] -> [Primitive] -> pg
+mkMemo075 :: ProgramGenerator pg => [Primitive] -> pg
 mkMemo075 = mkPGOpt (options{primopt = Nothing, contain = False, guess = True})
 
 
-mkPGOpt :: ProgramGenerator pg => Options -> [Primitive] -> [Primitive] -> pg
-mkPGOpt opt classes prims = mkPGXOpt opt classes [] [prims] []
+mkPGOpt :: ProgramGenerator pg => Options -> [Primitive] -> pg
+mkPGOpt opt prims = mkPGXOpt opt [] [] [prims] []
 
 mkPGXOpt
   :: ProgramGenerator pg
@@ -510,8 +512,16 @@ updatePGXOpts
   -> Common
   -> a
 updatePGXOpts = uPGXO (const dynamicsp)
-updatePGXOptsFilt :: Int -> (Common -> [Typed [CoreExpr]] -> [[Typed [CoreExpr]]] -> [[Typed [CoreExpr]]] -> a)
-              -> Maybe [[Primitive]] -> [PD.Dynamic] -> [(PD.Dynamic,PD.Dynamic)] -> [[PD.Dynamic]] -> [[(PD.Dynamic,PD.Dynamic)]] -> Common -> a
+updatePGXOptsFilt
+  :: Int
+  -> (Common -> [Typed [CoreExpr]] -> [[Typed [CoreExpr]]] -> [[Typed [CoreExpr]]] -> a)
+  -> Maybe [[Primitive]]
+  -> [PD.Dynamic]
+  -> [(PD.Dynamic,PD.Dynamic)]
+  -> [[PD.Dynamic]]
+  -> [[(PD.Dynamic,PD.Dynamic)]]
+  -> Common
+  -> a
 updatePGXOptsFilt dep = uPGXO (\cmn dynss -> -- trace ("dynamicsp dynss = "++show (dynamicsp dynss) ++ "\nand the result is "++show (filtTCEsss cmn dep $ dynamicsp dynss)) $
                                              filtTCEsss cmn dep $ dynamicsp dynss)
 uPGXO
@@ -546,9 +556,9 @@ setPG = writeIORef refmemodeb
 
 -- | @setPrimitives@ creates a @ProgGen@ from the given set of primitives using the current set of options, and sets it as the current program generator.
 --   It used to be equivalent to @setPG . mkPG@ which overwrites the options with the default, but it is not now.
-setPrimitives :: [Primitive] -> [Primitive] -> IO ()
-setPrimitives classes tups = do PG (_,_,_,cmn) <- readIORef refmemodeb
-                                setPG $ mkPGOpt ((opt cmn){primopt=Nothing}) classes tups
+setPrimitives :: [Primitive] -> IO ()
+setPrimitives tups = do PG (_,_,_,cmn) <- readIORef refmemodeb
+                        setPG $ mkPGOpt ((opt cmn){primopt=Nothing}) tups
 -- setPrimitives tups = writeIORef refmemodeb (mkPG tups) -- This definition overwrites the old configuration.
 
 -- zipAppend is like zipWith (++), but the length of the resulting list is the same as that of the longer of the two list arguments.
