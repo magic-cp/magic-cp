@@ -1,17 +1,17 @@
--- 
+--
 -- (c) Susumu Katayama
 --
 -- Dynamic with unsafe execution.
 
 {-# LANGUAGE CPP, TemplateHaskell, MagicHash, RankNTypes #-}
-module MagicHaskeller.PolyDynamic (
-        Dynamic(..),
-        fromDyn,        -- :: Type -> Dynamic -> a -> a
-        fromDynamic,    -- :: Type -> Dynamic -> Maybe a
-        dynApply,
-        dynApp,
-        dynAppErr,
-        unsafeToDyn -- :: Type -> a -> Dynamic
+module MagicHaskeller.PolyDynamic
+        ( Dynamic(..)
+        , fromDyn        -- :: Type -> Dynamic -> a -> a
+        , fromDynamic    -- :: Type -> Dynamic -> Maybe a
+        , dynApply
+        , dynApp
+        , dynAppErr
+        , unsafeToDyn -- :: Type -> a -> Dynamic
         , aLittleSafeFromDyn -- :: Type -> Dynamic -> a
         , fromPD, dynamic,dynamicH
         -- I (susumu) believe the above is enough, provided unsafeFromDyn does not invoke typeOf for type checking. (Otherwise there would be ambiguity error.)
@@ -32,12 +32,9 @@ import Language.Haskell.TH hiding (Type)
 import Debug.Trace
 
 import MagicHaskeller.ReadTypeRep(trToType)
-import MagicHaskeller.ReadTHType(typeToTHType)
+import MagicHaskeller.ReadTHType(typeToTHType, thTypeToType)
 
-
-import MagicHaskeller.ReadTHType(thTypeToType)
 import MagicHaskeller.MHTH
-import Data.Typeable(typeOf)
 
 
 infixl `dynApp`
@@ -76,7 +73,8 @@ dynApply (Dynamic t1 f e1) (Dynamic t2 x e2) =
 dynApp :: Dynamic -> Dynamic -> Dynamic
 dynApp = dynAppErr ""
 dynAppErr :: String ->Dynamic -> Dynamic -> Dynamic
-dynAppErr s f x = case dynApply f x of 
+dynAppErr s f x = trace ("dynApp " ++ show f ++ " $ " ++ show x) $
+                  case dynApply f x of
                     Just r -> r
                     Nothing -> error ("Type error in dynamic application.\n" ++
                                "Can't apply function " ++ show f ++
@@ -92,7 +90,6 @@ $(dynamic [|tcl|] [| (,) :: forall a b. a->b->(a,b) |])
 -}
 dynamic :: ExpQ -> ExpQ -> ExpQ
 dynamic eqtcl eq = eq >>= p' eqtcl
-
 
 -- Quasi-quotes with higher-rank types are not permitted. When that is the case, take the type info apart from the expression.
 -- E.g. $(dynamicH [|tcl|] 'foo [t| forall a b. a->b->(a,b) |]) is equivalent to $(dynamic [|tcl|] [| foo :: forall a b. a->b->(a,b) |])

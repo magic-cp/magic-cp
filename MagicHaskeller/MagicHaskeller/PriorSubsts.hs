@@ -1,11 +1,10 @@
--- 
+--
 -- (c) Susumu Katayama
 --
 
-Everything written in this module can be rewritten using StateT.
-When I wrote this first (around 2003?) I did not know the term `Monad Transformer' and I reinvented it....
+-- Everything written in this module can be rewritten using StateT.
+-- When I wrote this first (around 2003?) I did not know the term `Monad Transformer' and I reinvented it....
 
-\begin{code}
 {-# LANGUAGE CPP, FlexibleInstances #-}
 module MagicHaskeller.PriorSubsts where
 
@@ -73,6 +72,11 @@ instance (Functor m, Monad m) => Monad (PriorSubsts m) where
 -- {-# RULES "listThenPS" thenPS = listThenPS #-}
 
 -- distPS is also used to implement ifDepthPS
+distPS
+  :: (m1 (a1, Subst, TyVar) -> m2 (a2, Subst, TyVar) -> m3 (a3, Subst, TyVar))
+  -> PriorSubsts m1 a1
+  -> PriorSubsts m2 a2
+  -> PriorSubsts m3 a3
 distPS op (PS f) (PS g) = PS (\s i -> f s i `op` g s i)
 
 instance (Functor m, MonadPlus m) => Alternative (PriorSubsts m) where
@@ -87,6 +91,7 @@ instance Delay m => Delay (PriorSubsts m) where
   delay (PS f) = PS $ \s i -> delay $ f s i
 instance Monoid a => Monoid (PriorSubsts [] a) where
     mempty = PS (\_ _ -> [])
+    -- mappend :: PriorSubsts [] a -> PriorSubsts [] a -> PriorSubsts [] a
     mappend = distPS $ mergeWithBy (\(xs,k,i) (ys,_,_) -> (xs `mappend` ys, k, i)) (\ (_,k,_) (_,l,_) -> k `compare` l)
 instance Monoid a => Monoid (PriorSubsts Recomp a) where
     mempty = PS (\_ _ -> mzero)
@@ -164,7 +169,7 @@ freshInst ty = do tv <- reserveTVars $ maxVarID ty + 1
 {-
 freshInst ty = do let tvs = tyvars ty
 		  ntvs <- mapM (const newTVar) tvs
-		  let ar = array (0,maxVarID ty) (zip (map tvID tvs) ntvs) 
+		  let ar = array (0,maxVarID ty) (zip (map tvID tvs) ntvs)
 		  return (inst ar ty)
     where inst :: Array Int TyVar -> Type -> Type
 	  -- inst ar = mapTV (\tv -> ar ! tvID tv) -- mapTVはType.lhsからexportしない方が良さそうなので．てゆーか単に，Type.unifyFunAp(QTy)でmapTV相当のものを実装すれば良いのか？
@@ -197,7 +202,7 @@ uniqBy eq []     = []
 uniqBy eq (x:xs) = case span (eq x) xs of (_,ns) -> x : uniqBy eq ns
 
 
--- | reserveTVars takes the number of requested tvIDs, reserves consecutive tvIDs, and returns the first tvID. 
+-- | reserveTVars takes the number of requested tvIDs, reserves consecutive tvIDs, and returns the first tvID.
 reserveTVars :: Monad m => TyVar -> PriorSubsts m TyVar
 reserveTVars n = PS (\s i -> return (i,s,i+n))
 {- こっちの定義にしたら阿呆みたいに時間を食った．訳ワカメ
@@ -213,4 +218,3 @@ flatten (PS sbb) = PS (\s i -> map cat $ unMx (sbb s i))
 cat :: Bag ([a], Subst, TyVar) -> Bag (a, Subst, TyVar)
 cat xs = [ (y, s, i) | (ys, s, i) <- xs, y <- ys ]
 -}
-\end{code}

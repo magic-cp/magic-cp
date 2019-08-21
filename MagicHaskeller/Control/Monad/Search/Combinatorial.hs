@@ -119,7 +119,7 @@ accumulate :: Monad m => Matrix (m a) -> m (Matrix a)
 accumulate (Mx xss) = fmap Mx (sequence (sequence xss))
 -}
 
-{- ########################################################################## -}
+{- ---------------------------------------------------------------------------}
 
 type    DepthFst = [] -- ghc6.8 does not like "type DepthFst = Stream"
 newtype Recomp a = Rc {unRc::Int->Bag a}
@@ -351,7 +351,7 @@ instance Show (Recomp a) where
 instance Show (DBound a) where
     showsPrec _ _ = ("<DBound>"++)
 
-{- ########################################################################## -}
+{- -------------------------------------------------------------------------- -}
 
 -- aはあらかじめannotateしたものを用いる
 categorizeDB :: DBound a -> Int -> Array Int [a]
@@ -483,7 +483,7 @@ instance Monad DBMemo where
     DBM p >>= f = DBM $
 -}
 
-{- ########################################################################## -}
+{- -------------------------------------------------------------------------- -}
 
 test'' = mconcat (unMx test')
 test' = do x <- Mx [return x | x<-[1..]]

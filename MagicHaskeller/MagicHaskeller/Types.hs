@@ -1,12 +1,11 @@
--- 
+--
 -- (c) Susumu Katayama
 --
 
-\begin{code}
 
 
 {-# OPTIONS -cpp -funbox-strict-fields #-}
-module MagicHaskeller.Types(Type(..), Kind, TyCon, TyVar, TypeName, Typed(..), tyvars, Subst, plusSubst, 
+module MagicHaskeller.Types(Type(..), Kind, TyCon, TyVar, TypeName, Typed(..), tyvars, Subst, plusSubst,
             emptySubst, apply, mgu, varBind, match, maxVarID, normalizeVarIDs, normalize, unChin,
             Decoder(..), typer, typee, negateTVIDs, limitType, saferQuantify, quantify, quantify', unquantify, lookupSubst, unifyFunAp,
             alltyvars, mapTV, size, unitSubst, applyCheck, assertsubst, substOK, eqType, getRet, getArity, getArities, getAritiesRet, splitArgs, getArgs, pushArgs, popArgs, mguFunAp, revSplitArgs, revGetArgs, module Data.Int
@@ -48,7 +47,7 @@ size (t0 :-> t1) = size t0 + size t1
 sizeCheck :: Type -> Type
 sizeCheck ty = sc 100 ty
     where sc 0 _ = error ("sizeCheck: " ++ show ty)
-          sc n (TA t0 t1) = 
+          sc n (TA t0 t1) =
 -}
 
 {- I comment this out because this is unused (except in Classification.tex, where arityOf is redefined) and confusing along with |:>|.
@@ -216,7 +215,7 @@ mguFunAp t0 t1 = trace ("mguFunAp t0 = "++ show t0++", and t1 = "++show t1) $
                  case maxVarID t1 + 1 of mx -> mfa (mapTV (mx+) t0) t1
 mfa (a:->r) t = do subst <- mgu a t
 --                   return (apply subst r)
-                   let retv = (apply subst r)
+                   let retv = apply subst r
                    trace ("retv = "++show retv) $ return retv
 mfa (a:>r)  t = mfa (a:->r) t -- mguFunAp is only used by PolyDynamic
 mfa (a:=>r) t = mfa (a:->r) t -- mguFunAp is only used by PolyDynamic
@@ -227,7 +226,7 @@ mfa f       t = mzero
 
 pushArgsCPS :: Integral i => (i -> i -> [Type] -> Type -> a) -> [Type] -> Type -> a
 pushArgsCPS f = pa 0 0
-  where 
+  where
         pa c n args (t0:->t1)        = pa c (n+1) (t0:args) t1
         pa c n args (t0:>t1)         = pa c (n+1) (t0:args) t1
         pa c n args (t0:=>t1)        = pa (c+1) n (t0:args) t1 -- So, the arity is not incremented in this case.
@@ -271,11 +270,9 @@ splitArgs (t0:->t1) = let (ts, t) = splitArgs t1 in (t0:ts, t)
 splitArgs t         = ([], t)
 -}
 
-\end{code}
 
-data "Typed", taken from obsolete/Binding.hs
+{- ---- data "Typed", taken from obsolete/Binding.hs ---- -}
 
-\begin{code}
 
 data Typed a   = a ::: !Type deriving (Show, Eq, Ord)
 
@@ -285,11 +282,8 @@ typer (_ ::: t) = t
 instance Functor Typed where
   fmap f (a ::: t) = f a ::: t
 
-\end{code}
 
-\section{Type inference tools}
-
-\begin{code}
+{- ---- section: Type inference tools ---- -}
 
 type Subst = [(TyVar,Type)]
 
@@ -389,14 +383,14 @@ lookupSubst subst i = case lookup i subst of Nothing -> mzero
 
 apply :: Subst -> Type -> Type
 apply subst ty = apply' ty
-                                      where apply' tc@(TC _)    = tc
-                                            apply' tg@(TV tv)
-                                                = case lookupSubst subst tv of Just tt -> tt
-                                                                               Nothing -> tg
-                                            apply' (TA t0 t1) = TA (apply' t0) (apply' t1)
-                                            apply' (t0:->t1)  = apply' t0 :-> apply' t1
-                                            apply' (t0:>t1)   = apply' t0 :>  apply' t1
-                                            apply' (t0:=>t1)  = apply' t0 :=> apply' t1
+  where apply' tc@(TC _)    = tc
+        apply' tg@(TV tv)
+            = case lookupSubst subst tv of Just tt -> tt
+                                           Nothing -> tg
+        apply' (TA t0 t1) = TA (apply' t0) (apply' t1)
+        apply' (t0:->t1)  = apply' t0 :-> apply' t1
+        apply' (t0:>t1)   = apply' t0 :>  apply' t1
+        apply' (t0:=>t1)  = apply' t0 :=> apply' t1
 
 applyCheck subst t = -- trace ("t= " ++ show t ++ " and subst = "++ show subst) $
                      apply subst t
@@ -412,4 +406,3 @@ bakaHash :: String -> TyVar
 bakaHash []     = 0
 bakaHash (c:cs) = fromIntegral (ord c) + bakaHash cs * 131
 -}
-\end{code}

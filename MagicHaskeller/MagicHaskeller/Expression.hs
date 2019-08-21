@@ -1,4 +1,4 @@
--- 
+--
 -- (c) Susumu Katayama
 --
 {-# LANGUAGE CPP #-}
@@ -41,7 +41,7 @@ aeToME :: TyConLib -> RTrie -> Type -> AnnExpr -> MemoExpr
 aeToME tcl (_,_,_,_,mtdd) ty@(_:->_) (AE ce dyn)
     = case lookupMT mtdd argty of (m,a) -> let me@(ME _ memo _) = ME ce (dynApp m udyn) (curryDyn cur ty $ dynApp a memo)
                                            in me  -- make sure to use the memo table in the datatype by using letrec, or the table will be recomputed.
-    where argty:->_ = uncurryTy tcl ty
+    where argty :-> _ = uncurryTy tcl ty
           unc   = mkUncurry tcl
           udyn  = uncurryDyn unc ty dyn
           cur   = mkCurry tcl
@@ -130,10 +130,10 @@ decodeVarsDyn :: Int -> [Int8] -> Dynamic -> Dynamic
 decodeVarsDyn lenav vs dyn = insAbsents (fromIntegral lenav) (map (fromIntegral lenav-1-) $ reverse vs) `dynApp` dyn
 
 insAbsents :: Int8 -> [Int8] -> Dynamic
-insAbsents lenav ns = -- trace ("insAbsents "++show lenav ++ ' ':show ns) 
+insAbsents lenav ns = -- trace ("insAbsents "++show lenav ++ ' ':show ns)
                       ia 0 ns where
   ia i []     | i ==lenav = dynI
-  ia i (n:ns) | i == n    = dynB  `dynApp` ia (succ i) ns 
+  ia i (n:ns) | i == n    = dynB  `dynApp` ia (succ i) ns
   ia i ms                 = dynBK `dynApp` ia (succ i) ms
 
 
@@ -162,8 +162,8 @@ dynss :: [[Dynamic]]
 dynss = [ [ mkDyn i j | j <- [0..] ] | i <- [0..] ]
 mkDyn 0         _ = dynI
 {-
-mkDyn lenavails 0 = unsafeExecute (B :$ K) `dynApp` mkDyn (lenavails-1) 0 
-mkDyn lenavails arity = unsafeExecute $ mkCE lenavails arity 
+mkDyn lenavails 0 = unsafeExecute (B :$ K) `dynApp` mkDyn (lenavails-1) 0
+mkDyn lenavails arity = unsafeExecute $ mkCE lenavails arity
 -}
 -- mkDyn lenavails arity = napply lenavails (dynApp (dynB `dynApp` x arity)) dynI
 mkDyn lenavails arity = dynApp (dynB `dynApp` x arity) (getDyn (lenavails-1) arity)
@@ -238,7 +238,7 @@ tkr10 = mergesortWithBy (\ (k,is) (_,js) -> (k,is++js)) (\ (k,_) (l,_) -> k `com
 
 -- annotateはsplitAvailsの前処理としても使える．
 annotate :: [Type] -> [(Type,Int8)]
-annotate ts = zipWith (,) ts [0..]
+annotate ts = zip ts [0..]
 {-
 annotate ts = an 0 ts
     where an n []     = []

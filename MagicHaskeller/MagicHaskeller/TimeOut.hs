@@ -1,4 +1,4 @@
--- 
+--
 -- (c) Susumu Katayama
 --
 {-# LANGUAGE CPP, ScopedTypeVariables #-}
@@ -69,7 +69,7 @@ unsafeOpWithPTO mto op l r = unsafeWithPTO mto (op l r)
 
 {-
 unsafeEvaluate :: Int -> a -> Maybe a
-unsafeEvaluate t e = unsafePerformIO (withTO t (return e)) -- Should I use Control.OldException.evaluate? I do not want to evaluate long lists deeply. 
+unsafeEvaluate t e = unsafePerformIO (withTO t (return e)) -- Should I use Control.OldException.evaluate? I do not want to evaluate long lists deeply.
 -}
 
 maybeWithTO' :: (a -> IO () -> IO ()) -> Maybe Int -> ((IO b -> IO b) -> IO a) -> IO (Maybe a)
@@ -85,9 +85,10 @@ maybeWithTO' dsq (Just t) action = System.Timeout.timeout t (action undefined) -
 maybeWithTO' dsq (Just t) action = do tid <- myThreadId
                                       bracket (forkIO (threadDelay t >> -- hPutStrLn stderr "throwing Timeout" >>
                                                                         throwTo tid (ErrorCall "Timeout")))
-                                              (\th -> {- block $ -} killThread th)
-                                              (\_ -> fmap Just $ action (yield>>))
-                                        `Control.Exception.catch` \(e :: SomeException) -> -- trace ("within maybeWithTO': " ++ show e) $
+                                              ({- block . -} killThread)
+                                              (\_ -> Just <$> action (yield>>))
+                                        `Control.Exception.catch` \(e :: SomeException) ->
+                                                                         -- trace ("within maybeWithTO': " ++ show e) $
                                                                          return Nothing
 
 --  'withTO' creates CHTO every time it is called. Currently unused.

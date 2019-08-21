@@ -399,7 +399,7 @@ dynamicsc ps = mergesortWithBy (\(x:::t) (y:::_) -> (x++y):::t) (\(_:::t) (_:::u
                            map (\ dyn -> [Context $ Dict dyn] ::: {- toCxt (numCxts e) -} PD.dynType dyn) ps
 
 mkPG :: ProgramGenerator pg => [Primitive] -> pg
-mkPG   = mkPGX [] . (:[])
+mkPG   = mkPGX [] . (:[]) -- mkPGX [] [[]]
 mkPGX :: ProgramGenerator pg => [Primitive] -> [[Primitive]] -> pg
 mkPGX   = mkPG' True
 -- ^ 'mkPG' is defined as:
@@ -409,9 +409,11 @@ mkPGX   = mkPG' True
 mkMemo :: ProgramGenerator pg => [Primitive] -> pg
 mkMemo = mkPG' False [] . (:[])
 mkPG' :: ProgramGenerator pg => Bool -> [Primitive] -> [[Primitive]] -> pg
-mkPG' cont classes tups = case mkCommon options{contain=cont} totals totals depths of cmn -> mkTrie cmn (primitivesc (tcl cmn) classes) (primitivesp (tcl cmn) tups)
-        where totals = concat tups ++ classes
-              depths = mkDepths tups ++ map (const 0) classes
+mkPG' cont classes tups =
+  case mkCommon options{contain=cont} totals totals depths of
+    cmn -> mkTrie cmn (primitivesc (tcl cmn) classes) (primitivesp (tcl cmn) tups)
+  where totals = concat tups ++ classes
+        depths = mkDepths tups ++ map (const 0) classes
 
 -- | 'mkPGSF' and 'mkMemoSF' are provided mainly for backward compatibility. These functions are defined only for the 'ProgramGenerator's whose names end with @SF@ (i.e., generators with synergetic filtration).
 --   For such generators, they are defined as:
@@ -590,8 +592,8 @@ everything, everythingF :: (ProgramGenerator pg, Typeable a) =>
                      pg   -- ^ program generator
                   -> Bool -- ^ whether to include functions with unused arguments
                   -> Every a
-everything  memodeb = et undefined  memodeb (mxExprToEvery   "MagicHaskeller.everything: type mismatch" memodeb)
-everythingF memodeb = et undefined  memodeb (mxExprFiltEvery "MagicHaskeller.everythingF: type mismatch" memodeb)
+everything  memodeb = et undefined memodeb (mxExprToEvery   "MagicHaskeller.everything: type mismatch" memodeb)
+everythingF memodeb = et undefined memodeb (mxExprFiltEvery "MagicHaskeller.everythingF: type mismatch" memodeb)
 everyACE :: (ProgramGenerator pg, Typeable a) =>
                      pg   -- ^ program generator
                   -> Bool -- ^ whether to include functions with unused arguments
@@ -742,8 +744,9 @@ findDo op withAbsents pred = do
                      let mpto = timeout $ opt $ extractCommon md
                      fp mpto (concat et)
     where fp mpto ((e,a):ts) = do -- hPutStrLn stderr ("trying" ++ pprintUC e)
-                                  --putStrLn "TH.Expression in findDo: "
+                                  --putStr "TH.Expression in findDo: "
                                   --print e
+                                  --putStrLn ""
                                   result <- maybeWithTO seq mpto (return (pred a))
                                   case result of Just True  -> e `op` fp mpto ts
                                                  Just False -> fp mpto ts

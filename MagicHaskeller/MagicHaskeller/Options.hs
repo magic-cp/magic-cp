@@ -29,12 +29,12 @@ data Opt a   = Opt{ primopt :: Maybe a           -- ^ Use this option if you wan
                                                  --   (History: I once abandoned this guessing strategy around the time I moved to the library implementation, because
                                                  --   I could not formally prove the exhaustiveness of the resulting algorithm.
                                                  --   For this reason, the old standalone version of MagicHaskeller uses this strategy, but almost the same effect
-                                                 --   can be obtained by setting this option to True, or using 'MagicHaskeller.init075' instead of 'MagicHaskeller.initialize'. 
+                                                 --   can be obtained by setting this option to True, or using 'MagicHaskeller.init075' instead of 'MagicHaskeller.initialize'.
                   , contain :: Bool                 -- ^ This option is now obsolete, and we always assume True now.
                                                  --   If this option was @False@, data structures might not contain functions, and thus types like @[Int->Int]@, @(Int->Bool, Char)@, etc. were not permitted.
                                                  --   (NB: recently I noticed that making this @False@ might not improve the efficiency of generating lambda terms at all, though when I generated combinatory expressions it WAS necessary.
                                                  --   In fact, I mistakenly turned this limitation off, and my code always regarded this as True, but I did not notice that, so this option can be obsoleted.)
-                  , constrL :: Bool              -- ^ If this option is @True@, matching at the antecedent of induction rules may occur, which constrains generation of existential types. 
+                  , constrL :: Bool              -- ^ If this option is @True@, matching at the antecedent of induction rules may occur, which constrains generation of existential types.
                                                  --   You need to use prefixed @(->)@ to show that some parameter can be matched at the antecedent, e.g.,
                                                  --   @'p' [| ( []::[a], (:)::a->[a]->[a], foldr :: (a->b->b) -> b -> (->) [a] b ) |]@
                                                  --   See LibTH.hs for examples.
@@ -48,43 +48,43 @@ data Opt a   = Opt{ primopt :: Maybe a           -- ^ Use this option if you wan
                                                  --   The priority of
                                                  --
                                                  -- > \xs -> foldr (\x y -> x+y) 0 xs
-                                                 --                             
+                                                 --
                                                  --   is 5,
                                                  --   because there are five @$@'s in
                                                  --
                                                  -- > \xs -> ((foldr $ (\x y -> ((+) $ x) $ y)) $ 0) xs
-                                                 --   
-                                                 --   
+                                                 --
+                                                 --
                                                  --   The priority of
-                                                 --   
+                                                 --
                                                  -- > \xs ys -> foldr (\x y zs -> x : y zs) (\ws->ws) xs ys
-                                                 --   
+                                                 --
                                                  --   is 7,
                                                  --   because there are seven @$@'s in
-                                                 --   
+                                                 --
                                                  -- > \xs ys -> (((foldr $ (\x y zs -> (((:) $ x) $ y) $ zs)) $ (\ws->ws)) $ xs) $ ys
-                                                 --   
-                                                 --   
+                                                 --
+                                                 --
                                                  --   Example: when tvndelay = 2,
                                                  --
                                                  --   The priority of
-                                                 --   
+                                                 --
                                                  -- > \xs -> foldr (\x y -> x+y) 0 xs
-                                                 --   
+                                                 --
                                                  --   is 5,
                                                  --   because there are five @$@'s in
-                                                 --   
+                                                 --
                                                  -- > \xs -> ((foldr $ (\x y -> ((+) $ x) $ y)) $ 0) xs
-                                                 --   
+                                                 --
                                                  --   The priority of
-                                                 --   
+                                                 --
                                                  -- > \xs ys -> foldr (\x y zs -> x : y zs) (\ws->ws) xs ys
-                                                 --   
+                                                 --
                                                  --   is 8,
                                                  --   because there are eight @$@'s in
-                                                 --   
+                                                 --
                                                  -- > \xs ys -> (((foldr $ (\x y zs -> (((:) $ x) $ y) $ zs)) $ (\ws->ws)) $ xs) $$ ys
-                                                 --   
+                                                 --
                                                  --   where @$$@ denotes the function application caused by expanding a type variable into a function type.
                   , tv1     :: Bool              -- ^ If this option is @True@, the return type of functions returning a type variable (e.g. @b@ in @foldr::(a->b->b)->b->[a]->b@)
                                                  --   can only be replaced with @Eval t => t@ and @Eval t => u -> t@, while if @False@ with @Eval t => t@, @Eval t => u->t@, @Eval t => u->v->t@, etc., where @Eval t@ means t cannot be replaced with a function.
@@ -128,7 +128,7 @@ options = Opt{ primopt = Nothing
              , memoCond = \ _ty d -> return $ if d<10 then Ram else Recompute
              , execute = unsafeExecute
              , timeout = Just 20000
-             , forcibleTimeout = False 
+             , forcibleTimeout = False
              , guess   = False
              , contain = True
              , constrL = False
