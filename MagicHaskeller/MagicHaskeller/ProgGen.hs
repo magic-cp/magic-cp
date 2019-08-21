@@ -21,7 +21,7 @@ import MagicHaskeller.Options(Opt(..))
 import MagicHaskeller.Classify
 import MagicHaskeller.Instantiate
 
-import MagicHaskeller.Expression
+import MagicHaskeller.Expression hiding ((<$>))
 
 import MagicHaskeller.T10
 import qualified Data.Map as Map
@@ -35,7 +35,7 @@ import Data.Monoid
 import MagicHaskeller.MemoToFiles hiding (freezePS,fps)
 
 traceTy _    = id
--- traceTy fty = trace ("lookup "++ show fty)
+--traceTy fty = trace ("lookup "++ show fty)
 
 
 type BF = Recomp
@@ -63,10 +63,24 @@ lmt mt fty =
        traceTy fty $
        lookupMT mt fty
 
-lookupFunsShared :: (Search m) => Generator m CoreExpr -> Generator m CoreExpr
-lookupFunsShared behalf memodeb@(_,mt,_,cmn) avail reqret
+lookupFunsShared :: (Search m) => Generator m CoreExpr
+lookupFunsShared memodeb@(_,mt,_,_) avail reqret
     = let annAvails = zip [0..] avail
-      in PS (\subst mx -> fromRc $ Rc $ \d ->concat [ let (tn, decoder) = encode (popArgs newavails reqret) mx in map (decodeVarsPos ixs) $ map (\ (exprs, sub, m) -> (exprs, retrieve decoder sub `plusSubst` subst, mx+m)) $ unMx (lmt mt tn) !! d | annAvs <- combs (d+1) annAvails, let (ixs, newavails) = unzip annAvs ] :: [Possibility CoreExpr])
+      in PS (\subst mx ->
+        fromRc $ Rc $ \d -> -- d+1 is the maximum number of arguments to use.
+        concat [ let (tn, decoder) = encode (popArgs newavails reqret) mx
+                  in map (decodeVarsPos ixs) $ -- applies the new Var Names (X n)
+                     map (\ (exprs, sub, m) -> (exprs, retrieve decoder sub `plusSubst` subst, mx+m)) $ -- apply PS input(?)
+                     --(\bagpos -> trace (
+                        --"\nd: " ++ show d ++
+                        --"\nmx: " ++ show mx ++
+                        --"\nsubst: " ++ show subst ++
+                        --"\nbag of poss: " ++ show bagpos
+                                       --) bagpos) $
+                     unMx (lmt mt tn :: BFM (Possibility CoreExpr)) !! d -- Bag (Possibility CoreExpr)
+                       | annAvs <- combs (d+1) annAvails, -- avail is going to be the arguments of the function(?)
+                         let (ixs, newavails) = unzip annAvs
+               ] :: [Possibility CoreExpr])
 
 lookupFunsPoly :: (Search m, Expression e) => Generator m e -> Generator m e
 lookupFunsPoly behalf memodeb@(_,mt,_,cmn) avail reqret
@@ -77,13 +91,16 @@ lookupFunsPoly behalf memodeb@(_,mt,_,cmn) avail reqret
                          (unPS (behalf memodeb avail reqret) subst mx) )
 
 instance WithCommon ProgGen where
-    extractCommon     (PG (_,_,_,cmn)) = cmn
+    extractCommon (PG (_,_,_,cmn)) = cmn
 instance ProgramGenerator ProgGen where
-    mkTrie cmn classes tces = mkTriePG cmn classes tces
-    unifyingPrograms   ty (PG x@(_,_,_,cmn)) = fromRc $ fmap (toAnnExpr $ reducer cmn) $ catBags $ fmap (\ (es,_,_) -> es) $ unifyingPossibilities   ty x
+    mkTrie = mkTriePG
+    unifyingPrograms ty (PG md@(_,_,_,cmn)) = trace ("Starting search of functions with type: " ++ show ty ++ "\n") $
+      fromRc $ fmap (toAnnExpr $ reducer cmn) $ -- fmap (\ce -> trace ("Current CE: " ++ show ce) ce) $
+      catBags $ (\ (es,_,_) -> es) <$>
+      unifyingPossibilities ty md
 instance ProgramGeneratorIO ProgGen where
     mkTrieIO cmn classes tces = return $ mkTriePG cmn classes tces
-    unifyingProgramsIO ty (PG x@(_,_,_,cmn)) = fmap (toAnnExpr $ reducer cmn) $ catBags $ fmap (\ (es,_,_) -> es) $ unifyingPossibilitiesIO ty x
+    unifyingProgramsIO ty (PG x@(_,_,_,cmn)) = fmap (toAnnExpr $ reducer cmn) $ catBags $ (\ (es,_,_) -> es) <$> unifyingPossibilitiesIO ty x
 
 unifyingPossibilities :: Search m => Type -> MemoDeb (ClassLib CoreExpr) CoreExpr -> m ([CoreExpr],Subst,TyVar)
 unifyingPossibilities ty memodeb = unPS (mguProgs memodeb [] ty) emptySubst 0
@@ -140,7 +157,7 @@ mguFuns :: (Search m) => Generator m CoreExpr
 mguPrograms memodeb = applyDo (mguProgs memodeb)
 
 
-mguProgs memodeb = wind (>>= (return . fmap (mapCE Lambda))) (lookupFunsShared mguFuns memodeb)
+mguProgs memodeb = wind (>>= (return . fmap (mapCE Lambda))) (lookupFunsShared memodeb)
 --mguProgs memodeb = wind (>>= (return . fmap Lambda)) (\avail reqret -> reorganize (\newavail -> lookupFunsPoly mguFuns memodeb newavail reqret) avail)
 {- どっちがわかりやすいかは不明
 mguProgs memodeb avail (t0:->t1) = do result <- mguProgs memodeb (t0 : avail) t1
