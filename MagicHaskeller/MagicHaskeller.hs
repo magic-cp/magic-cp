@@ -441,17 +441,45 @@ mkPG075 = mkPGOpt (options{primopt = Nothing, contain = True, guess = True})
 mkMemo075 :: ProgramGenerator pg => [Primitive] -> [Primitive] -> pg
 mkMemo075 = mkPGOpt (options{primopt = Nothing, contain = False, guess = True})
 
+
 mkPGOpt :: ProgramGenerator pg => Options -> [Primitive] -> [Primitive] -> pg
 mkPGOpt opt classes prims = mkPGXOpt opt classes [] [prims] []
-mkPGXOpt :: ProgramGenerator pg => Options -> [Primitive] -> [(Primitive,Primitive)] -> [[Primitive]] -> [[(Primitive,Primitive)]] -> pg
+
+mkPGXOpt
+  :: ProgramGenerator pg
+  => Options
+  -> [Primitive]
+  -> [(Primitive,Primitive)]
+  -> [[Primitive]]
+  -> [[(Primitive,Primitive)]]
+  -> pg
 mkPGXOpt  = mkPGXOpts mkTrieOpt
+
 mkPGIO    :: ProgramGeneratorIO pg => [Primitive] -> [Primitive] -> IO pg
 mkPGIO classes prims = mkPGXOptIO options classes [] [prims] []
-mkPGXOptIO :: ProgramGeneratorIO pg => Options -> [Primitive] -> [(Primitive,Primitive)] -> [[Primitive]] -> [[(Primitive,Primitive)]] -> IO pg
+
+mkPGXOptIO
+  :: ProgramGeneratorIO pg
+  => Options
+  -> [Primitive]
+  -> [(Primitive,Primitive)]
+  -> [[Primitive]]
+  -> [[(Primitive,Primitive)]]
+  -> IO pg
 mkPGXOptIO = mkPGXOpts mkTrieOptIO
 
-mkPGXOpts :: (Common -> [Typed [CoreExpr]] -> [[Typed [CoreExpr]]] -> [[Typed [CoreExpr]]] -> a)
-          -> Options -> [Primitive] -> [(Primitive,Primitive)] -> [[Primitive]] -> [[(Primitive,Primitive)]] -> a
+mkPGXOpts
+  :: (   Common
+      -> [Typed [CoreExpr]]
+      -> [[Typed [CoreExpr]]]
+      -> [[Typed [CoreExpr]]]
+      -> a)
+  -> Options
+  -> [Primitive]
+  -> [(Primitive,Primitive)]
+  -> [[Primitive]]
+  -> [[(Primitive,Primitive)]]
+  -> a
 mkPGXOpts mkt opt classes partclasses prims partprims
     = let cmn = initCommon opt (classes ++ concat prims ++ map fst (partclasses ++ concat partprims))
           ptd = primitiveToDynamic (tcl cmn)
@@ -472,17 +500,35 @@ mkPGXOpts mkt opt classes partclasses prims partprims = case mkCommon opt (conca
           totalclss   = classes ++ totc
           partialclss = classes ++ partc
 -}
-updatePGXOpts :: (Common -> [Typed [CoreExpr]] -> [[Typed [CoreExpr]]] -> [[Typed [CoreExpr]]] -> a)
-              -> Maybe [[Primitive]] -> [PD.Dynamic] -> [(PD.Dynamic,PD.Dynamic)] -> [[PD.Dynamic]] -> [[(PD.Dynamic,PD.Dynamic)]] -> Common -> a
+updatePGXOpts
+  :: (Common -> [Typed [CoreExpr]] -> [[Typed [CoreExpr]]] -> [[Typed [CoreExpr]]] -> a)
+  -> Maybe [[Primitive]]
+  -> [PD.Dynamic]
+  -> [(PD.Dynamic,PD.Dynamic)]
+  -> [[PD.Dynamic]]
+  -> [[(PD.Dynamic,PD.Dynamic)]]
+  -> Common
+  -> a
 updatePGXOpts = uPGXO (const dynamicsp)
 updatePGXOptsFilt :: Int -> (Common -> [Typed [CoreExpr]] -> [[Typed [CoreExpr]]] -> [[Typed [CoreExpr]]] -> a)
               -> Maybe [[Primitive]] -> [PD.Dynamic] -> [(PD.Dynamic,PD.Dynamic)] -> [[PD.Dynamic]] -> [[(PD.Dynamic,PD.Dynamic)]] -> Common -> a
 updatePGXOptsFilt dep = uPGXO (\cmn dynss -> -- trace ("dynamicsp dynss = "++show (dynamicsp dynss) ++ "\nand the result is "++show (filtTCEsss cmn dep $ dynamicsp dynss)) $
                                              filtTCEsss cmn dep $ dynamicsp dynss)
-uPGXO :: (Common -> [[PD.Dynamic]] -> [[Typed [CoreExpr]]]) ->
-               (Common -> [Typed [CoreExpr]] -> [[Typed [CoreExpr]]] -> [[Typed [CoreExpr]]] -> a)
-              -> Maybe [[Primitive]] -> [PD.Dynamic] -> [(PD.Dynamic,PD.Dynamic)] -> [[PD.Dynamic]] -> [[(PD.Dynamic,PD.Dynamic)]] -> Common -> a
-uPGXO dyp mkt mbpo classes partclasses prims partprims c = case updateCommon (concat totalss ++ totalclss) (concat partialss ++ partialclss) (mkDepths totalss ++ map (const 0) totalclss) c of cmn -> mkt cmn (dynamicsc totalclss) (alt cmn) (dyp cmn totalss) -- dyp c? vlをうまく同期させねば．
+uPGXO
+  :: (Common -> [[PD.Dynamic]] -> [[Typed [CoreExpr]]])
+  -> (Common -> [Typed [CoreExpr]] -> [[Typed [CoreExpr]]] -> [[Typed [CoreExpr]]] -> a)
+  -> Maybe [[Primitive]]
+  -> [PD.Dynamic]
+  -> [(PD.Dynamic,PD.Dynamic)]
+  -> [[PD.Dynamic]]
+  -> [[(PD.Dynamic,PD.Dynamic)]]
+  -> Common
+  -> a
+uPGXO dyp mkt mbpo classes partclasses prims partprims c =
+  case updateCommon (concat totalss ++ totalclss)
+        (concat partialss ++ partialclss)
+        (mkDepths totalss ++ map (const 0) totalclss) c of
+          cmn -> mkt cmn (dynamicsc totalclss) (alt cmn) (dyp cmn totalss) -- dyp c? vlをうまく同期させねば．
     where alt cmn = case mbpo of Nothing -> dyp cmn totalss -- dyp c?
                                  Just po -> primitivesp (tcl c) po
           (tot, part) = unzip $ map unzip partprims
