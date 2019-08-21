@@ -33,7 +33,7 @@ Flag READFILE
 
 Flag DEBUG
   Description: Force typechecking at each dynamic application
-  Default:     False
+  Default:     True
 
 Flag NETWORKURI
   Description: Find Network.URI in network-uri rather than in network < 2.6 (This is a workaround for the changes made in those packages.)
