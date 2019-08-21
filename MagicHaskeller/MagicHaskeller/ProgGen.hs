@@ -108,6 +108,8 @@ unifyingPossibilities ty memodeb = unPS (mguProgs memodeb [] ty) emptySubst 0
 unifyingPossibilitiesIO :: Type -> MemoDeb (ClassLib CoreExpr) CoreExpr -> RecompT IO ([CoreExpr],Subst,TyVar)
 unifyingPossibilitiesIO ty memodeb = unPS (mguProgsIO memodeb [] ty) emptySubst 0
 
+-- newtype ProgGen = PG (MemoDeb (ClassLib CoreExpr) CoreExpr) -- ^ internal data representation
+-- newtype ClassLib e = CL (MemoDeb (ClassLib e) e)
 type MemoDeb c a = (c, MemoTrie a, ([[Prim]],[[Prim]]), Common)
 
 

@@ -73,7 +73,7 @@ dynApply (Dynamic t1 f e1) (Dynamic t2 x e2) =
 dynApp :: Dynamic -> Dynamic -> Dynamic
 dynApp = dynAppErr ""
 dynAppErr :: String ->Dynamic -> Dynamic -> Dynamic
-dynAppErr s f x = trace ("dynApp " ++ show f ++ " $ " ++ show x) $
+dynAppErr s f x = --trace ("dynApp " ++ show f ++ " $ " ++ show x) $
                   case dynApply f x of
                     Just r -> r
                     Nothing -> error ("Type error in dynamic application.\n" ++

@@ -85,7 +85,7 @@ mkCommon opts totals partials priorities
       updateCommon (map (primitiveToDynamic $ tcl cmn) totals) (map (primitiveToDynamic $ tcl cmn) partials) priorities cmn
 initCommon :: Options -> [Primitive] -> Common
 initCommon opts totals = let
-                           tyconlib = (\tcl -> trace (show tcl) tcl) $ primitivesToTCL totals
+                           tyconlib = primitivesToTCL totals
                            optunit  = forget opts
                          in Cmn {opt = optunit, tcl = tyconlib, rt = mkRandTrie (nrands opts) tyconlib (stdgen opts)}
 -- | 'updateCommon' can be used for incremetal learning

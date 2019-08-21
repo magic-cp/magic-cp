@@ -10,7 +10,7 @@ import Language.Haskell.TH as TH
 import Control.Monad.State.Lazy
 import Data.Array(Array, (!), inRange, bounds)
 import Data.Char(ord,chr)
-import Data.List(nub)
+import Data.List(nub, elemIndex)
 import Data.Map(lookup)
 
 import Debug.Trace
@@ -20,10 +20,8 @@ showTypeName = TH.nameBase -- Use the unqualified name to avoid confusion becaus
 
 -- MyDynamicでしか使われていないので，ForallTは単に無視する．PolyDynamicのチェックがちょっと緩くなるだけ．
 thTypeToType :: TyConLib -> TH.Type -> Types.Type
-thTypeToType tcl t = -- trace (show t ++ "\n ---------\n"
-                     --   ++ show tcl ++ "\n ----------\n") $
-                        let ret = normalize $ evalState (thTypeToType' tcl t) []
-                         in {- trace (show ret) -} ret
+thTypeToType tcl t = let ret = normalize $ evalState (thTypeToType' tcl t) []
+                      in ret
 
 thTypeToType' :: TyConLib -> TH.Type -> State [Name] Types.Type
 thTypeToType' tcl (ForallT bs []    t) = do
@@ -51,20 +49,21 @@ thTypeToType' (fm,_) (ConT name) = let nstr = showTypeName name
                                           Nothing -> -- TC $ (-1 - bakaHash nstr)
                                                      error $ "thTypeToType' : "++nstr++" : unknown TyCon"
                                           Just c  -> return $ TC c
+
 {- この辺は単なるコメントアウトでいいんだっけ？
 thTypeToType' tcl (HsTyCon (Special HsUnitCon)) = TC (unit tcl)
 thTypeToType' tcl (HsTyCon (Special HsListCon)) = TC (list tcl)
 -}
 thTypeToType' _  ArrowT = error "Partially applied (->)."
 thTypeToType' _  (VarT name) = do
-                                  modify $ \vs -> case Prelude.lookup name $ zip vs [0..] of
-                                                    Nothing -> name : vs
-                                                    _ -> vs
-                                  vs <- get
-                                  --trace ("looking for " ++ show name ++ ": " ++ show vs) (return ())
-                                  return $ TV $ case Prelude.lookup name $ zip vs [0..] of
-                                                Nothing -> error "thTypeToType : unbound type variable"
-                                                Just i  -> i
+  modify $ \vs -> case elemIndex name vs of
+                    Nothing -> vs ++ [name]
+                    _ -> vs
+  vs <- get
+  --trace ("looking for " ++ show name ++ ": " ++ show vs) (return ())
+  return $ TV $ case Prelude.lookup name $ zip vs [0..] of
+                Nothing -> error "thTypeToType : unbound type variable"
+                Just i  -> i
 -- thTypeToType' _   hst = error ("thTypeToType': "++show hst)
 
 tyVarBndrToName (PlainTV name)    = name
