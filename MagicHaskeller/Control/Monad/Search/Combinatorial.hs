@@ -15,7 +15,9 @@ import Control.Applicative -- necessary for backward compatibility
 #ifdef HOOD
 import Observe
 #endif
-import Data.Monoid -- Matrix, and any (MonadPlus a) => a, should be a Monoid.
+-- import Data.Monoid -- Matrix, and any (MonadPlus a) => a, should be a Monoid.
+
+import Data.Semigroup
 
 #ifdef QUICKCHECK
 import Test.QuickCheck hiding (shrink)
@@ -29,15 +31,21 @@ import Data.Array
 -- import AList -- append list used as the Bag
 
 -- instance (MonadPlus m) => Monoid (m a) where
+instance Semigroup (Matrix a) where
+  (<>) = mplus
 instance Monoid (Matrix a) where
-    mempty  = mzero
-    mappend = mplus
+  mempty  = mzero
+  mappend = mplus
+instance Semigroup (Recomp a) where
+  (<>) = mplus
 instance Monoid (Recomp a) where
-    mempty  = mzero
-    mappend = mplus
+  mempty  = mzero
+  mappend = mplus
+instance (Functor m, Monad m) => Semigroup (RecompT m a) where
+  (<>) = mplus
 instance (Functor m, Monad m) => Monoid (RecompT m a) where
-    mempty  = mzero
-    mappend = mplus
+  mempty  = mzero
+  mappend = mplus
 
 type Stream a = [a]
 

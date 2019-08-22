@@ -14,11 +14,12 @@ import Control.Monad.Search.Combinatorial
 -- import Control.Monad.Search.BalancedMerge
 import MagicHaskeller.Types
 import Data.Array.IArray
-import Data.Monoid
+-- import Data.Monoid
 import MagicHaskeller.T10(mergeWithBy)
 
 -- import T10(nubSortBy)
 import Data.List
+import Data.Semigroup
 
 import Debug.Trace
 
@@ -89,10 +90,16 @@ instance (Functor m, MonadPlus m) => MonadPlus (PriorSubsts m) where
     mplus = distPS mplus
 instance Delay m => Delay (PriorSubsts m) where
   delay (PS f) = PS $ \s i -> delay $ f s i
+
+instance Semigroup a => Semigroup (PriorSubsts [] a) where
+  (<>) = distPS $ mergeWithBy (\(xs,k,i) (ys,_,_) -> (xs <> ys, k, i)) (\ (_,k,_) (_,l,_) -> k `compare` l)
 instance Monoid a => Monoid (PriorSubsts [] a) where
     mempty = PS (\_ _ -> [])
     -- mappend :: PriorSubsts [] a -> PriorSubsts [] a -> PriorSubsts [] a
     mappend = distPS $ mergeWithBy (\(xs,k,i) (ys,_,_) -> (xs `mappend` ys, k, i)) (\ (_,k,_) (_,l,_) -> k `compare` l)
+
+instance Semigroup a => Semigroup (PriorSubsts Recomp a) where
+    PS f <> PS g = PS $ \s i -> Rc $ \dep -> mergeWithBy (\(xs,k,i) (ys,_,_) -> (xs <> ys, k, i)) (\ (_,k,_) (_,l,_) -> k `compare` l) (unRc (f s i) dep) (unRc (g s i) dep)
 instance Monoid a => Monoid (PriorSubsts Recomp a) where
     mempty = PS (\_ _ -> mzero)
     PS f `mappend` PS g = PS $ \s i -> Rc $ \dep -> mergeWithBy (\(xs,k,i) (ys,_,_) -> (xs `mappend` ys, k, i)) (\ (_,k,_) (_,l,_) -> k `compare` l) (unRc (f s i) dep) (unRc (g s i) dep)

@@ -11,7 +11,8 @@ import Data.IntMap as IM
 
 -- import CoreLang
 
-import Data.Monoid
+-- import Data.Monoid
+import Data.Semigroup
 
 data FMType a = EmptyFMT
               | FMT {
@@ -37,7 +38,7 @@ lookupFMT (t1 :-> t0) fmt = lookupFMTFMT t0 t1 (funFMT fmt)
 #endif
 lookupFMTFMT t0 t1 fmtfmt = lookupFMT t0 fmtfmt >>= lookupFMT t1
 
-mapFMT :: (Type -> a -> b) -> FMType a -> FMType b -- takes the index as an argument, like mapFM, but currently only the structures of the types are considered. 
+mapFMT :: (Type -> a -> b) -> FMType a -> FMType b -- takes the index as an argument, like mapFM, but currently only the structures of the types are considered.
 mapFMT f EmptyFMT = EmptyFMT
 mapFMT f (FMT v c a n u) = FMT (mapWithKey (\tv -> f (TV $ fromIntegral tv)) v)
                                (mapWithKey (\tc -> f (TC $ fromIntegral tc)) c)
@@ -89,6 +90,8 @@ updateFMT f x t fmt = updFMT t fmt
 unitFMT x t = updateFMT undefined x t EmptyFMT
 -- used by FMSubst.lhs
 
+instance Semigroup a => Semigroup (FMType a) where
+    (<>) = unionFMT (<>)
 instance Monoid a => Monoid (FMType a) where
     mappend = unionFMT mappend
     mempty  = EmptyFMT
