@@ -296,10 +296,10 @@ trainSeq stat fp = do
   hPutStrLn stderr "performing GC..."
   performGC
   hPutStrLn stderr "done.\a"
-#if __GLASGOW_HASKELL__ >= 706
-  gcStatsAvailable <- getGCStatsEnabled
-  when gcStatsAvailable $ getGCStats >>= print
-#endif
+-- #if __GLASGOW_HASKELL__ >= 706
+--   gcStatsAvailable <- getGCStatsEnabled
+--   when gcStatsAvailable $ getGCStats >>= print
+-- #endif
 processTrainers stat h = do
   (r,t) <- time $ try (answerHIO stat h stdout)
   case r of Left e | isEOFError e -> do hClose h

@@ -15,7 +15,8 @@ Description:     MagicHaskeller is an inductive functional programming system fo
 		 and the MagicHaskeller.cgi executable that is a CGI frontend for providing the Web interface.
 Build-Type:      Simple
 Category:        Language
-data-files:      ExperimIOP.hs MagicHaskeller/predicates MagicHaskeller/predicatesAug2014 MagicHaskeller.conf MagicHaskeller/predicatesServed primitives.txt
+-- data-files:      ExperimIOP.hs MagicHaskeller/predicates MagicHaskeller/predicatesAug2014 MagicHaskeller.conf MagicHaskeller/predicatesServed primitives.txt
+data-files:      MagicHaskeller/predicates MagicHaskeller/predicatesAug2014 MagicHaskeller.conf MagicHaskeller/predicatesServed primitives.txt
 Extra-source-files: xlmap changelog.txt
 Tested-with:     GHC == 7.6.3, GHC == 7.10.3, GHC == 8.0.2
 
@@ -120,9 +121,9 @@ Library
     Build-depends:   tf-random <= 0.3 || >= 0.5
     cpp-options:     -DTFRANDOM
 
-  if flag(GHCAPI) && !os(windows)
-    Build-depends:   ghc >= 6.10, ghc-paths
-    Exposed-modules: MagicHaskeller.RunAnalytical, MagicHaskeller.ExecuteAPI610
+--  if flag(GHCAPI) && !os(windows)
+--    Build-depends:   ghc >= 6.10, ghc-paths
+--    Exposed-modules: MagicHaskeller.RunAnalytical, MagicHaskeller.ExecuteAPI610
 
   if flag(READFILE)
     Build-depends:   haskell-src

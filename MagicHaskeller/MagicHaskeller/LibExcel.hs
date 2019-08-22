@@ -1,4 +1,4 @@
--- 
+--
 -- (c) Susumu Katayama
 --
 {-# LANGUAGE TemplateHaskell, NoMonomorphismRestriction, PatternGuards, CPP #-}
@@ -19,6 +19,8 @@ import MagicHaskeller.ProgGenSF(mkTrieOptSFIO)
 
 import qualified Data.IntMap as IM
 -- import Data.Hashable
+
+import Prelude hiding ((<>))
 
 -- whether succ is used only for numbers or not
 succOnlyForNumbers = True -- This is True for Excel.
@@ -127,11 +129,11 @@ ppExcel (AppE v@(VarE name) e)
         "product" -> case ppe of
                        AppE (VarE name) e' | nameBase name == "reverse" -> AppE productE e'
                        _         -> AppE productE ppe
-        nb       -> case ppe of 
+        nb       -> case ppe of
                        TupE _                            -> AppE (ppv v) ppe
                        ConE name | nameBase name == "()" -> AppE (ppv v) ppe
                        _                                 -> AppE (ppv v) (ParensE ppe)
-  where ppe = ppExcel e 
+  where ppe = ppExcel e
 -- The following pattern is actually unnecessary if only eta-long normal expressions will be generated.
 ppExcel e@(VarE _)          = ppv e
 ppExcel e@(ConE _)          = ppv e
@@ -142,8 +144,8 @@ ppExcel (AppE f x)          = case ppx of
 ppExcel (InfixE me1 op me2)
   = let j1 = fmap ppExcel me1
         j2 = fmap ppExcel me2
-    in case op of 
-          VarE opname -> 
+    in case op of
+          VarE opname ->
             case (j1,j2) of
                        (Just (LitE (IntegerL i1)), Just (LitE (IntegerL i2))) ->
                                         case nameBase opname of "+" -> LitE $ IntegerL $ i1+i2
@@ -172,13 +174,13 @@ ppv e@(VarE name) | nameBase name `elem` ["iF", "nat_cata"] = LamE [ VarP n | n 
     where names   = [ mkName [n] | n <- "ptf" ]
           [p,t,f] = map VarE names
 -}
-ppv (VarE name) = VarE $ ppopn name 
-ppv (ConE name) = ConE $ ppopn name 
+ppv (VarE name) = VarE $ ppopn name
+ppv (ConE name) = ConE $ ppopn name
 ppopn name = mkName $ nameBase name
 
 
 
-ppdrop m0j e 
+ppdrop m0j e
   = case ppExcel e of
       AppE (AppE (VarE drn) (LitE (IntegerL i))) list | nameBase drn == "drop" -> droppy (m0j + i) list -- NB: m0j and i are both positive.
       ppe                                             -> droppy m0j ppe
@@ -228,17 +230,18 @@ mkPgExcels sz = mkPGXOpts mkTrieOptSFIO options{memoCondPure = \t d -> size t < 
 
 -- doubleCls = $(p [| (eq :: Equivalence Double) |])
 
-excel = [$(p [| (" " :: [Char], "," :: [Char], "-" :: [Char], 
+excel = [$(p [| (" " :: [Char], "," :: [Char], "-" :: [Char],
                  fromIntegral :: Int -> Double, floor :: Double -> Int, -- These two are hidden by ppExcel.
                  0::Int, 1::Int, (1+)::Int->Int, 3::Int,
-                 0::Double, 1::Double, -- (1+)::Double->Double, 
-                 (<) :: Int -> Int -> Bool, (<=) :: Int -> Int -> Bool, (<>) :: Int -> Int -> Bool, 
-                 (<) :: Double -> Double -> Bool, -- (<=) :: Double -> Double -> Bool, (<>) :: Double -> Double -> Bool, 
-                 (<>) :: [Char] -> [Char] -> Bool, 
+                 0::Double, 1::Double, -- (1+)::Double->Double,
+                 (<) :: Int -> Int -> Bool, (<=) :: Int -> Int -> Bool,
+                 (<>) :: Int -> Int -> Bool,
+                 (<) :: Double -> Double -> Bool, -- (<=) :: Double -> Double -> Bool, (<>) :: Double -> Double -> Bool,
+                 (<>) :: [Char] -> [Char] -> Bool,
                  not :: (->) Bool Bool, True :: Bool, False :: Bool, aND'2 :: (->) Bool ((->) Bool Bool), oR'2 :: (->) Bool ((->) Bool Bool), iF'3 :: (->) Bool (a -> a -> a),
                  (,) :: a -> b -> (a,b), (,,) :: a -> b -> c -> (a,b,c), (,,,) :: a -> b -> c -> d -> (a,b,c,d)) |])
          ++ $(p [| (
-                                            upper::[Char]->[Char],                                             
+                                            upper::[Char]->[Char],
                                             lower::[Char]->[Char],
                                             proper::[Char]->[Char],
                                             left1 :: [Char] -> [Char],
@@ -271,7 +274,7 @@ excel = [$(p [| (" " :: [Char], "," :: [Char], "-" :: [Char],
                                             fIND'3 :: [Char] -> [Char] -> Int -> Maybe Int,
                                             ifERROR'2 :: Maybe a -> a -> a,
                                             fact   :: Int -> Maybe Int,
-                                            combin'2 :: Int -> Int -> Maybe Int, 
+                                            combin'2 :: Int -> Int -> Maybe Int,
                                             mOD'2    :: Int -> Int -> Maybe Int,
                                             degrees :: Double -> Double,
                                             radians :: Double -> Double,
@@ -298,7 +301,7 @@ excel = [$(p [| (" " :: [Char], "," :: [Char], "-" :: [Char],
 --                          fromIntegral :: Int -> Double,
                           pI () :: Double
                           ) |]),
-                  $(p [| (          
+                  $(p [| (
                           exp :: Double -> Double,
                           ln  :: Double -> Maybe Double,
                           sQRT :: Double -> Maybe Double,

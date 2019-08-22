@@ -1,4 +1,4 @@
-resolver: lts-10.0
+resolver: lts-14.0
 # resolver: lts-9.21
 # first found lts-3.22
 
@@ -12,6 +12,10 @@ packages:
 #
 
 extra-deps:
+  # - cgi-3001.4.0.0
+  # - mueval-0.9.3
+  # - exceptions-0.10.2
+  # - show-0.6
 - cgi-3001.4.0.0
 - mueval-0.9.3
 - exceptions-0.10.2

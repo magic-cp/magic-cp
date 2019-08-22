@@ -1,4 +1,4 @@
--- 
+--
 -- (c) Susumu Katayama
 --
 
@@ -24,7 +24,8 @@ import MagicHaskeller.Options(Opt(..))
 
 import MagicHaskeller.Expression
 
-import Data.Monoid
+-- import Data.Monoid
+import Data.Semigroup
 
 
 import MagicHaskeller.T10(mergesortWithBy, diffSortedBy)
@@ -176,7 +177,7 @@ mkTrieOptSFIO cmn classes txsopt txs
 dbtToCumulativeMx :: (Ord a) => DBoundT IO a -> IO (Matrix a)
 dbtToCumulativeMx (DBT f) = do ts <- interleaveActions $ map f [0..]
                                let xss = map (sort . map fst) ts
-                               let result = zipWith (diffSortedBy compare) xss $ scanl (++) [] result 
+                               let result = zipWith (diffSortedBy compare) xss $ scanl (++) [] result
                                return $ Mx result -- 多分本当は明示的にlookupし直すべき．
 
 mkMTty = mkMT
@@ -199,7 +200,7 @@ freezePS :: Type -> PriorSubsts Recomp Type -> Matrix (Type,Subst,TyVar)
 freezePS ty ps
     = let mxty = maxVarID ty -- `max` maximum (map maxVarID avail)
 --      in zipDepthMx (\d tups -> map (\(Mx xss, s, i)->(xss!!d, s, i)) $ tokoro10ap ty tups) $ toMx $ fmap fst $ Rc $ unDB $ unPS ps emptySubst (mxty+1)
-      in mapDepth tokoro10ap $ toMx $ fmap fst $ Rc $ unDB $ fromRc $ unPS ps emptySubst (mxty+1) 
+      in mapDepth tokoro10ap $ toMx $ fmap fst $ Rc $ unDB $ fromRc $ unPS ps emptySubst (mxty+1)
   --  tokoro10 in place of tokoro10ap ty causes an infinite loop.
   --  fps mxty ps can be used in place of unPS ps emptySubst (mxty+1)
 
@@ -279,6 +280,8 @@ specTypes memodeb ttrie ty
 -- quantifyはmemo先で既にやられているので不要
                                 applyPS ty
 
+instance Semigroup BitSet where
+    (<>) = (.|.)
 instance Monoid BitSet where
     mappend = (.|.)
     mempty  = 0
@@ -293,7 +296,7 @@ funApSub_ clbehalf lltbehalf behalf _t       = return mempty
 funApSub_spec clbehalf behalf = funApSub_ clbehalf behalf behalf
 
 funApSub_forcingNil :: (Type -> PriorSubsts Recomp ()) -> (Type -> PriorSubsts Recomp BitSet) -> (Type -> PriorSubsts Recomp BitSet) -> Type -> BitSet -> PriorSubsts Recomp ()
-funApSub_forcingNil clbehalf lltbehalf behalf t bsf 
+funApSub_forcingNil clbehalf lltbehalf behalf t bsf
   = funApSub_forcingNil_cont clbehalf lltbehalf behalf t bsf $ \bs -> guard $ bs == 0
 funApSub_forcingNil_spec clbehalf behalf = funApSub_forcingNil clbehalf behalf behalf
 
@@ -355,7 +358,7 @@ specCases' memodeb@(CL classLib, (prims@(primgen,primmono),_),cmn) ttrie avail r
 -- absentを含める場合こっちを使う
 lookupWithAbsents :: (Search m, Expression e) => PGSF e -> Type -> m e
 lookupWithAbsents memodeb ty
-  = case splitArgs ty of 
+  = case splitArgs ty of
     (a,r) -> wind (fmap (mapCE Lambda)) (lookupNormalizedSharedET (lookupTypeTrieAndExpTrie memodeb)) a r
 --unifyableExprs memodeb = applyDo (wind (fmap (map (mapCE Lambda))) (lookupNormalizedShared (\ixs -> map (decodeVarsCE ixs)) (lookupTypeTrieAndExpTrie memodeb)))
 
@@ -423,10 +426,10 @@ lookupNormalized fun avail t
 lookupNormalizedShared :: (Search m, Search n) => ([Int8] -> BitSet -> e -> r) -> (Type -> m (e, Subst, TyVar)) ->  [Type] -> Type -> PriorSubsts n r
 lookupNormalizedShared ceDecoder fun avail t
     = let annAvails = zip3 [0..] (iterate (`unsafeShiftL` 1) 1) avail
-      in PS (\subst mx -> fromRc $ Rc $ \d ->concat 
-                                             [ map (\ (exprs, sub, m) -> (ceDecoder ixs ixBits exprs, retrieve decoder sub `plusSubst` subst, mx+m)) $ unRc (toRc (fun tn)) d 
+      in PS (\subst mx -> fromRc $ Rc $ \d ->concat
+                                             [ map (\ (exprs, sub, m) -> (ceDecoder ixs ixBits exprs, retrieve decoder sub `plusSubst` subst, mx+m)) $ unRc (toRc (fun tn)) d
                                              | annAvs <- combs (d+1) annAvails
-                                             , let (ixs, ixBitss, newavails) = unzip3 annAvs 
+                                             , let (ixs, ixBitss, newavails) = unzip3 annAvs
                                                    ixBits = foldl (.|.) 0 ixBitss
                                                    (tn, decoder) = encode (popArgs newavails t) mx
                                              ])
@@ -510,7 +513,7 @@ funApSubOpBits op clbehalf lltbehalf behalf = faso
           faso (t:> ts) (funs, bsf)
               = do (args, bse) <- lltbehalf t
                    faso ts (liftM2 op funs args, bsf .|. bse)
-          -- original. 
+          -- original.
           faso (t:->ts) (funs, bsf)
               = do (args, bse) <- behalf t
                    faso ts (liftM2 op funs args, bsf .|. bse)
@@ -523,7 +526,7 @@ funApSubOpBits_resetting op clbehalf lltbehalf behalf = faso
           faso (t:> ts) (funs, bsf)
               = do (args, bse) <- lltbehalf t
                    faso ts (liftM2 op funs args, bsf .&. complement bse)
-          -- original. 
+          -- original.
           faso (t:->ts) (funs, bsf)
               = do (args, bse) <- behalf t
                    faso ts (liftM2 op funs args, bsf .&. complement bse)
@@ -541,7 +544,7 @@ funApSubBits_forcingNil clbehalf lltbehalf behalf ty = funApSubOpBits_forcingNil
 funApSubBits_forcingNil_cont :: (Expression e) => (Type -> PriorSubsts Recomp [e]) -> (Type -> PriorSubsts Recomp ([e],BitSet)) -> (Type -> PriorSubsts Recomp ([e],BitSet)) -> Type -> ([e],BitSet) -> (([e],BitSet) -> PriorSubsts Recomp [e]) -> PriorSubsts Recomp [e]
 funApSubBits_forcingNil_cont clbehalf lltbehalf behalf ty = funApSubOpBits_forcingNil_cont (aeAppErr (" to the request of "++show ty)) clbehalf lltbehalf behalf ty
 funApSubOpBits_forcingNil_cont op clbehalf lltbehalf behalf = faso
-    where faso (t:=>ts) (funs, bsf) cont 
+    where faso (t:=>ts) (funs, bsf) cont
               = do args <- clbehalf t
                    faso ts (liftM2 op funs args, bsf) cont
           faso (t:> ts) (funs, bsf) cont
@@ -549,11 +552,11 @@ funApSubOpBits_forcingNil_cont op clbehalf lltbehalf behalf = faso
                    let newRemaining = bsf .&. complement bse
                    forceNil newRemaining $
                      faso ts (liftM2 op funs args, newRemaining) cont
-          -- original. 
+          -- original.
           faso (t:->ts) (funs, bsf) cont
               = do (args, bse) <- behalf t
                    let newRemaining = bsf .&. complement bse
-                   forceNil newRemaining $ 
+                   forceNil newRemaining $
                      faso ts (liftM2 op funs args, newRemaining) cont
           faso _        (funs, bsf) cont = cont (funs, bsf)
 funApSubOpBits_forcingNil op clbehalf lltbehalf behalf t tup
@@ -561,7 +564,7 @@ funApSubOpBits_forcingNil op clbehalf lltbehalf behalf t tup
                                       do guard $ bsf == 0
                                          return funs
 -- Data.Bits.popCount does the job. However, instance Bits Integer uses popCountDefault, which uses the naive algorithm.
-countBits32 bin 
+countBits32 bin
   = let quad = bin - ((bin `unsafeShiftR` 1) .&. 0x55555555) -- quadary coded
         hex  = (quad .&. 0x33333333) + ((quad `unsafeShiftR` 2) .&. 0x33333333) -- hexadecimalary coded
     in fromIntegral $ ((((hex + (hex `unsafeShiftR` 4)) .&. 0x0F0F0F0F) * 0x01010101) `unsafeShiftR` 24) .&. 0xFF -- The last (.&. 0xFF) should not be necessary when using Word32.
@@ -583,13 +586,13 @@ retGenOrdBits cmn lenavails fullBits fe clbehalf lltbehalf behalf reqret (numcxt
 --                        | t > u     = mzero
                         | otherwise = do (args, ixs) <- behalf t
                                          funApSub'' (t==u) ts (if filtexp then [ f <$> e | f <- funs, e <- args, let _:$d = toCE f, d <= toCE e ]
-                                                                         else liftM2 (<$>) funs args,  
+                                                                         else liftM2 (<$>) funs args,
                                                                bs .&. complement ixs)
 -- てゆーかtとuが同じならばもっといろんなことができそう．
                     funApSub'' filtexp (t:->ts) (funs, bs)
                                     = do (args, ixs) <- behalf t
                                          return (if filtexp then [ f <$> e | f <- funs, e <- args, let _:$d = toCE f, d <= toCE e]
-                                                            else liftM2 (<$>) funs args,  
+                                                            else liftM2 (<$>) funs args,
                                                  bs .&. complement ixs)
                     funApSub'' _fe _t tups = return tups
 
@@ -598,7 +601,7 @@ retGenTV1Bits cmn lenavails fullBits fe clbehalf lltbehalf behalf reqret (numcxt
                                                -- let typ = apply (unitSubst tvid reqret) (mapTV (tvid+) ty) -- mapTVとapplyはhylo-fusionできるはずだが，勝手にされる？
                                                --                                                              -- unitSubstをinlineにしないと駄目か
                                                a <- mkSubst (tvndelay $ opt cmn) tvid reqret
-{-                                               
+{-
                                                (exprs, bs1) <- funApSubBits_resetting clbehalf lltbehalf behalf (mapTV (tvid+) ty) (map (mkHead (reducer cmn) lenavails (getLongerArity ty+a)) xs, fullBits)
                                                gentvar <- applyPS (TV tvid)
                                                guard (usedArg (tvid+1) gentvar)
