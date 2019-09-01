@@ -19,7 +19,7 @@ import Test.QuickCheck -- this is since 6.4
 #endif
 import Data.Int
 
--- import Debug.Trace
+import qualified Debug.Trace as Trace
 
 infixr :->, :>
 

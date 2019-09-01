@@ -1,4 +1,4 @@
--- 
+--
 -- (c) Susumu Katayama
 --
 {-# LANGUAGE TemplateHaskell, RankNTypes, CPP, PatternGuards, ImpredicativeTypes #-}
@@ -42,7 +42,7 @@ import Language.Haskell.TH hiding (Type)
 
 import MagicHaskeller.NearEq(NearEq(..))
 
--- import Debug.Trace
+import qualified Debug.Trace as Trace
 trace _ e = e
 
 dynApp = dynAppErr "in MagicHaskeller.Instantiate"
@@ -69,7 +69,7 @@ curryDyn _   _                 x = x
 {-
 varsInts (TA t u) = TA (varsInts t) (varsInts u)
 varsInts (u:->t)  = varsInts u :-> varsInts t
-varsInts (TV 
+varsInts (TV
 -}
 uniqueVars (TA t u) = TA (uniqueVars t) (uniqueVars u)
 uniqueVars (u:->t)  = uniqueVars u :-> uniqueVars t
@@ -151,16 +151,20 @@ type RTrie = (CmpMap, Maps, MemoMap,
               Tries,  MapType (Dynamic,Dynamic))
 
 mkRandTrie :: [Int] -> TyConLib -> Generator -> RTrie
+mkRandTrie nrnds tcl gen | Trace.trace "mkRandTrie used!! Nani!?" True = undefined
 mkRandTrie nrnds tcl gen
-                   = let arbtup   = mkArbMap tcl
-                         coarbtup = mkCoarbMap tcl
-                         (g0,g1)  = split gen
-                         maps     = (arbtup, coarbtup, g0, g1)
-                         cmap     = mkCmpMap tcl
-                         mmap     = mkMemoMap tcl
-                     in (cmap, maps, mmap,
-                            (mkMT tcl (argTypeToRandoms tcl cmap maps), mkMT tcl (argTypeToRandomss nrnds tcl cmap maps)),
-                            (mkMT tcl (typeToMemo mmap)))
+  = let arbtup   = mkArbMap tcl
+        coarbtup = mkCoarbMap tcl
+        (g0,g1)  = split gen
+        maps     = (arbtup, coarbtup, g0, g1)
+        cmap     = mkCmpMap tcl
+        mmap     = mkMemoMap tcl
+    in ( cmap
+       , maps
+       , mmap
+       , (mkMT tcl (argTypeToRandoms tcl cmap maps), mkMT tcl (argTypeToRandomss nrnds tcl cmap maps))
+       , mkMT tcl (typeToMemo mmap)
+       )
 argTypeToRandoms :: TyConLib -> CmpMap -> Maps -> Type -> Maybe [Dynamic]
 argTypeToRandoms  tcl cmap (arbtup, coarbtup, gen, _) a
     = do arb  <- typeToArb arbtup coarbtup a
@@ -278,12 +282,12 @@ mkArbMap tcl@(mapNameTyCon,_) = (mkMap tcl [mct0, mct1, mct2, mct3],
                   ("(,)",     $(dynamic [|tcl|] [| arbitraryPair    :: Gen a -> Gen b -> Gen (a, b)       |]))]
           mct3 = [("(,,)",    $(dynamic [|tcl|] [| arbitraryTriplet :: Gen a -> Gen b -> Gen c -> Gen (a,b,c) |]))]
 
--- ArbMap specialized for Ratio Int, etc. 
+-- ArbMap specialized for Ratio Int, etc.
 -- This is necessary because we cannot have something like arbitraryRatio :: Gen a -> Gen (Ratio a) (without type constraint),
 -- in order to avoid zero-denominator cases.
 type SpecialMap = IntMap.IntMap Dynamic
 mkSpecialMap :: TyConLib -> [(String,String,Dynamic)] -> IntMap.IntMap Dynamic
-mkSpecialMap tcl@(mapNameTyCon,_) = IntMap.fromList . map (\ (name1, name2, dyn) -> (combineTCs (mapNameTyCon Map.! name1) (mapNameTyCon Map.! name2),  dyn)) 
+mkSpecialMap tcl@(mapNameTyCon,_) = IntMap.fromList . map (\ (name1, name2, dyn) -> (combineTCs (mapNameTyCon Map.! name1) (mapNameTyCon Map.! name2),  dyn))
 
 {- こっちにすべき ---------------------------------------
 -- This signature silently makes sure that TyCon == Int8. This should cause an error when TyCon /= Int8.
@@ -361,11 +365,12 @@ typeToCoarb arbtup@(arbmap,_,arbchar,arbfun) coarbtup@(coarbmap,spmap,coarbchar,
 
 
 
-type MemoMap = (IntMap.IntMap (IntMap.IntMap (Dynamic,Dynamic)), (Dynamic,Dynamic))
+type MemoMap = ( IntMap.IntMap (IntMap.IntMap (Dynamic,Dynamic))
+               , (Dynamic,Dynamic))
 mkMemoMap :: TyConLib -> MemoMap
 mkMemoMap tcl@(mapNameTyCon,_) = (mkMap tcl [mct0, mct1, mct2, mct3],
                                   memoAppChar)
-    where memoAppChar = ( $(dynamic [|tcl|] [| memoChar :: (Char->a) -> MapChar a |]), 
+    where memoAppChar = ( $(dynamic [|tcl|] [| memoChar :: (Char->a) -> MapChar a |]),
                           $(dynamic [|tcl|] [| appChar  :: MapChar a -> (Char->a) |]) )
           mct0, mct1, mct2, mct3 :: [(String,(Dynamic,Dynamic))]
           mct0 = [("Int",     ($(dynamic  [|tcl|] [| memoIx3      :: (Int->a) -> MapIx Int a |]),
@@ -383,7 +388,10 @@ mkMemoMap tcl@(mapNameTyCon,_) = (mkMap tcl [mct0, mct1, mct2, mct3],
                                $(dynamic  [|tcl|] [| appReal      :: MapReal a -> (Double->a) |]))),
                   ("Float",   ($(dynamic  [|tcl|] [| memoReal     :: (Float->a) -> MapReal a |]),
                                $(dynamic  [|tcl|] [| appReal      :: MapReal a -> (Float->a) |])))]
-          mct1 = [("[]",      ($(dynamicH [|tcl|] 'memoList      [t| forall m b a. (forall c. (b->c) -> m c) -> ([b] -> a) -> MapList m b a |]), -- use an undefined type, because forall is not supported. (But then does this work? I don't think so....) でも，単にforallを取ってinfinite typeを許せばOKって気もする．どうよ？
+          mct1 = [("[]",      ($(dynamicH [|tcl|] 'memoList      [t| forall m b a. (forall c. (b->c) -> m c) -> ([b] -> a) -> MapList m b a |]),
+                    -- use an undefined type, because forall is not supported.
+                    -- (But then does this work? I don't think so....)
+                    -- でも，単にforallを取ってinfinite typeを許せばOKって気もする．どうよ？
                                $(dynamicH [|tcl|] 'appList1     [t| forall m b a. (forall c. m c -> (b->c)) -> MapList m b a -> ([b]->a) |]))),
                   ("Maybe",   ($(dynamic  [|tcl|] [| memoMaybe    :: ((b->a)->m a) -> (Maybe b->a) -> MapMaybe m a |]),
                                $(dynamic  [|tcl|] [| appMaybe     :: (m a->(b->a)) -> MapMaybe m a -> (Maybe b -> a) |])))]
@@ -413,9 +421,11 @@ mkMemoMap tcl@(mapNameTyCon,_) = (mkMap tcl [mct0, mct1, mct2, mct3],
                                                                         MapTriplet l m n a -> ((b,c,d) -> a) |])))]
 memoLength = 10
 typeToMemo :: MemoMap -> Type -> (Dynamic,Dynamic)
-typeToMemo memotup@(memomap,memochar) ty = case ttc 0 ty of Nothing -> (dynI,dynI) -- メモできない場合．テストするときは取り合えず全部(dynI,dynI)にしてもいいかも．
-                                                            Just t  -> t
-    where ttc 0 (t:->u) = Nothing
+typeToMemo memotup@(memomap,memochar) ty =
+  case ttc 0 ty of Nothing -> (dynI,dynI)
+  -- メモできない場合．テストするときは取り合えず全部(dynI,dynI)にしてもいいかも．
+    where ttc k t | Trace.trace ("typeToMemo ttc: " ++ show k ++ ", " ++ show t) False = undefined
+          ttc 0 (t:->u) = Nothing
           ttc 0 (TV _)  = Just memochar
           ttc _ (TV _)  = Nothing
           ttc k (TC tc) | tc < 0    = Nothing

@@ -346,9 +346,13 @@ primitivesp :: TyConLib -> [[Primitive]] -> [[Typed [CoreExpr]]]
 primitivesp tcl pss = dynamicsp (map (map (primitiveToDynamic tcl)) pss)
 dynamicsp :: [[PD.Dynamic]] -> [[Typed [CoreExpr]]]
 dynamicsp pss
-    = let ixs = scanl (+) 0 $ map genericLength pss
-      in zipWith (\ix -> mergesortWithBy (\(x:::t) (y:::_) -> (x++y):::t) (\(_:::t) (_:::u) -> compare t u) .
-                         zipWith (\ n d -> [if expIsAConstr $ PD.dynExp d then PrimCon n else Primitive n] ::: toCxt (numCxts $ PD.dynExp d) (PD.dynType d)) [ix..]) ixs pss
+  = let ixs = scanl (+) 0 $ map genericLength pss
+    in zipWith (\ix dyn -> mergesortWithBy (\(x:::t) (y:::_) -> (x++y):::t) (\(_:::t) (_:::u) -> compare t u) $
+          zipWith (\n d ->
+            [if expIsAConstr $ PD.dynExp d then PrimCon n else Primitive n]
+              ::: toCxt (numCxts $ PD.dynExp d) (PD.dynType d)
+                  ) [ix..] dyn
+               ) ixs pss
 
 
 
@@ -541,12 +545,12 @@ uPGXO dyp mkt mbpo classes partclasses prims partprims c =
           cmn -> mkt cmn (dynamicsc totalclss) (alt cmn) (dyp cmn totalss) -- dyp c? vlをうまく同期させねば．
     where alt cmn = case mbpo of Nothing -> dyp cmn totalss -- dyp c?
                                  Just po -> primitivesp (tcl c) po
-          (tot, part) = unzip $ map unzip partprims
-          totalss     = zipAppend prims tot
-          partialss   = zipAppend prims part
-          (totc,partc)= unzip partclasses
-          totalclss   = classes ++ totc
-          partialclss = classes ++ partc
+          (tot, part) = unzip $ map unzip partprims -- ([], [])
+          totalss     = zipAppend prims tot -- prims
+          partialss   = zipAppend prims part -- prims
+          (totc,partc)= unzip partclasses -- ([], [])
+          totalclss   = classes ++ totc -- []
+          partialclss = classes ++ partc -- []
 
 mkDepths :: [[a]] -> [Int]
 mkDepths = concat . zipWith (\i xs -> map (const i) xs) [0..]

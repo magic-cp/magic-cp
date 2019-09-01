@@ -87,10 +87,17 @@ initCommon :: Options -> [Primitive] -> Common
 initCommon opts totals = let
                            tyconlib = primitivesToTCL totals
                            optunit  = forget opts
-                         in Cmn {opt = optunit, tcl = tyconlib, rt = mkRandTrie (nrands opts) tyconlib (stdgen opts)}
+                         in Cmn { opt = optunit
+                                , tcl = tyconlib
+                                , rt = mkRandTrie (nrands opts) tyconlib (stdgen opts)
+                                }
 -- | 'updateCommon' can be used for incremetal learning
 updateCommon :: [PD.Dynamic] -> [PD.Dynamic] -> [Int] -> Common -> Common
-updateCommon totals partials priorities cmn = cmn{vl = dynamicsToVL totals, pvl = dynamicsToVL partials, vpl = prioritiesToVPL priorities}
+updateCommon totals partials priorities cmn =
+  cmn { vl = dynamicsToVL totals
+      , pvl = dynamicsToVL partials
+      , vpl = prioritiesToVPL priorities
+      }
 
 -- | options for limiting the hypothesis space.
 type Options = Opt [[Primitive]]
@@ -100,7 +107,8 @@ retsTVar _                   = False
 
 annotateTCEs :: Typed [CoreExpr] -> Prim
 annotateTCEs tx@(_:::t) = let (numcs, arity, retty) = getAritiesRet t
-                          in (numcs, arity, retty, maxVarID t + 1, tx) -- arity is the shorter arity that does not count contexts.
+                          in trace ("annotateTCEs" ++ show (t, numcs, arity, retty)) $
+                             (numcs, arity, retty, maxVarID t + 1, tx) -- arity is the shorter arity that does not count contexts.
 
 splitPrims :: [Typed [CoreExpr]] -> ([Prim],[Prim])
 splitPrims = partition retsTVar . map annotateTCEs
