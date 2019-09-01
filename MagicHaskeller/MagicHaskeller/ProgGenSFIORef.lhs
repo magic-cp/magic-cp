@@ -1,4 +1,4 @@
--- 
+--
 -- (c) Susumu Katayama
 --
 
@@ -131,7 +131,7 @@ unBFM = unMx
 freezePS :: Type -> PriorSubsts Recomp Type -> Matrix (Type,Subst,TyVar)
 freezePS ty ps
     = let mxty = maxVarID ty
-      in mapDepth tokoro10ap $ toMx $ fmap fst $ Rc $ unDB $ fromRc $ unPS ps emptySubst (mxty+1) 
+      in mapDepth tokoro10ap $ toMx $ fmap fst $ Rc $ unDB $ fromRc $ unPS ps emptySubst (mxty+1)
 
 tokoro10ap :: [(Type,s,i)] -> [(Type,s,i)]
 tokoro10ap = M.elems . M.fromListWith const . map (\ t@(ty,_,_) -> (ty, t))
@@ -146,7 +146,7 @@ specializedTypes memodeb avail t = do specializedCases memodeb avail t
 -- specializedCases is the same as unifyableExprs, except that the latter returns PriorSubsts BF [CoreExpr], and that the latter considers memodepth.
 specializedCases, specCases, specCases' :: (Search m) => MemoDeb CoreExpr -> [Type] -> Type -> PriorSubsts m ()
 specializedCases memodeb = applyDo (specCases memodeb)
-specCases memodeb = wind_ (\avail reqret -> reorganize_ (\newavail -> uniExprs_ memodeb newavail reqret) avail)
+specCases memodeb = wind id (\avail reqret -> reorganize_ (\newavail -> uniExprs_ memodeb newavail reqret) avail)
 {- どっちがわかりやすいかは不明
 specCases memodeb avail (t0:->t1) = specCases memodeb (t0 : avail) t1
 specCases memodeb avail reqret = reorganize_ (\newavail -> uniExprs_ memodeb newavail reqret) avail
@@ -247,7 +247,7 @@ lmtIO md@(PGSFIOR fmtref (_,_,_,cmn)) ty = memoRTIO fmtref (computeExpTip md) ty
 
 memoRTIO :: (Expression e) => ExpTrie e -> (Type -> RecompT IO e) -> Type -> RecompT IO e
 memoRTIO fmtref compute ty
-    = RcT $ \depth -> if memocondexp ty depth then ensureAtHand fmtref compute ty depth 
+    = RcT $ \depth -> if memocondexp ty depth then ensureAtHand fmtref compute ty depth
                                            else unRcT (compute ty) depth
 
 ensureAtHand fmtref compute ty depth

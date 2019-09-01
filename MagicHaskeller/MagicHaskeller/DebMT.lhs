@@ -1,4 +1,4 @@
--- 
+--
 -- (c) Susumu Katayama
 --
 \begin{code}

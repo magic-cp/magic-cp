@@ -133,12 +133,10 @@ applyDo :: (Functor m, Monad m) => ([Type] -> Type -> PriorSubsts m a) -> [Type]
 applyDo fun avail ty = do subst <- getSubst
                           fun (map (apply subst) avail) (apply subst ty)
 
+-- wind g f [t0, t1] (t2 -> t3 -> t4 -> t5) = g( g( g(f [t4, t3, t2, t0, t1] t5)))
 wind :: (a->a) -> ([Type] -> Type -> a) -> [Type] -> Type -> a
 wind g f avail (t0 :-> t1) = g $ wind g f (t0 : avail) t1
 wind _ f avail reqret      = f avail reqret
-
-wind_ :: ([Type] -> Type -> a) -> [Type] -> Type -> a
-wind_ = wind id
 
 
 {-# SPECIALIZE fromAssumptions :: (Search m) => Common -> Int -> (Type -> PriorSubsts m [CoreExpr]) -> (Type -> Type -> PriorSubsts m ()) -> Type -> [Type] -> PriorSubsts m [CoreExpr] #-}

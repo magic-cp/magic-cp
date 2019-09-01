@@ -261,6 +261,7 @@ revSplitArgs t         = (0, [], t)
 revGetArgs :: Type -> [Type]
 revGetArgs ty = case revSplitArgs ty of (_,ts,_) -> ts
 
+
 popArgs :: [Type] -> Type -> Type
 popArgs = flip (foldl (flip (:->)))
 
