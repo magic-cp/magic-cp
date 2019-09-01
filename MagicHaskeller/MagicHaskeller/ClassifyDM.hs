@@ -1,8 +1,8 @@
--- 
+--
 -- (c) Susumu Katayama
 --
 {-# LANGUAGE CPP #-}
-#define CHTO
+-- #define CHTO
 module MagicHaskeller.ClassifyDM(filterDM, filterList, filterListDB, filterDMIO, spreexecuteDM) where -- , filterDMTI) where
 
 import Control.Monad.Search.Combinatorial

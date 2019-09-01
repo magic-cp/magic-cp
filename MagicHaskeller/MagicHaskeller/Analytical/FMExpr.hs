@@ -1,4 +1,4 @@
--- 
+--
 -- (C) Susumu Katayama
 --
 -- Finite trie indexed by Expr, used for fast pattern match
@@ -42,7 +42,7 @@ updateFME f x t                EmptyFME = updateFME f x t emptyFME
 updateFME f x (E _ i)            fme      = fme { existentialFME = IntMap.insertWith (\_ -> f) i (f x) $ existentialFME fme }
 updateFME f x (U _ i)            fme      = fme { universalFME   = insertNth f x i $ universalFME fme }
 updateFME f x (C _ _ (c Types.:::_) fs) fme  = fme { conApFME       = IntMap.insertWith (\_ -> updateFMEs f x fs) (fromIntegral c) (updateFMEs f x fs EmptyFMEs) $ conApFME fme }
-updateFMEs f x es         EmptyFMEs = updateFMEs f x es FMEs{nilFMEs = x, consFMEs = EmptyFME} 
+updateFMEs f x es         EmptyFMEs = updateFMEs f x es FMEs{nilFMEs = x, consFMEs = EmptyFME}
 updateFMEs f x []              fmes = fmes { nilFMEs  = f $ nilFMEs fmes }
 updateFMEs f x (e:es)          fmes = fmes { consFMEs = updateFME (updateFMEs f x es) EmptyFMEs e $ consFMEs fmes }
 emptyFME = FME{ existentialFME = IntMap.empty, universalFME = [], conApFME = IntMap.empty }
@@ -79,7 +79,7 @@ unifyFME' x@(C _ _sz (c Types.::: _) xs) fme s = matchExistential ++ matchConstr
                              , subst <- case lookup k s of Nothing -> [[(k,x)]]
                                                            Just e  -> unify e x
                              ]
-          matchConstr      = case IntMap.lookup (fromIntegral c) (conApFME fme) of 
+          matchConstr      = case IntMap.lookup (fromIntegral c) (conApFME fme) of
                                                                     Nothing   -> []
                                                                     Just fmes -> unifyFMEs xs fmes s
 unifyFMEs :: [Expr b] -> FMExprs a -> Subst b -> [(a, Subst b)]
@@ -100,7 +100,7 @@ assocsFMEs fmes = ([], nilFMEs fmes) : [ (x:xs, v) | (x,fmes') <- assocsFME (con
 valsFME :: FMExpr a -> [a]
 valsFME EmptyFME = []
 valsFME fme = IntMap.elems (existentialFME fme) ++ universalFME fme
-	   ++ [ v  | fmes <- IntMap.elems (conApFME fme), v <- valsFMEs fmes ]
+     ++ [ v  | fmes <- IntMap.elems (conApFME fme), v <- valsFMEs fmes ]
 valsFMEs :: FMExprs a -> [a]
 valsFMEs EmptyFMEs = []
 valsFMEs fmes = nilFMEs fmes : [ v | fmes' <- valsFME (consFMEs fmes), v <- valsFMEs fmes' ]
@@ -115,7 +115,7 @@ matchFME' (E {}) fme s = [ (x, s) | x <- valsFME fme ] -- ただし，matchFME (
 matchFME' x@(U{}) fme s = matchExistential x fme s
 -- Constractor applications can match to both existentials and constructor applications with the same constructor.
 matchFME' x@(C _ _sz (c Types.::: _) xs) fme s = matchExistential x fme s ++ matchConstr
-    where matchConstr = case IntMap.lookup (fromIntegral c) (conApFME fme) of 
+    where matchConstr = case IntMap.lookup (fromIntegral c) (conApFME fme) of
                                                                Nothing   -> []
                                                                Just fmes -> matchFMEs xs fmes s
 matchExistential x fme s = [ (v, subst `plusSubst` s)

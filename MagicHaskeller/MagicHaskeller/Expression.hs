@@ -90,6 +90,7 @@ instance Expression CoreExpr where
     replaceVars' = replaceVarsCE'
     decodeVars = const decodeVarsCE
 instance Expression AnnExpr where
+    --repacleVars = undefined
     mkHead reduce lenavails numcxts arity ce = mkHeadAE reduce (fromIntegral lenavails) (fromIntegral numcxts) (fromIntegral arity) ce
     toCE ae@(AE ce _)                  = ce
     fromCE                          = toAnnExpr

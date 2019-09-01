@@ -90,6 +90,9 @@ initCommon opts totals = let
                          in Cmn { opt = optunit
                                 , tcl = tyconlib
                                 , rt = mkRandTrie (nrands opts) tyconlib (stdgen opts)
+                                , vl = undefined
+                                , pvl = undefined
+                                , vpl = undefined
                                 }
 -- | 'updateCommon' can be used for incremetal learning
 updateCommon :: [PD.Dynamic] -> [PD.Dynamic] -> [Int] -> Common -> Common

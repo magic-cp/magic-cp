@@ -1,4 +1,4 @@
--- 
+--
 -- (C) Susumu Katayama
 --
 {-# LANGUAGE CPP #-}
@@ -27,7 +27,7 @@ import Data.Int
 import Data.Word
 
 -- | function specification by examples.
-data Fun a = BKF {maxNumBVs :: Int, arity :: Int, iopairs :: [IOPair a], fmexpr :: FMExpr [IOPair a]} -- ^ the function is really a background knowledge (and thus there is no need for loop check)     
+data Fun a = BKF {maxNumBVs :: Int, arity :: Int, iopairs :: [IOPair a], fmexpr :: FMExpr [IOPair a]} -- ^ the function is really a background knowledge (and thus there is no need for loop check)
            | Rec {maxNumBVs :: Int, arity :: Int, iopairs :: [IOPair a], fmexpr :: FMExpr [IOPair a], toBeSought :: TBS} -- ^ it is actually a recursive call.
 mkBKFun          iops@(iop:_) = BKF {maxNumBVs = maximum $ map numUniIDs iops, arity = length $ inputs iop, iopairs = iops, fmexpr = iopsToFME iops}
 mkRecFun ari tbs iops@(iop:_) = Rec {maxNumBVs = maximum $ map numUniIDs iops, arity = ari, iopairs = iops, fmexpr = iopsToVisFME tbs iops, toBeSought = tbs} -- arity = filter id tbs, but it is usually know beforehand
@@ -49,7 +49,7 @@ analyticSynthAndInfType tcl vl target bkdec
                let (bknames, bktiopss) = unzip bktups
                    (bkiopss, bktypes)  = unzipTyped bktiopss
                    target = mkRecFun aritar tbs iops
-                   tbs = replicate aritar True                   
+                   tbs = replicate aritar True
                    aritar = length $ inputs iop
                    aritar8 = fromIntegral aritar
                    bk = reverse $ zipWith (Types.:::) (map mkBKFun $ bkiopss) bktypes
@@ -67,15 +67,15 @@ fastAnalSynthNoUniT bk tfun@(fun Types.::: _) | any hasExistential $ map output 
 fastAnalSynthmNoUniT bk tfun
     = others `mplus` delay bkRelated
   where newbk = tfun : bk
-        bkRelated = headSpine analSynthNoUniT introBKm newbk tfun 
+        bkRelated = headSpine analSynthNoUniT introBKm newbk tfun
         others    = headSpine fastAnalSynthNoUniT (introConstr +++ introVarm +++ ndelayIntro 2 introCase) newbk tfun
 
 analSynthNoUniT bk tfun
   = headSpine analSynthNoUniT (introConstr +++ introVarm' +++ ndelayIntro 2 introCase +++ ndelayIntro 1 introBKm) (tfun:bk) tfun
 
 {-
-The following definition of analSynth should work even if 
-- existential variables are included in BK or in Fun, e.g. a function binding 
+The following definition of analSynth should work even if
+- existential variables are included in BK or in Fun, e.g. a function binding
   f a = b
   is included
   or
@@ -90,14 +90,14 @@ analSynth bk tfun@(fun Types.::: _) | any hasExistential $ map output $ iopairs 
 analSynthm bk tfun
     = others `mplus` delay bkRelated
   where newbk = tfun : bk
-        bkRelated = headSpine analSynth introBKm newbk tfun 
+        bkRelated = headSpine analSynth introBKm newbk tfun
         others    = headSpine analSynthm (introConstr +++ introVarm +++ ndelayIntro 2 introCase) newbk tfun
-headSpine rec intro bk tfun 
+headSpine rec intro bk tfun
   = do (hd, subfuns, mbpivot) <- intro bk tfun
        subexps <- mapM (\subfun -> let arisub = fromIntegral $ arity $ Types.typee subfun :: Int8 in fmap (\e -> Fix e arisub (mkArgs mbpivot arisub)) $ rec bk subfun)  subfuns
        return (hd subexps)
 #ifdef DEBUG
-headSpine_debug rec trs intro bk tfun 
+headSpine_debug rec trs intro bk tfun
   = do (hd, subfuns, mbpivot) <- intro bk tfun
        subexps <- zipWithM (\tr subfun -> let arisub = fromIntegral $ arity $ Types.typee subfun in fmap (\e -> Fix e arisub (mkArgs mbpivot arisub)) $ rec tr bk subfun) trs subfuns
        return (hd subexps)
@@ -106,7 +106,7 @@ headSpine_debug rec trs intro bk tfun
 analSynthUTm :: Search m => BK a -> Types.Typed (Fun a) -> UniT a m CoreExpr
 -- analSynthm ([], _, _) = mzero -- If there is no example, nothing can be done. (But is this line necessary?)
 analSynthUTm bk (fun Types.::: ty)
-    = do 
+    = do
          s <- gets subst
          let aptfun = applyFun s fun Types.::: ty
              newbk  = aptfun : bk
@@ -125,7 +125,7 @@ analyticSynthNoUniT_debug tree tcl vl target bkdec
                let (bknames, bktiopss) = unzip bktups
                    (bkiopss, bktypes)  = unzipTyped bktiopss
                    target = mkRecFun aritar tbs iops
-                   tbs = replicate aritar True                   
+                   tbs = replicate aritar True
                    aritar = length $ inputs iop
                    bk = reverse $ zipWith (Types.:::) (map mkBKFun $ bkiopss) bktypes
                in (fmap (\e -> napply (length bktups) FunLambda $ napply aritar Lambda (Fix e aritar [aritar-1, aritar-2..0])) $   --  $ Fix e $ map X [arity-1, arity-2 .. 0]) $     -- 本当はこの結果のそれぞれに bknamesを適用したいのだが，bknamesなHValueがないので.... てゆーか，Expなら作れる．CoreExprも，BKが全部VarLibにはいっていれば作れる．
@@ -190,7 +190,7 @@ introAny     =          introConstr +++ {- +/ -} (
 (+/) :: MonadPlus m => IntroUniT a [] -> IntroUniT a m -> IntroUniT a m
 m +/ n = \bk iops ->
          do st <- get
-       	    case runStateT (m bk iops) st of [] -> n bk iops
+            case runStateT (m bk iops) st of [] -> n bk iops
                                              ts -> StateT $ \_ -> msum $ map return ts
 liftList :: MonadPlus m => StateT s [] a -> StateT s m a
 liftList = mapStateT (msum . map return)
@@ -231,7 +231,7 @@ introVar cmp _ (fun Types.::: ty)
                     return (const (X ix), [], Nothing)
 
 introConstr bk (fun Types.::: ty)
-    = let argtys = Types.getArgs ty 
+    = let argtys = Types.getArgs ty
           iops   = iopairs fun
       in
       case [ output iop | iop <- iops ] of
@@ -244,7 +244,7 @@ introConstr bk (fun Types.::: ty)
         _                        -> mzero
 divideIOP (IOP bvs ins out) = map (IOP bvs ins) $ fields out -- The actual number of buondVars may reduce, but not updating the field would not hurt.
 
-shareConstr (C _ _ (cid Types.::: _) _ : iops) = all (`sConstrIs` cid) iops 
+shareConstr (C _ _ (cid Types.::: _) _ : iops) = all (`sConstrIs` cid) iops
 shareConstr _                = False
 -- typeが違うと同じcidを異なるconstructorで使い得る場合，typeごと比較する必要があるが，現在はそうではないので．
 C _ _ (c Types.::: _) _ `sConstrIs` cid = cid==c
@@ -266,9 +266,9 @@ introCase bk (fun Types.::: ty) = msum $ reverse $ zipWith introCase' [0..] $ se
                          Int              -- ^ the pivot position
                          -> ([Expr a],TBS)  -- ^ (the pivot expression for each I/O pair, the next TBS)
                          -> m ([CoreExpr] -> CoreExpr, [Types.Typed (Fun a)], Maybe Int)
-          -}          
+          -}
           introCase' pos (pivots, tbs) -- includes variable cases. Overlapping patterns are not supported yet.
-              = case mapM maybeCtor pivots of 
+              = case mapM maybeCtor pivots of
                   Nothing -> mzero
                   Just ctors
                       -> let
@@ -281,7 +281,7 @@ introCase bk (fun Types.::: ty) = msum $ reverse $ zipWith introCase' [0..] $ se
                                             (zipWith (\(constr, (_, (pivot,_):_)) ce -> (fromIntegral constr, genericLength (fields pivot), ce))
                                                      ts
                                                      ces)
-                             iopss  = [ Rec { maxNumBVs  = maxNumBVs fun, 
+                             iopss  = [ Rec { maxNumBVs  = maxNumBVs fun,
                                               arity      = arifun-1+lenflds,
                                               iopairs    = iops,
                                               fmexpr     = iopsToVisFME newtbs iops,
@@ -301,20 +301,20 @@ dropNth pos bs = case splitAt pos bs of (tk,_:dr) -> tk ++ dr
 
 introBKm   bk tfun = fromMx $ toMx $ introBK subtractIOPairsFromIOPairsBKm subtractIOPairsFromIOPairsm bk tfun
 introBKUTm bk tfun = liftList $ introBK (const subtractIOPairsFromIOPairsBKUTm) (const subtractIOPairsFromIOPairsUTm) bk tfun
-introBK subBK sub bk (fun Types.:::ty) = do          
+introBK subBK sub bk (fun Types.:::ty) = do
                               let (argtys, retty) = Types.splitArgs ty
                               (ix, bkfun Types.::: bkty) <- msum $ map return $ tail $ zip [0..] bk
                                               -- The tail function here is used to avoid generating expressions like
                                               -- fix (\fa x1 ... xn -> fa ...).
-                                              -- Such expressions would be excluded by the loop checker even without the tail function, 
+                                              -- Such expressions would be excluded by the loop checker even without the tail function,
                                               -- but we exclude them beforehand for efficiency reasons.
                               let (bkargtys, bkretty) = Types.splitArgs bkty
                               substy <- Types.match bkretty retty
                               iopss <- case bkfun of BKF{maxNumBVs=addendum} -> subBK (-addendum) (iopairs fun) bkfun
                                                      Rec{maxNumBVs=addendum} -> sub (-addendum) initTS fun bkfun
                               return (foldl (:$) (FunX ix),
-                                      [ setIOPairs iops fun Types.::: tys 
-                                      | iops Types.::: tys <- reverse $ 
+                                      [ setIOPairs iops fun Types.::: tys
+                                      | iops Types.::: tys <- reverse $
                                                               zipWith (\x retty -> x Types.::: Types.popArgs argtys retty)
                                                                       (transpose iopss)
                                                                       (map (Types.apply substy) bkargtys) ],
@@ -327,7 +327,7 @@ subtractIOPairsFromIOPairsBKUTm :: MonadPlus m => [IOPair a] -> (Fun a) -> UniT 
 subtractIOPairsFromIOPairsBK funs bks = foldr (liftM2 (:)) (return []) $ map (flip subtractIOPairs bks) funs
 -}
 subtractIOPairsFromIOPairsBKUTm []         bkf = return []
-subtractIOPairsFromIOPairsBKUTm (fun:funs) bkf = do 
+subtractIOPairsFromIOPairsBKUTm (fun:funs) bkf = do
                                                  iops <- subtractIOPairsBKUTm fun bkf
                                                  iopss <- subtractIOPairsFromIOPairsBKUTm funs bkf -- iopsは，subfunctionが複数あって，それらsubfunctionsのそれぞれに関してIOPair1個ずつに過ぎない．
                                                  return (iops:iopss)
@@ -340,7 +340,7 @@ subtractIOPairs fun bkpairs = [ iops | bk <- bkpairs, iops <- subtractIOPair fun
 -}
 subtractIOPairsBKUTm :: MonadPlus m => IOPair a -> (Fun a) -> UniT a m [IOPair a] -- 内側リストの基数はfunのarity, 外側はbkのIO pairのうちmatchするのはいくつあるか
                                                     -- てゆーか，内側はbkのarityでは？
-subtractIOPairsBKUTm tgt bkf = do 
+subtractIOPairsBKUTm tgt bkf = do
                                s <- gets subst
                                let aptgt = applyIOP  s tgt
                                    apbkf = applyIOPs s $ iopairs bkf
@@ -398,16 +398,16 @@ subtractIOPairsFromIOPairsmFME :: Int -> TermStat -> Int -> [IOPair a] -> Fun a 
 subtractIOPairsFromIOPairsBK funs bks = foldr (liftM2 (:)) (return []) $ map (flip subtractIOPairs bks) funs
 -}
 subtractIOPairsFromIOPairsmFME addendum ts ary []         bkf offset = return []
-subtractIOPairsFromIOPairsmFME addendum ts ary (fun:funs) bkf offset = do 
+subtractIOPairsFromIOPairsmFME addendum ts ary (fun:funs) bkf offset = do
                                                  (iops,newts) <- subtractIOPairsmFME ts ary fun bkf offset
                                                  iopss <- subtractIOPairsFromIOPairsmFME addendum newts ary funs bkf (offset+addendum) -- iopsは，subfunctionが複数あって，それらsubfunctionsのそれぞれに関してIOPair1個ずつに過ぎない．
                                                  return (iops:iopss)
 -- Applying substitutions to funs is not currently necessary (because funs does not include existential variables), but that will be useful in future versions which fill gaps of input examples.
 
 subtractIOPairsmFME :: TermStat -> Int -> IOPair a -> Fun a -> Int -> [([IOPair a], TermStat)] -- 返り値の[IOPair]は各引数に対応
-subtractIOPairsmFME ts ary tgtiop bkf offset 
+subtractIOPairsmFME ts ary tgtiop bkf offset
   = case output tgtiop of E{}  -> [(replicate (arity bkf) tgtiop, ts)] -- targetの返り値が単にexistential variableの場合，使われないのでなんでもよい．が，arityを揃える必要がある．
-                          tgto -> do 
+                          tgto -> do
                                 let vistgt = reverse $ visibles (reverse $ toBeSought bkf) $ reverse $ inputs tgtiop
                                 visbkis <- unifyingIOPairs tgto (fmexpr bkf) offset
                                 let iops = [ tgtiop{output=o} | o <- visbkis ]
@@ -415,8 +415,8 @@ subtractIOPairsmFME ts ary tgtiop bkf offset
                                 guard $ evalTS newts
 --                                guard $ lessExprss (reverse bkis) (reverse apis)
                                 return (iops, newts)
-                                
-                                
+
+
 subtractIOPairsFromIOPairsBKm :: Int -- maxNumBVsでゲットできる値．
                                  -> [IOPair a] -> (Fun a) -> [] [[IOPair a]]
 subtractIOPairsFromIOPairsBKm addendum tgt bkf = subtractIOPairsFromIOPairsBKmFME addendum tgt (iopsToFME $ iopairs bkf) addendum
@@ -425,16 +425,16 @@ subtractIOPairsFromIOPairsBKmFME :: Int -> [IOPair a] -> FMExpr [IOPair a] -> In
 subtractIOPairsFromIOPairsBK funs bks = foldr (liftM2 (:)) (return []) $ map (flip subtractIOPairs bks) funs
 -}
 subtractIOPairsFromIOPairsBKmFME addendum []         bkf offset = return []
-subtractIOPairsFromIOPairsBKmFME addendum (fun:funs) bkf offset = do 
+subtractIOPairsFromIOPairsBKmFME addendum (fun:funs) bkf offset = do
                                                  iops <- subtractIOPairsBKmFME fun bkf offset
                                                  iopss <- subtractIOPairsFromIOPairsBKmFME addendum funs bkf (offset+addendum) -- iopsは，subfunctionが複数あって，それらsubfunctionsのそれぞれに関してIOPair1個ずつに過ぎない．
                                                  return (iops:iopss)
 -- Applying substitutions to funs is not currently necessary (because funs does not include existential variables), but that will be useful in future versions which fill gaps of input examples.
-                              
-                                
-                                
+
+
+
 subtractIOPairsBKmFME :: IOPair a -> FMExpr [IOPair a] -> Int -> [] [IOPair a] -- 返り値の[IOPair a]は各引数に対応
-subtractIOPairsBKmFME tgtiop bkfme offset = do 
+subtractIOPairsBKmFME tgtiop bkfme offset = do
                                 visbkis <- unifyingIOPairs (output tgtiop) bkfme offset
                                 return [ tgtiop{output=o} | o <- visbkis ]
 

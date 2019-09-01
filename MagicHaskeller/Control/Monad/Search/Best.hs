@@ -1,4 +1,4 @@
--- 
+--
 -- (c) Susumu Katayama
 --
 
@@ -42,8 +42,13 @@ instance MonadPlus Best where
     Delay b      `mplus` Delay c      = Delay $ b `mplus` c
 instance Delay Best where
     delay = Delay
+    getDepth = undefined
 
 instance Search  Best where
+    fromDB = undefined
+    toDF = undefined
+    mapDepth = undefined
+    ifDepth = undefined
     fromRc             = fromMx . toMx
     toRc               = toRc   . toMx
     fromMx (Mx xss)    = fromLists xss

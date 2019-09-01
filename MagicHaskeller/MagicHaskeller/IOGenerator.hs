@@ -1,4 +1,4 @@
--- 
+--
 -- (c) Susumu Katayama
 --
 {-# LANGUAGE FlexibleInstances, UndecidableInstances, OverlappingInstances, IncoherentInstances #-}
@@ -52,7 +52,7 @@ showIOPairsWithFormsHTML mypath predicate
       in showIOPairsHTML' (showIOPairWithFormHTML beginForm)
 showIOPairsHTML' :: (Int -> ShownIOPair -> String) -> String -> [ShownIOPair] -> String
 showIOPairsHTML' shower funname iopairs
-  = concat $ map (("<tr align=left cellspacing=20><td><font size=1 color='#888888'>&amp;&amp;</font>&nbsp;</td><td>"++) . (funname++) . shower boxSize) {- (nubSortedOn iopairToInputs -} iopairs -- Instead, nubOn is applied to showArbitraries.  
+  = concat $ map (("<tr align=left cellspacing=20><td><font size=1 color='#888888'>&amp;&amp;</font>&nbsp;</td><td>"++) . (funname++) . shower boxSize) {- (nubSortedOn iopairToInputs -} iopairs -- Instead, nubOn is applied to showArbitraries.
   where boxSize  = maximum $ 20 : map length (snd $ unzip iopairs)
 
 nubOn  f = map snd . nubBy ((==) `on` fst) . map (\x -> (f x, x))
@@ -196,13 +196,13 @@ instance (ShowArbitrary a, ShowArbitrary b) => ShowArbitrary (Either a b) where
 -- ほんとはもっとランダムにすべきではある．2本Eitherがある場合，同じarbitraries::[Bool]を共有するので，同じ箇所でLeftやRightになる．
 mapSA str fun (f,x) =  (\annotater -> showParen True ((str++) . f annotater), fun x)
 instance (ShowArbitrary a, ShowArbitrary b) => ShowArbitrary (a, b) where
-      showArbitraries = zipWith (\(f1,x1) (f2,x2) -> (\annotater -> ('(':) . f1 annotater . (',':) . f2 annotater . (')':), (x1,x2))) 
-                                (skip 1 showArbitraries) 
+      showArbitraries = zipWith (\(f1,x1) (f2,x2) -> (\annotater -> ('(':) . f1 annotater . (',':) . f2 annotater . (')':), (x1,x2)))
+                                (skip 1 showArbitraries)
                                 (skip 1 $ drop 1 showArbitraries)
 instance (ShowArbitrary a, ShowArbitrary b, ShowArbitrary c) => ShowArbitrary (a, b, c) where
-      showArbitraries = zipWith3 (\(f1,x1) (f2,x2) (f3,x3) -> (\annotater -> ('(':) . f1 annotater . (',':) . f2 annotater . (',':) . f3 annotater . (')':), (x1,x2,x3))) 
-                                 (skip 2 showArbitraries) 
-                                 (skip 2 $ drop 1 showArbitraries) 
+      showArbitraries = zipWith3 (\(f1,x1) (f2,x2) (f3,x3) -> (\annotater -> ('(':) . f1 annotater . (',':) . f2 annotater . (',':) . f3 annotater . (')':), (x1,x2,x3)))
+                                 (skip 2 showArbitraries)
+                                 (skip 2 $ drop 1 showArbitraries)
                                  (skip 2 $ drop 2 showArbitraries)
 -- leap frog
 skip n (x:xs) = x : skip n (drop n xs)
@@ -217,7 +217,7 @@ chopBy is     xs = cb is $ cycle xs
 cvt :: [(AnnShowS,a)] -> (AnnShowS, [a])
 cvt ts = case unzip ts of (fs, xs) -> (showsList fs, xs)
 
-showsList fs@(f:_) | head (f id "") == '\'' -- The String case is dealt with here. I use overlapping instances only conservatively. The drawback is that "" is still printed as []. 
+showsList fs@(f:_) | head (f id "") == '\'' -- The String case is dealt with here. I use overlapping instances only conservatively. The drawback is that "" is still printed as [].
                        = const $ shows (map (\fun -> read $ fun id "") fs :: String)
 showsList fs       = \annotater -> ('[':) . foldr (.) (']':) (intersperse (',':) $ map ($ annotater) fs)
 
@@ -226,7 +226,7 @@ instance (Typeable a, Typeable b) => ShowArbitrary (a->b) where
 
 generateIOPairsFun :: (Ord a, Show a, Arbitrary a, IOGenerator b) => Bool -> (a->b) -> [ShownIOPair]
 -- generateFun     b f = [ ' ' : showParen b (shows a) s | a <- uniqSort $ take 5 arbitraries, s <- generate (f a) ]
-generateIOPairsFun b f = [ (const (showParen b (shows a)) : args, ret) 
+generateIOPairsFun b f = [ (const (showParen b (shows a)) : args, ret)
                          | a <- uniqSort $ take 5 arbitraries
                          , (args, ret) <- generateIOPairs (f a) ]
 

@@ -1,4 +1,4 @@
--- 
+--
 -- (c) Susumu Katayama
 --
 module MagicHaskeller.ShortString where
@@ -30,6 +30,7 @@ instance ShortString a => ShortString [a] where
                                                               (xs,es) <- readsBriefly ds
                                                               return (x:xs, es)
 instance ShortString Bool where
+    readsBriefly = undefined
     showsBriefly True   = LC.cons 'T'
     showsBriefly False  = LC.cons 'F'
 instance ShortString CoreExpr where

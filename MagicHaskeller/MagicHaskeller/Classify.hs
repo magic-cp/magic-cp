@@ -1,4 +1,4 @@
--- 
+--
 -- (c) Susumu Katayama
 --
 {-# LANGUAGE MagicHash, CPP #-}
@@ -6,7 +6,7 @@ module MagicHaskeller.Classify(randomTestFilter, filterBF, filterRc, filterDB --
                , ofilterDB, opreexecute, CmpBot, cmpBot, cmpBotIO -- used by ClassifyDM.hs
                , FiltrableBF
                ) where
-#define CHTO
+-- #define CHTO
 import Control.Monad.Search.Combinatorial
 -- import Types(Subst) -- Substにspecializeする必要はないけど．
 import Data.Maybe
@@ -144,7 +144,7 @@ liftCmp len cmp (x:xs) (y:ys) = trace "liftCmp" $
                                    case cmp x y of
                                                 EQ -> trace "just eq" $
                                                            liftCmp (len-1) cmp xs ys
-                                                c       -> trace "otherwise" 
+                                                c       -> trace "otherwise"
                                                            c
 
 liftCompareBot :: Int -> CmpBot a -> ([a],e) -> ([a],e) -> Maybe Ordering
@@ -161,7 +161,7 @@ liftCmpBot' len cmp (x:xs) (y:ys) = trace "liftCmpBot" $
                                    case unsafePerformIO $ maybeWithTO pto $ return $ cmp x y of
                                                 Just EQ -> trace "just eq" $
                                                            liftCmpBot' (len-1) cmp xs ys
-                                                c       -> trace "otherwise" 
+                                                c       -> trace "otherwise"
                                                            c
 -}
 cmpBot (cmp,pto) x y = unsafeWithPTOOpt pto $ cmp x y
@@ -202,7 +202,7 @@ eqClsBy_naive cmp (Mx xss) = Mx $ zipWith (\dep ys -> ys /// liftCompareBot dep 
 {- 多少効率化しようかとも思ったけど，とりあえずは本当にnaiveにやる
 eqClsBy_naive cmp mx =         scanl (mergeBy cmp) (eqClsByFstNs cmp mx)
 
-scanlx cmp [a0,a1,...] = [a0, mergeBy 
+scanlx cmp [a0,a1,...] = [a0, mergeBy
 -}
 
 
@@ -216,7 +216,7 @@ tcnrnds tup = map (fcnrnd tup) [1..]
 
 -- repEqClsBy cmp = [([k]の最初の1個のみを見たときの同値類分解の代表元たち), ([k]の最初の2個のみを見たときの同値類分解の代表元たち), ([k]の最初の3個のみを見たときの同値類分解の代表元たち), ....]
 repEqClsBy :: CmpBot k -> Matrix ([k],e) -> Matrix ([k],e)
-repEqClsBy cmp = trace "repEqClsBy" . 
+repEqClsBy cmp = trace "repEqClsBy" .
                  fmap head . eqClsBy cmp
 -- eqClsByの結果の深さn番目には，[k]の最初のn個をcmpで比較したときの同値関係による同値類分解が入っている．
 -- x 深さ1でサイズ1なやつらを同値類分解 : 深さ1での分解結果を2文字目で同値類分解したヤツと，サイズ2のやつらを2文字分見て同値類分解したやつらをマージ : 深さ2での分解結果を3文字目で同値類分解した奴と，....

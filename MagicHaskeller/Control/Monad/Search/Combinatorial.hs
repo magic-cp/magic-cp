@@ -8,7 +8,7 @@
 
 {-# OPTIONS -cpp -XUndecidableInstances -XMultiParamTypeClasses -XTypeSynonymInstances #-}
 module Control.Monad.Search.Combinatorial(Matrix(..), (/\), (\/), Recomp(..), RecompT(..), rcToMx, mxToRc, Search(..), diag, Delay(..), msumMx, msumRc, listToRc, consMx, consRc, zipWithBF, printMx, printNMx, {- filterMx, -} mapDepthDB,
-                               Bag, Stream, cat, toList, getDepth, scanl1BF, zipDepthMx, zipDepthRc, zipDepth3Mx, zipDepth3Rc, scanlRc,
+                               Bag, Stream, cat, toList, scanl1BF, zipDepthMx, zipDepthRc, zipDepth3Mx, zipDepth3Rc, scanlRc,
                                DBound(..), DBoundT(..), zipDepthDB, DBMemo(..), Memoable(..), shrink, DB, dbtToRcT) where
 import Control.Monad -- hiding (join) -- ... but still collided when using Hat.
 import Control.Applicative -- necessary for backward compatibility
@@ -245,6 +245,7 @@ class Delay m where
     getDepth :: m Int
 
 instance Delay DepthFst where
+    getDepth = undefined
     delay    = id
     ndelay _ = id
 instance Delay Recomp where
@@ -261,12 +262,14 @@ instance Delay Matrix where
     getDepth = fromRc getDepth
 
 instance Monad m => Delay (RecompT m) where
+    getDepth = undefined
     delay (RcT f) = RcT g where g 0 = return mempty
                                 g n = f (n-1)
     ndelay i (RcT f) = RcT g where g n | n < i     = return mempty
                                        | otherwise = f (n-i)
 
 instance (Monad m, Delay m) => Delay (StateT s m) where
+         getDepth = undefined
          delay    = mapStateT delay
          ndelay n = mapStateT (ndelay n)
 
@@ -424,6 +427,7 @@ instance Delay DBound where
     ndelay i (DB p) = DB $ \n -> if n<i then [] else p (n-i)
     getDepth = DB $ \n -> [ (d, n-d) | d <- [0..n] ]
 instance Monad m => Delay (DBoundT m) where
+    getDepth = undefined
     delay (DBT p) = DBT $ \n -> case n of 0   -> return []
                                           n   -> p (n-1)
     ndelay i (DBT p) = DBT $ \n -> if n<i then return [] else p (n-i)

@@ -89,6 +89,7 @@ instance (Functor m, MonadPlus m) => MonadPlus (PriorSubsts m) where
     mzero = PS (\_ _->mzero)
     mplus = distPS mplus
 instance Delay m => Delay (PriorSubsts m) where
+  getDepth = undefined
   delay (PS f) = PS $ \s i -> delay $ f s i
 
 instance Semigroup a => Semigroup (PriorSubsts [] a) where
