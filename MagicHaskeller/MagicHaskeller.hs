@@ -124,6 +124,8 @@ module MagicHaskeller(
 #endif
        -- other stuff which will not be documented by Haddock
        unsafeCoerce#, {- unifyablePos, -} exprToTHExp, trToTHType, printAny, p1, Filtrable, zipAppend, mapIO, fpIO, fIO, fpartial, fpartialIO, ftotalIO, etup, mkCurriedDecls
+
+      , refmemodeb
       ) where
 
 import Data.Generics(everywhere, mkT, Data)

@@ -325,6 +325,14 @@ matchFuns' rec md@(PGSFIOR _ (CL classLib, _, (_,(primgen,primmono)),cmn)) avail
           mapSum ((    if tv0 $ opt cmn then retGenTV0 else
                         if tv1 $ opt cmn then retGenTV1 else retGenOrd) cmn lenavails fe clbehalf lltbehalf behalf reqret) primgen
 
+{-# SPECIALIZE matchAssumptions :: (Functor m, MonadPlus m) => Common -> Int -> Type -> [Type] -> PriorSubsts m [CoreExpr] #-}
+matchAssumptions :: (Functor m, MonadPlus m, Expression e) => Common -> Int -> Type -> [Type] -> PriorSubsts m [e]
+matchAssumptions cmn lenavails reqty assumptions
+    = do s <- getSubst
+         let newty = apply s reqty
+             (numcxts, arity) = getArities newty
+         msum $ zipWith (\n t -> matchPS newty t >> return [mkHead (reducer cmn) lenavails numcxts arity (X n)]) [0..] assumptions
+
 lookupListrie :: (Search m, Expression e) => Int -> Generator m e -> Generator m e
 lookupListrie lenavails rec memodeb@(PGSFIOR _ (_,_,_,cmn)) avail t
                                     | constrL opts = matchAssumptions cmn lenavails t avail

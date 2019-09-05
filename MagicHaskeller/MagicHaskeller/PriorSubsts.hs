@@ -176,15 +176,15 @@ freshInst ty = do tv <- reserveTVars $ maxVarID ty + 1
                   return $ mapTV (tv+) ty
 {-
 freshInst ty = do let tvs = tyvars ty
-		  ntvs <- mapM (const newTVar) tvs
-		  let ar = array (0,maxVarID ty) (zip (map tvID tvs) ntvs)
-		  return (inst ar ty)
+      ntvs <- mapM (const newTVar) tvs
+      let ar = array (0,maxVarID ty) (zip (map tvID tvs) ntvs)
+      return (inst ar ty)
     where inst :: Array Int TyVar -> Type -> Type
-	  -- inst ar = mapTV (\tv -> ar ! tvID tv) -- mapTVはType.lhsからexportしない方が良さそうなので．てゆーか単に，Type.unifyFunAp(QTy)でmapTV相当のものを実装すれば良いのか？
-	  inst ar (TA l r) = TA (inst ar l) (inst ar r)
-	  inst ar (l:->r)  = inst ar l :-> inst ar r
-	  inst ar (TV tv)  = TV (ar ! tvID tv)
-	  inst _  t@(TC _) = t
+ -- inst ar = mapTV (\tv -> ar ! tvID tv) -- mapTVはType.lhsからexportしない方が良さそうなので．てゆーか単に，Type.unifyFunAp(QTy)でmapTV相当のものを実装すれば良いのか？
+    inst ar (TA l r) = TA (inst ar l) (inst ar r)
+    inst ar (l:->r)  = inst ar l :-> inst ar r
+    inst ar (TV tv)  = TV (ar ! tvID tv)
+    inst _  t@(TC _) = t
 -}
 
 

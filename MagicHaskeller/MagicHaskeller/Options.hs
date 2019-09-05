@@ -129,7 +129,7 @@ options = Opt{ primopt = Nothing
              , execute = unsafeExecute
              , timeout = Just 20000
              , forcibleTimeout = False
-             , guess   = False
+             , guess   = True
              , contain = True
              , constrL = False
              , tvndelay = 1

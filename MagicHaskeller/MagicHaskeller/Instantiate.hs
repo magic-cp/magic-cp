@@ -185,7 +185,8 @@ type CmpMap = (MapTC Dynamic, SpecialMap, Dynamic)
 
 
 mkMap :: TyConLib -> [[(String,a)]] -> MapTC a
-mkMap tcl@(mapNameTyCon,_) mcts = IntMap.fromAscList $ zip [0..] $ map (IntMap.fromList . map (\ (name, dyn) -> (fromIntegral (mapNameTyCon Map.! name),  dyn))) mcts
+mkMap tcl@(mapNameTyCon,_) mcts = undefined
+--mkMap tcl@(mapNameTyCon,_) mcts = IntMap.fromAscList $ zip [0..] $ map (IntMap.fromList . map (\ (name, dyn) -> (fromIntegral (mapNameTyCon Map.! name),  dyn))) mcts
 mkCmpMap :: TyConLib -> CmpMap
 mkCmpMap tcl = (mkMap tcl [mct0, mct1, mct2],
                 mkSpecialMap tcl [("Ratio", "Int",     $(dynamic [|tcl|] [| compareRatio :: Ratio Int -> Ratio Int -> Ordering |])),

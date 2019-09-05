@@ -32,6 +32,9 @@ import Debug.Trace
 
 import MagicHaskeller.MemoToFiles hiding (freezePS,fps)
 
+--import System.IO.Unsafe(unsafePerformIO)
+--import Data.IORef
+
 traceTy _    = id
 --traceTy fty = trace ("lookup "++ show fty)
 
@@ -70,11 +73,42 @@ lookupFunsShared memodeb@(_,mt,_,_) avail reqret
         fromRc $ Rc $ \d -> -- d+1 is the maximum number of arguments to use.
         concat [ let (tn, decoder) = encode (popArgs newavails reqret) mx
                   in map (decodeVarsPos ixs) $ -- applies the new Var Names (X n)
-                     map (\ (exprs, sub, m) -> (exprs, retrieve decoder sub `plusSubst` subst, mx+m)) $ -- apply PS input(?)
-                     (unMx (lmt mt tn) !! d) :: Bag (Possibility CoreExpr)
+                     map (\ (exprs, sub, m) -> (exprs, retrieve decoder sub `plusSubst` subst, mx+m)) -- apply PS input(?)
+                     (unMx (lmt mt tn) !! d) :: [Possibility CoreExpr]
                        | annAvs <- combs (d+1) annAvails,
                          let (ixs, newavails) = unzip annAvs
                ] :: [Possibility CoreExpr])
+
+{- {{{ IORef cnts
+
+{-# NOINLINE luFunShcnt #-}
+luFunShcnt :: IORef Int
+luFunShcnt  = unsafePerformIO (newIORef 0)
+cntluFunShcnt  :: IO ()
+cntluFunShcnt = do
+  modifyIORef luFunShcnt (+1)
+  val <- readIORef luFunShcnt
+  putStrLn $ "luFunShcnt = " ++ show val
+
+{-# NOINLINE pscnt #-}
+pscnt :: IORef Int
+pscnt  = unsafePerformIO (newIORef 0)
+cntpscnt  :: IO ()
+cntpscnt = do
+  modifyIORef pscnt (+1)
+  val <- readIORef pscnt
+  putStrLn $ "pscnt = " ++ show val
+
+{-# NOINLINE dcnt #-}
+dcnt :: IORef Int
+dcnt  = unsafePerformIO (newIORef 0)
+cntdcnt  :: IO ()
+cntdcnt = do
+  modifyIORef dcnt (+1)
+  val <- readIORef dcnt
+  putStrLn $ "dcnt = " ++ show val
+
+}}} -}
 
 {- {{{ wasn't used
 lookupFunsPoly :: (Search m, Expression e) => Generator m e -> Generator m e
@@ -114,18 +148,20 @@ type MemoDeb c a = (c, MemoTrie a, ([[Prim]],[[Prim]]), Common)
 mkTriePG :: Common -> [Typed [CoreExpr]] -> [[Typed [CoreExpr]]] -> ProgGen
 -- mkTriePG cmn [] [[typed prims]]
 mkTriePG cmn classes tces =   let qtl = splitPrimss tces :: ([[Prim]], [[Prim]])
-                                  trie = mkTrieMD (mkCL cmn classes) qtl cmn
+                                  trie = mkTrieMD qtl cmn
                               in PG trie
 mkCL :: Common -> [Typed [CoreExpr]] -> ClassLib CoreExpr
-mkCL cmn classes = CL $ mkTrieMD undefined ([],[map annotateTCEs classes]) cmn
-mkTrieMD :: ClassLib CoreExpr -> ([[Prim]],[[Prim]]) -> Common -> MemoDeb (ClassLib CoreExpr) CoreExpr
-mkTrieMD cl qtl cmn
+mkCL cmn classes | trace (show classes) False = undefined
+mkCL cmn classes = CL $ mkTrieMD ([],[map annotateTCEs classes]) cmn
+
+mkTrieMD :: ([[Prim]],[[Prim]]) -> Common -> MemoDeb (ClassLib CoreExpr) CoreExpr
+mkTrieMD qtl cmn
     = let trie :: MapType (Matrix (Possibility CoreExpr))
           trie = mkMT (tcl cmn)
                       (\ty -> fromRc
                         (let (avail,t) = splitArgs ty
                           in freezePS (length avail) ty (mguFuns memoDeb avail t))) -- :: Type -> Matrix (Possibility CoreExpr)
-          memoDeb = (cl,trie,qtl,cmn)
+          memoDeb = (undefined,trie,qtl,cmn)
        in memoDeb
 
 -- moved from DebMT.lhs to avoid cyclic modules.
@@ -163,6 +199,7 @@ mguPrograms memodeb = applyDo (mguProgs memodeb)
 
 mguProgs memodeb =
   wind (>>= (return . fmap (mapCE Lambda))) (lookupFunsShared memodeb)
+
 -- {{{
 --mguProgs memodeb = wind (>>= (return . fmap Lambda)) (\avail reqret -> reorganize (\newavail -> lookupFunsPoly mguFuns memodeb newavail reqret) avail)
 {- どっちがわかりやすいかは不明
@@ -177,20 +214,23 @@ mguFuns = generateFuns mguPrograms
 generateFuns :: (Search m) =>
                 Generator m CoreExpr                               -- ^ recursive call
                 -> Generator m CoreExpr
-generateFuns rec memodeb@(CL classLib, _, (primgen,primmono),cmn) avail reqret
-    = let clbehalf  = mguPrograms classLib []
+generateFuns rec memodeb@(_, _, (primgen,primmono),cmn) avail reqret
+    = let -- clbehalf  =  mguPrograms classLibmemodeb []
           behalf    = rec memodeb avail
-          lltbehalf = lookupListrie (opt cmn) rec memodeb avail -- heuristic filtration
+          -- lltbehalf = lookupListrie (opt cmn) rec memodeb avail -- heuristic filtration
           lenavails = genericLength avail
 --          fe :: Type -> Type -> [CoreExpr] -> [CoreExpr] -- ^ heuristic filtration
           fe        = filtExprs (guess $ opt cmn)
-          rg  | tv0 $ opt cmn = retGenTV0
-              | tv1 $ opt cmn = retGenTV1
-              | otherwise = retGen
+          rg -- | (trace (show (tv0 $ opt cmn, tv1 $ opt cmn)) False) = undefined
+               | tv0 $ opt cmn = retGenTV0
+               | tv1 $ opt cmn = retGenTV1
+               | otherwise = retGen
       in fromAssumptions cmn lenavails behalf mguPS reqret avail `mplus`
-         mapSum (rg cmn lenavails fe clbehalf lltbehalf behalf reqret) primgen `mplus`
-         mapSum (retPrimMono cmn lenavails clbehalf lltbehalf behalf mguPS reqret) primmono
+         mapSum (rg cmn lenavails fe undefined undefined behalf reqret) primgen `mplus`
+         mapSum (retPrimMono cmn lenavails undefined undefined behalf mguPS reqret) primmono
 
+{- {{{
+lookupListrie opt _ _ _ _ | trace (show $ guess opt) False = undefined
 lookupListrie opt rec memodeb avail t
 --                      | constrL opt = mguAssumptions t avail
                       | guess opt = do args <- rec memodeb avail t
@@ -201,4 +241,4 @@ lookupListrie opt rec memodeb avail t
                                        let args' = filter (not.isConstrExpr.toCE) args
                                        when (null args') mzero
                                        return args'
-
+}}} -}

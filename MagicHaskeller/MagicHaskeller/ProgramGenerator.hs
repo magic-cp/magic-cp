@@ -109,9 +109,11 @@ retsTVar (_, _, TV tv, _, _) = True
 retsTVar _                   = False
 
 annotateTCEs :: Typed [CoreExpr] -> Prim
-annotateTCEs tx@(_:::t) = let (numcs, arity, retty) = getAritiesRet t
-                          in trace ("annotateTCEs" ++ show (t, numcs, arity, retty)) $
-                             (numcs, arity, retty, maxVarID t + 1, tx) -- arity is the shorter arity that does not count contexts.
+annotateTCEs tx@(_:::t) =
+  let (numcs, arity, retty) = getAritiesRet t
+   in
+      --trace ("annotateTCEs" ++ show (t, numcs, arity, retty))
+      (numcs, arity, retty, maxVarID t + 1, tx) -- arity is the shorter arity that does not count contexts.
 
 splitPrims :: [Typed [CoreExpr]] -> ([Prim],[Prim])
 splitPrims = partition retsTVar . map annotateTCEs
@@ -128,10 +130,6 @@ mapSum :: (MonadPlus m, Delay m) => (a -> m b) -> [[a]] -> m b
 mapSum f = foldr (\xs y -> msum (map f xs) `mplus` delay y) mzero
 
 
--- availにしろTypeにしろapplyされている．
--- だからこそ，runAnotherPS的にemptySubstに対して実行した方が効率的なはず？ でも，Substitutionってそんなにでかくならなかったのでは？FiniteMapでもassoc listでも変わらなかった気が．
-
-
 applyDo :: (Functor m, Monad m) => ([Type] -> Type -> PriorSubsts m a) -> [Type] -> Type -> PriorSubsts m a
 applyDo fun avail ty = do subst <- getSubst
                           fun (map (apply subst) avail) (apply subst ty)
@@ -142,16 +140,33 @@ wind g f avail (t0 :-> t1) = g $ wind g f (t0 : avail) t1
 wind _ f avail reqret      = f avail reqret
 
 
-{-# SPECIALIZE fromAssumptions :: (Search m) => Common -> Int -> (Type -> PriorSubsts m [CoreExpr]) -> (Type -> Type -> PriorSubsts m ()) -> Type -> [Type] -> PriorSubsts m [CoreExpr] #-}
-fromAssumptions :: (Search m, Expression e) => Common -> Int -> (Type -> PriorSubsts m [e]) -> (Type -> Type -> PriorSubsts m ()) -> Type -> [Type] -> PriorSubsts m [e]
-fromAssumptions cmn lenavails behalf mps reqret avail = msum $ map (retMono cmn lenavails behalf (flip mps reqret)) (fromAvail avail)
+fromAssumptions
+  :: (Search m)
+   => Common
+   -> Int
+   -> (Type
+   -> PriorSubsts m [CoreExpr])
+   -> (Type -> Type -> PriorSubsts m ())
+   -> Type
+   -> [Type]
+   -> PriorSubsts m [CoreExpr]
+--fromAssumptions cmn lenavails behalf mps reqret avail | trace ("fromAss: " ++ show reqret ++ "   " ++ show avail) False = undefined
+fromAssumptions cmn lenavails behalf mps reqret avail =
+  msum $ map (retMono cmn lenavails behalf (`mps` reqret)) (fromAvail avail)
 
-retMono :: (Search m, Expression e) => Common -> Int -> (Type -> PriorSubsts m [e]) -> (Type -> PriorSubsts m ()) -> (Int8, (Int,[Type],Type)) -> PriorSubsts m [e]
-retMono cmn lenavails behalf tok fromBlah
-                  = do let (n, (arity,args,retty)) = fromBlah
-                       tok retty
+retMono
+  :: (Search m)
+  => Common
+  -> Int
+  -> (Type -> PriorSubsts m [CoreExpr])
+  -> (Type -> PriorSubsts m ())
+  -> (Int8, (Int,[Type],Type))
+  -> PriorSubsts m [CoreExpr]
+-- retMono cmn lenavails behalf tok (n, (arity,args,retty)) | trace ("    retMono: " ++ show retty ++ "  " ++ show args) False = undefined
+retMono cmn lenavails behalf tok (n, (arity,args,retty))
+                  = do tok retty
                        convertPS (ndelay $ fromIntegral arity) $
-                              fap behalf args (map (mkHead (reducer cmn) lenavails 0 arity) [X n])
+                              fap behalf args [X n]
 fromAvail :: [Type] -> [(Int8, (Int,[Type],Type))]
 fromAvail = zipWith (\ n t -> (n, revSplitArgs t)) [0..]
 
@@ -161,13 +176,7 @@ mguAssumptions :: (Functor m, MonadPlus m) => Type -> [Type] -> PriorSubsts m [C
 mguAssumptions  patty assumptions = applyDo mguAssumptions' assumptions patty
 mguAssumptions' assumptions patty = msum $ zipWith (\n t -> mguPS patty t >> return [X n]) [0..] assumptions
 
-{-# SPECIALIZE matchAssumptions :: (Functor m, MonadPlus m) => Common -> Int -> Type -> [Type] -> PriorSubsts m [CoreExpr] #-}
-matchAssumptions :: (Functor m, MonadPlus m, Expression e) => Common -> Int -> Type -> [Type] -> PriorSubsts m [e]
-matchAssumptions cmn lenavails reqty assumptions
-    = do s <- getSubst
-         let newty = apply s reqty
-             (numcxts, arity) = getArities newty
-         msum $ zipWith (\n t -> matchPS newty t >> return [mkHead (reducer cmn) lenavails numcxts arity (X n)]) [0..] assumptions
+
 -- match の場合，通常はreqtyの方だけapply substすればよい．
 
 -- not sure if this is more efficient than doing mguAssumptions and returning ().
@@ -177,21 +186,34 @@ mguAssumptions_' assumptions patty = msum $ map (mguPS patty) assumptions
 
 
 {-# SPECIALIZE retPrimMono ::  (Search m) => Common -> Int -> (Type -> PriorSubsts m [CoreExpr]) -> (Type -> PriorSubsts m [CoreExpr]) -> (Type -> PriorSubsts m [CoreExpr]) -> (Type -> Type -> PriorSubsts m ()) -> Type -> Prim -> PriorSubsts m [CoreExpr] #-}
-retPrimMono :: (Search m, Expression e) => Common -> Int -> (Type -> PriorSubsts m [e]) -> (Type -> PriorSubsts m [e]) -> (Type -> PriorSubsts m [e]) -> (Type -> Type -> PriorSubsts m ()) -> Type -> Prim -> PriorSubsts m [e]
-retPrimMono cmn lenavails clbehalf lltbehalf behalf mps reqret (numcxts, arity, retty, numtvs, xs:::ty)
-                                              = do tvid <- reserveTVars numtvs
-                                                   mps (mapTV (tvid+) retty) reqret
-                                                   convertPS (ndelay $ fromIntegral arity) $
-                                                             funApSub clbehalf lltbehalf behalf (mapTV (tvid+) ty) (map (mkHead (reducer cmn) lenavails numcxts arity) xs)
-funApSub :: (Search m, Expression e) => (Type -> PriorSubsts m [e]) -> (Type -> PriorSubsts m [e]) -> (Type -> PriorSubsts m [e]) -> Type -> [e] -> PriorSubsts m [e]
+retPrimMono
+  :: (Search m, Expression e)
+  => Common
+  -> Int
+  -> (Type -> PriorSubsts m [e]) -- undefined
+  -> (Type -> PriorSubsts m [e]) -- undefined
+  -> (Type -> PriorSubsts m [e])
+  -> (Type -> Type -> PriorSubsts m ())
+  -> Type
+  -> Prim
+  -> PriorSubsts m [e]
+--retPrimMono cmn lenavails _ _ behalf mps reqret (numcxts, arity, retty, numtvs, xs:::ty) | trace (show xs ++ ":::" ++ show ty) False = undefined
+retPrimMono cmn lenavails _ _ behalf mps reqret (numcxts, arity, retty, numtvs, xs:::ty) = do
+       tvid <- reserveTVars numtvs
+       mps (mapTV (tvid+) retty) reqret
+       convertPS (ndelay $ fromIntegral arity) $
+                 funApSub behalf (mapTV (tvid+) ty) (map (fromCE undefined) xs)
+
+funApSub
+  :: (Search m, Expression e)
+  => (Type -> PriorSubsts m [e])
+  -> Type
+  -> [e]
+  -> PriorSubsts m [e]
 funApSub = funApSubOp (<$>)
-funApSubOp op clbehalf lltbehalf behalf = faso
-    where faso (t:=>ts) funs
-              = do args <- clbehalf t
-                   faso ts (liftM2 op funs args)
-          faso (t:> ts) funs
-              = do args <- lltbehalf t
-                   faso ts (liftM2 op funs args)
+funApSubOp op behalf = faso
+    where faso (t:=>ts) funs = undefined
+          faso (t:> ts) funs = undefined
           -- original.
           faso (t:->ts) funs
               = do args <- behalf t
@@ -213,34 +235,46 @@ fap behalf ts funs = do args <- mapM behalf ts
                         return (foldl (liftM2 (<$>)) funs args)
 -}
  -- foldMを使う．なぜかこれが一番速い
+fap :: Monad m => (Type -> PriorSubsts m [CoreExpr]) -> [Type] -> [CoreExpr] -> PriorSubsts m [CoreExpr]
 fap behalf ts funs = foldM (\fs t -> do args <- behalf t
                                         return $ liftM2 (<$>) fs args)
-                           funs
-                           ts
+                            funs
+                            ts
 
 -- fap behalf ts funs = mapAndFoldM (liftM2 (<$>)) funs behalf ts
-mapAndFoldM op n f []     = return n
-mapAndFoldM op n f (x:xs) = do y <- f x
-                               mapAndFoldM op (n `op` y) f xs
+-- mapAndFoldM op n f []     = return n
+-- mapAndFoldM op n f (x:xs) = do y <- f x
+--                               mapAndFoldM op (n `op` y) f xs
 
 
 
 {-# SPECIALIZE retGen :: (Search m) => Common -> Int -> (Type -> Type -> [CoreExpr] -> [CoreExpr]) -> (Type -> PriorSubsts m [CoreExpr]) -> (Type -> PriorSubsts m [CoreExpr]) -> (Type -> PriorSubsts m [CoreExpr]) -> Type -> Prim -> PriorSubsts m [CoreExpr] #-}
 retGen, retGenOrd, retGenTV1
-    :: (Search m, Expression e) => Common -> Int -> (Type -> Type -> [e] -> [e]) -> (Type -> PriorSubsts m [e]) -> (Type -> PriorSubsts m [e]) -> (Type -> PriorSubsts m [e]) -> Type -> Prim -> PriorSubsts m [e]
-retGen cmn lenavails fe clbehalf lltbehalf behalf = retGen' (funApSub clbehalf lltbehalf behalf) cmn lenavails fe clbehalf lltbehalf behalf
-retGen' fas cmn lenavails fe clbehalf lltbehalf behalf reqret (numcxts, arity, _retty, numtvs, xs:::ty)
-                                          = convertPS (ndelay $ fromIntegral arity) $
-                                            do tvid <- reserveTVars numtvs -- この（最初の）IDそのもの（つまり返り値のtvID）はすぐに使われなくなる
-                                               -- let typ = apply (unitSubst tvid reqret) (mapTV (tvid+) ty) -- mapTVとapplyはhylo-fusionできるはずだが，勝手にされる？
-                                               --                                                              -- unitSubstをinlineにしないと駄目か
-                                               a <- mkSubsts (tvndelay $ opt cmn) tvid reqret
-                                               exprs <- funApSub clbehalf lltbehalf behalf (mapTV (tvid+) ty) (map (mkHead (reducer cmn) lenavails numcxts (arity+a)) xs)
-                                               gentvar <- applyPS (TV tvid)
-                                               guard (orderedAndUsedArgs gentvar) -- この辺のcheckをTVnに入る前の早い段階にやるのは1つの考え方だが，TVn中にreplaceされたりはしないのか?
-                                               fas gentvar (fe gentvar ty exprs)
+  :: (Search m, Expression e)
+  => Common
+  -> Int
+  -> (Type -> Type -> [e] -> [e])
+  -> (Type -> PriorSubsts m [e])
+  -> (Type -> PriorSubsts m [e])
+  -> (Type -> PriorSubsts m [e])
+  -> Type
+  -> Prim
+  -> PriorSubsts m [e]
+retGen cmn lenavails fe _ _ behalf = retGen' (funApSub behalf) cmn lenavails fe behalf
+--retGen' fas cmn lenavails fe behalf reqret (numcxts, arity, _, numtvs, xs:::ty) | trace ("retGen: " ++ show xs ++ ":::" ++ show ty) False = undefined
+retGen' fas cmn lenavails fe behalf reqret (numcxts, arity, _, numtvs, xs:::ty)
+  = convertPS (ndelay $ fromIntegral arity) $
+    do tvid <- reserveTVars numtvs
+       -- let typ = apply (unitSubst tvid reqret) (mapTV (tvid+) ty)
+       a <- mkSubsts (tvndelay $ opt cmn) tvid reqret
+       exprs <- funApSub behalf (mapTV (tvid+) ty) (map (fromCE undefined) xs)
+       gentvar <- applyPS (TV tvid)
+       guard (orderedAndUsedArgs gentvar)
+       fas gentvar (fe gentvar ty exprs)
+
 -- retGenOrd can be used instead of retGen, when not reorganizing.
-retGenOrd cmn lenavails fe clbehalf lltbehalf behalf = retGen' (funApSub'' False) cmn lenavails fe clbehalf lltbehalf behalf
+retGenOrd cmn lenavails fe clbehalf lltbehalf behalf = retGen' (funApSub'' False) cmn lenavails fe behalf
+-- retGenOrd cmn lenavails fe clbehalf lltbehalf behalf = retGen' (funApSub'' False) cmn lenavails fe clbehalf lltbehalf behalf
     where
 --                    funApSub'' filtexp (TV _ :-> _)     funs = mzero -- mkSubstsで導入されたtyvarsが使われていないケース．replaceされた結果TVってケースはとりあえず無視....
                     funApSub'' filtexp (t:->ts@(u:->_)) funs
@@ -269,10 +303,10 @@ retGenTV1 cmn lenavails fe clbehalf lltbehalf behalf reqret (numcxts, arity, _re
                                                -- let typ = apply (unitSubst tvid reqret) (mapTV (tvid+) ty) -- mapTVとapplyはhylo-fusionできるはずだが，勝手にされる？
                                                --                                                              -- unitSubstをinlineにしないと駄目か
                                                a <- mkSubst (tvndelay $ opt cmn) tvid reqret
-                                               exprs <- funApSub clbehalf lltbehalf behalf (mapTV (tvid+) ty) (map (mkHead (reducer cmn) lenavails numcxts (arity+a)) xs)
+                                               exprs <- funApSub behalf (mapTV (tvid+) ty) (map (mkHead (reducer cmn) lenavails numcxts (arity+a)) xs)
                                                gentvar <- applyPS (TV tvid)
                                                guard (usedArg (tvid+1) gentvar)
-                                               funApSub clbehalf lltbehalf behalf gentvar (fe gentvar ty exprs)
+                                               funApSub behalf gentvar (fe gentvar ty exprs)
 
 retGenTV0 cmn lenavails fe clbehalf lltbehalf behalf reqret (numcxts, arity, _retty, numtvs, xs:::ty)
                                           = convertPS (ndelay $ fromIntegral arity) $
@@ -280,7 +314,7 @@ retGenTV0 cmn lenavails fe clbehalf lltbehalf behalf reqret (numcxts, arity, _re
                                                -- let typ = apply (unitSubst tvid reqret) (mapTV (tvid+) ty) -- mapTVとapplyはhylo-fusionできるはずだが，勝手にされる？
                                                --                                                              -- unitSubstをinlineにしないと駄目か
                                                updatePS (unitSubst tvid reqret)
-                                               exprs <- funApSub clbehalf lltbehalf behalf (mapTV (tvid+) ty) (map (mkHead (reducer cmn) lenavails numcxts arity) xs)
+                                               exprs <- funApSub behalf (mapTV (tvid+) ty) (map (mkHead (reducer cmn) lenavails numcxts arity) xs)
                                                gentvar <- applyPS (TV tvid)
                                                return $ fe gentvar ty exprs
 
