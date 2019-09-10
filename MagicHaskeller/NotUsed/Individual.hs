@@ -1,4 +1,4 @@
--- 
+-- Not used
 -- (c) Susumu Katayama
 --
 {-# OPTIONS -XTemplateHaskell #-}
@@ -17,7 +17,7 @@ import Prelude hiding (tail)
 -- | 'totals' is the set of available values (except partial functions) that can be included/excluded individually.
 totals :: [Primitive]
 totals = concat withDoubleRatio
--- You can add functions you like here, e.g. 
+-- You can add functions you like here, e.g.
 -- totals = concat withDoubleRatio ++ $(p [| nat_para :: (->) Int (a -> (Int -> a -> a) -> a) |] )
 
 -- | 'partials' is the set of available partial functions that can be included/excluded individually.
@@ -61,8 +61,8 @@ availableNames = map fst assocAvailables
 
 -- postprocessを使いたくなるけど，結果同じ表現になっちゃうとまずい．
 pprintPrim :: Primitive -> String
-pprintPrim (_, e@(VarE name), t) = 
-  case nameBase name of 
+pprintPrim (_, e@(VarE name), t) =
+  case nameBase name of
     ('b':'y':d:'_':name) | isDigit d -> name                            -- Note that the type is omitted, because the class information is lost.
     ('-':'-':'#':name)           -> '(':dropWhile (=='#') name ++")"    -- Note that the type is omitted, because the class information is lost.
     _                                -> normalizeSpaces $ pprint $ TH.SigE (simplify e) t  -- normalizeSpaces is inserted just in case.

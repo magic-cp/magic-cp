@@ -1,3 +1,4 @@
+-- not used
 {-# LANGUAGE CPP #-}
 -- minimal set of definitions for safer use by a server
 module MagicHaskeller.Minimal(e, f1E, f1EF, f1EIO, f1EFIO, simpleEF, ProgGenSF, NearEq((~=)), postprocess, ppExcel) where
@@ -28,8 +29,8 @@ e :: Typeable a => (Exp->Exp) -> a -> ProgGenSF -> Bool -> [[Exp]]
 e  postproc dmy pgsf withAbsents = let o = opt $ extractCommon pgsf in map (map (postproc . fst . fst))$ etup dmy pgsf withAbsents
 
 f1EIO :: Typeable a => (Exp->Exp) -> (a -> Bool) -> ProgGenSF -> Bool -> IO [[Exp]]
-f1EIO  postproc pred pgsf withAbsents 
-  = let o = opt $ extractCommon pgsf 
+f1EIO  postproc pred pgsf withAbsents
+  = let o = opt $ extractCommon pgsf
     in fmap (map (map (postproc . fst))) $ interleaveActions $ map (fpartialIO (timeout o) pred) $ etup undefined pgsf withAbsents
 --    in fmap (map (map (postproc . fst)) . concat) $ interleaveActions $ map (mapIO $ fpartialIO (timeout o) pred) $ chopN 2 $ etup undefined pgsf withAbsents
 chopN n xs = map (take n) $ iterate (drop n) xs -- e.g. chopN 2 ['a'..] == ["ab","cd", ....
@@ -39,16 +40,16 @@ chopN n xs = map (take n) $ iterate (drop n) xs -- e.g. chopN 2 ['a'..] == ["ab"
 --    in fmap (map (map (postproc . fst))) $ interleaveActions $ map (runParIO . fpartialParIO (timeout o) pred) $ etup undefined pgsf withAbsents
 --    in fmap (map (map (postproc . fst))) $ runParIO $ mapParIO (liftIO . fpartialIO (timeout o) pred) $ etup undefined pgsf withAbsents
 f1EFIO :: (Filtrable a, Typeable a) => (Exp->Exp) -> (a -> Bool) -> ProgGenSF -> Bool -> IO [[Exp]]
-f1EFIO postproc pred pgsf withAbsents 
-  = let o = opt $ extractCommon pgsf 
+f1EFIO postproc pred pgsf withAbsents
+  = let o = opt $ extractCommon pgsf
     in fmap (map (map (postproc . fst)) . everyF o) $ interleaveActions $ map (fpartialIO (timeout o) pred) $ etup undefined pgsf withAbsents
 
 simpleF1EFIO :: (Filtrable a, Typeable a) => (a -> Bool) -> ProgGenSF -> Bool -> IO [[(CoreExpr, a)]]
-simpleF1EFIO pred pgsf withAbsents 
-  = let o = opt $ extractCommon pgsf 
+simpleF1EFIO pred pgsf withAbsents
+  = let o = opt $ extractCommon pgsf
     in fmap (everyF o) $ interleaveActions $ map (ftotalIO (timeout o) pred) $ everyACE pgsf withAbsents
 
 simpleEF :: (Filtrable a, Typeable a) => ProgGenSF -> Bool -> [[(CoreExpr,a)]]
-simpleEF pgsf withAbsents 
-  = let o = opt $ extractCommon pgsf 
+simpleEF pgsf withAbsents
+  = let o = opt $ extractCommon pgsf
     in everyF o $ everyACE pgsf withAbsents

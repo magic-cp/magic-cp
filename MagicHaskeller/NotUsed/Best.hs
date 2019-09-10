@@ -1,4 +1,4 @@
---
+-- Not used
 -- (c) Susumu Katayama
 --
 

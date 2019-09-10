@@ -1,3 +1,4 @@
+-- Not used but sounds useful, Maybe
 module MagicHaskeller.ReadHsType(readHsTypeSigs) where
 import Language.Haskell.TH as TH
 import Language.Haskell.Syntax

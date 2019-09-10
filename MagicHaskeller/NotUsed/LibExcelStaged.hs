@@ -1,3 +1,4 @@
+-- Only used by Minimal -> LibExcel
 module MagicHaskeller.LibExcelStaged where
 import MagicHaskeller
 import Data.List
@@ -5,7 +6,7 @@ import Data.Char
 
 default (Int, Integer, Double)
 
--- gcd in the latest library is total, but with older versions gcd 0 0 causes an error. 
+-- gcd in the latest library is total, but with older versions gcd 0 0 causes an error.
 totalGCD x y =  gcd' (abs x) (abs y)
   where gcd' a 0  =  a
         gcd' a b  =  gcd' b (a `rem` b)
@@ -80,9 +81,9 @@ mround  (a, b) = fromIntegral (Prelude.round   (a / b))*b
 -- The postprocessor expands it to FLOOR(a,b) if b is known to be positive.
 fLOOR0 a b | b <= 0    = 0
            | otherwise = fromIntegral (Prelude.floor   (a / b))*b
- 
+
 -- We need fLOOR in order to generate I/O examples. This definition is not exact, but it alerts anyway if its second argument is not positive.
-fLOOR (0, 0) = 0 
+fLOOR (0, 0) = 0
 fLOOR (a, b) | b <= 0    = 0/0
              | otherwise = fLOOR0 a b
 
@@ -103,7 +104,7 @@ aND (a, b) = a && b
 oR  (a, b) = a || b
 sign :: Num a => a -> a
 sign = signum
-power (a,b) | isNaN result || isInfinite result = Nothing 
+power (a,b) | isNaN result || isInfinite result = Nothing
             | otherwise                         = Just result
   where result = a ** b
 sQRT x | x < 0     = Nothing

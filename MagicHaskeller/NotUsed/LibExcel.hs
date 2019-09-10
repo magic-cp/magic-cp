@@ -1,3 +1,4 @@
+-- Only used by Minimal
 --
 -- (c) Susumu Katayama
 --

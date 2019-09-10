@@ -1,4 +1,4 @@
--- 
+-- Not used
 -- (c) Susumu Katayama
 --
 module MagicHaskeller.GetTime where
@@ -11,7 +11,7 @@ import Control.Monad(liftM2)
 batchWrite :: FilePath -> [IO a] -> IO ()
 batchWrite filename ios = do is <- batchRun ios
                              hPutStrLn stderr (showCPUTime (sum is) ++ " seconds in total.")
-                             writeFile filename $ unlines $ map showCPUTime is 
+                             writeFile filename $ unlines $ map showCPUTime is
 batchRun :: [IO a] -> IO [Integer]
 batchRun []       = return []
 batchRun (io:ios) = liftM2 (:) (fmap snd $ time io) (batchRun ios)
