@@ -16,8 +16,7 @@ Description:     MagicHaskeller is an inductive functional programming system fo
 Build-Type:      Simple
 Category:        Language
 -- data-files:      ExperimIOP.hs MagicHaskeller/predicates MagicHaskeller/predicatesAug2014 MagicHaskeller.conf MagicHaskeller/predicatesServed primitives.txt
-data-files:      MagicHaskeller.conf primitives.txt
-Extra-source-files: xlmap changelog.txt
+Extra-source-files: changelog.txt
 Tested-with:     GHC == 7.6.3, GHC == 7.10.3, GHC == 8.0.2
 
 Flag TFRANDOM
@@ -92,7 +91,6 @@ Library
                , MagicHaskeller.FMType
                , MagicHaskeller.NearEq
                , MagicHaskeller.ClassLib
-               , Paths_MagicHaskeller
   Extensions:    CPP, TemplateHaskell
   cpp-options:   -DCHTO -DCABAL
 
