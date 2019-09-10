@@ -625,7 +625,9 @@ soso =        (list'' ++
                         mb' ++ bool ++ plusInt ++ -- x $(p [| (hd :: [a] -> Maybe a, (+) :: Int -> Int -> Int) |]) ++
                     boolean ++ intinst1 ++
                     list1' ++ list3')
-rich = soso ++ list2 ++ intinst2 ++ $(p [| init :: [a] -> [a] |])
+rich = soso ++ list2 ++ intinst2 ++ $(p [| init' :: [a] -> [a] |])
+init' [] = []
+init' l = init l
 {-
 poormix = mkPGSF generator
               nrnds

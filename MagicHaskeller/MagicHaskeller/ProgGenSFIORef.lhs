@@ -44,6 +44,9 @@ import System.Directory(doesFileExist, createDirectoryIfMissing)
 import Debug.Trace
 -- trace str = id
 
+reorganizer_ :: ([Type] -> a) -> [Type] -> a
+reorganizer_ fun avail = fun $ uniqSort avail
+
 reorganize_ = reorganizer_
 -- reorganize_ = id
 

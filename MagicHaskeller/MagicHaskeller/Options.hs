@@ -134,7 +134,7 @@ options = Opt{ primopt = Nothing
              , constrL = False
              , tvndelay = 1
              , tv1     = False
-             , tv0    = False
+             , tv0    = True
 #ifdef TFRANDOM
              , stdgen  = seedTFGen (3497676378205993723,16020016691208771845,6545968067796471226,2770936286170065919)
 #else
