@@ -5,6 +5,7 @@ resolver: lts-14.0
 # User packages to be built.
 packages:
 - MagicHaskeller
+- .
 
 # Dependency packages to be pulled from upstream that are not in the resolver.
 # These entries can reference officially published versions as well as
@@ -16,7 +17,7 @@ extra-deps:
   # - mueval-0.9.3
   # - exceptions-0.10.2
   # - show-0.6
-- cgi-3001.4.0.0
+- curl-aeson-0.0.4
 - mueval-0.9.3
 - exceptions-0.10.2
 - show-0.6

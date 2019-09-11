@@ -1,0 +1,10 @@
+name: MagicCP
+
+dependencies:
+- aeson
+- base
+- curl-aeson
+- text
+
+library:
+  source-dirs: CF

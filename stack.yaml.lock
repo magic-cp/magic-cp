@@ -5,12 +5,12 @@
 
 packages:
 - completed:
-    hackage: cgi-3001.4.0.0@sha256:b9030005162183eba8d0ad0fb48c7d9d7b1bab456a9da831931f70fa60223a60,3105
+    hackage: curl-aeson-0.0.4@sha256:bef1581078e922f012ed5259d86481be2658bad00e9bc052f16a13604744af1a,1346
     pantry-tree:
-      size: 993
-      sha256: 612e753c785b5bbf64fb1aa6f96d9fb450224d69fc0aee7dc87608c91721f815
+      size: 220
+      sha256: 7895d3314955e5a383c0e3664c7f58753783de18340ad7eae8122399fe7ee56f
   original:
-    hackage: cgi-3001.4.0.0
+    hackage: curl-aeson-0.0.4
 - completed:
     hackage: mueval-0.9.3@sha256:9ecdbdc8f28ed7bc3f6f6cb5c2708e69f3b099db812bd2b8a51730915f7dab9e,2077
     pantry-tree:

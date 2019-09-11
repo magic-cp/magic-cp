@@ -1,0 +1,26 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.31.2.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 0270e104d72ec57ec7000a6ed28aeaa7eeac6cd24f188628421be3eb33407f42
+
+name:           MagicCP
+version:        0.0.0
+build-type:     Simple
+
+library
+  exposed-modules:
+      CF
+      CF.CFAPI
+  other-modules:
+      Paths_MagicCP
+  hs-source-dirs:
+      CF
+  build-depends:
+      aeson
+    , base
+    , curl-aeson
+    , text
+  default-language: Haskell2010
