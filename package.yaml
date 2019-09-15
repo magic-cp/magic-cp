@@ -1,10 +1,12 @@
-name: MagicCP
-
+library:
+  source-dirs: CF
+  exposed-modules: CF
 dependencies:
 - aeson
 - base
 - curl-aeson
+- directory
+- filepath
+- process
 - text
-
-library:
-  source-dirs: CF
+name: MagicCP
