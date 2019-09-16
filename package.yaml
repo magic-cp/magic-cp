@@ -9,4 +9,5 @@ dependencies:
 - filepath
 - process
 - text
+- unix
 name: MagicCP
