@@ -4,7 +4,7 @@ module CF.CFToolWrapper(getInputOutput, testSolution) where
 import Control.Monad( liftM2 )
 
 import Data.Char( toLower )
-import Data.List( partition, isPrefixOf, sort )
+import Data.List( partition, isPrefixOf, sort, isInfixOf )
 
 import System.Directory( createDirectoryIfMissing, removePathForcibly
                        , renameDirectory ,listDirectory, removeDirectory
@@ -15,7 +15,7 @@ import System.Posix.Directory( changeWorkingDirectory )
 
 import CF.CFConfig
 
-data Verdict = Accepted | Rejected deriving Show
+data Verdict = Accepted | Rejected Int String deriving Show
 
 problemIdToStrings :: (Int, Char) -> (String, String)
 problemIdToStrings (cIdInt, pIdChar) = (show cIdInt, [toLower pIdChar])
@@ -41,7 +41,21 @@ testSolution CFConfig{..} problemId = do
 
   changeWorkingDirectory $ cfparse_dir </> cId </> pId
   output <- readProcess (cftool_path </> "cf") ["test"] ""
-  print output
-
   changeWorkingDirectory project_root
-  return Accepted
+  if "Failed" `isInfixOf` output
+     then return $ Rejected 0 output
+     else return Accepted
+
+
+submitSolution :: CFConfig -> (Int, Char) -> IO Verdict
+submitSolution CFConfig{..} problemId = do
+  let (cId, pId) = problemIdToStrings problemId
+
+  changeWorkingDirectory $ cfparse_dir </> cId </> pId
+  output <- readProcess (cftool_path </> "cf") ["submit"] ""
+  changeWorkingDirectory project_root
+  let submission = read $ drop 2 $ dropWhile (/= ':') $ last $ filter ("#:" `isInfixOf`) $ lines output
+  let status = last $ filter ("status:" `isInfixOf`) $ lines output
+  if "Accepted" `isInfixOf` status
+     then return Accepted
+     else return $ Rejected submission status
