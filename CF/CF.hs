@@ -14,7 +14,12 @@ getPredicate :: CFConfig -> ProblemId -> IO ((String -> String) -> Bool)
 getPredicate cfg problemId = do
   inputOutput <- getInputOutput cfg problemId
   print inputOutput
-  return $ \f -> and [f i == o | (i, o) <- inputOutput]
+  return $ \f -> and [f i =~= o | (i, o) <- inputOutput]
+  where
+    (=~=) :: String -> String -> Bool
+    s1 =~= s2 = clean s1 == clean s2
+    clean :: String -> String
+    clean s = reverse (dropWhile (=='\n') $ reverse s)
 
 getProblems :: IO [Problem]
 getProblems =  map apiProbToProb <$> getAPIProblems

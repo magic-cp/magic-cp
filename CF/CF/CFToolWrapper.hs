@@ -27,7 +27,8 @@ getInputOutput CFConfig{..} problemId = do
   _ <- readProcess (cftool_path </> "cf") ["parse", cId, pId] ""
 
   dir <- listDirectory $ cfparse_dir </> cId </> pId
-  let (ins, outs) = partition ("in" `isPrefixOf`) dir
+  let ins = filter ("in" `isPrefixOf`) dir
+      outs = filter ("ans" `isPrefixOf`) dir
   changeWorkingDirectory project_root
   liftM2 zip (mapM readFile' $ sort ins) (mapM readFile' $ sort outs)
   where
