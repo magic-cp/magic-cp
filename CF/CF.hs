@@ -2,6 +2,7 @@
 module CF where
 
 import Data.Maybe
+
 import CF.CFAPI
 
 type ProblemId = (Int, Char)

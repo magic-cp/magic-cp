@@ -22,4 +22,5 @@ cabal.project.local~
 .ghc.environment.*
 
 cf-tool
-inputs/
+parsed/
+config.cfg

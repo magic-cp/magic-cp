@@ -4,6 +4,7 @@ library:
 dependencies:
 - aeson
 - base
+- configurator
 - curl-aeson
 - directory
 - filepath
