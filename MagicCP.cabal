@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 6174d93513233956e259d5a56a9cb4daf1907d433180abf4c3d213167ab45e32
+-- hash: 5879814fcc85b1ccf2b671d6a6756fd8492f177ede4bd0b274a5ea71ac21847e
 
 name:           MagicCP
 version:        0.0.0
@@ -15,8 +15,8 @@ library
       CF
   other-modules:
       CF.CFAPI
+      CF.CFConfig
       CF.CFToolWrapper
-      CF.Config
       Paths_MagicCP
   hs-source-dirs:
       CF
