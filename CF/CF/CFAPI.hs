@@ -1,31 +1,40 @@
-{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TemplateHaskell #-}
 module CF.CFAPI(getAPIProblems, APIProblem(..)) where
 
 import Data.Aeson
 import Data.List
 import Data.Maybe
 import Network.Curl.Aeson
+import Data.Aeson.TH
 
 import GHC.Generics
 data APIResponse = APIResponse
   { status :: String
   , result :: APIResponseProblems
-  } deriving (Generic, Show)
+  } deriving (Show)
 
-newtype APIResponseProblems =
-  APIResponseProblems { problems :: [APIProblem] } deriving (Generic, Show)
+data APIResponseProblems = APIResponseProblems
+  { problems :: [APIProblem]
+  , problemStatistics :: [APIProblemStatistics]
+  } deriving (Show)
+
+data APIProblemStatistics = APIProblemStatistics
+  { st_contestId :: Maybe Int
+  , st_index :: String
+  , st_solvedCount :: Int
+  } deriving (Show)
 
 data APIProblem = APIProblem
   { contestId :: Maybe Int
   , index :: String
   , rating :: Maybe Int
   , tags :: [String]
-  } deriving (Generic, Show)
+  } deriving (Show)
 
-instance FromJSON APIResponse
-instance FromJSON APIResponseProblems
-instance FromJSON APIProblem
-
+$(deriveJSON defaultOptions ''APIProblem)
+$(deriveJSON defaultOptions{fieldLabelModifier = drop 3} ''APIProblemStatistics)
+$(deriveJSON defaultOptions ''APIResponseProblems)
+$(deriveJSON defaultOptions ''APIResponse)
 
 getAPIProblems :: IO [APIProblem]
 getAPIProblems  = do
