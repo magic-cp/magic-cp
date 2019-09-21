@@ -1,7 +1,12 @@
 library:
-  source-dirs: CF
-  exposed-modules: CF
+  source-dirs:
+  - src
+  exposed-modules:
+  - CF
+  - MagicCP
 dependencies:
+- array
+- text
 - aeson
 - base
 - configurator
@@ -11,4 +16,5 @@ dependencies:
 - process
 - text
 - unix
+- MagicHaskeller
 name: MagicCP

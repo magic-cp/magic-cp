@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 5879814fcc85b1ccf2b671d6a6756fd8492f177ede4bd0b274a5ea71ac21847e
+-- hash: df5dcab06385d7ffd00144968d0546547bf3a6366a7ae4ff7da66d1e443cd1f1
 
 name:           MagicCP
 version:        0.0.0
@@ -13,15 +13,18 @@ build-type:     Simple
 library
   exposed-modules:
       CF
+      MagicCP
   other-modules:
       CF.CFAPI
       CF.CFConfig
       CF.CFToolWrapper
       Paths_MagicCP
   hs-source-dirs:
-      CF
+      src
   build-depends:
-      aeson
+      MagicHaskeller
+    , aeson
+    , array
     , base
     , configurator
     , curl-aeson
