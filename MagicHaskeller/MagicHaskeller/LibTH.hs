@@ -57,6 +57,10 @@ enumFromThenTo l m n = map toEnum $
   where lint = fromEnum l
         mint = fromEnum m
         nint = fromEnum n
+initializeTest :: IO ()
+initializeTest = do setPrimitives (test ++ list ++ nat ++ natural ++ mb ++ bool ++ $(p [| hd :: (->) [a] (Maybe a) |]) ++ plusInt ++ plusInteger)
+                    setDepth 10
+
 initialize, init075, inittv1 :: IO ()
 initialize = do setPrimitives (list ++ nat ++ natural ++ mb ++ bool ++ $(p [| hd :: (->) [a] (Maybe a) |]) ++ plusInt ++ plusInteger)
                 setDepth 10
@@ -116,6 +120,9 @@ list' = $(p [| ([] :: [a], (:), foldr :: (b -> a -> a) -> a -> (->) [b] a, tail 
 list  = $(p [| ([] :: [a], (:), list_para :: (->) [b] (a -> (b -> [b] -> a -> a) -> a)) |] )
 
 bool = $(p [| (True, False, iF :: (->) Bool (a -> a -> a)) |] )
+
+test = $(p [| ((==) :: [Char] -> [Char] -> Bool, words :: [Char] -> [[Char]], tail :: (->) [a] [a],
+          "0" :: [Char], "1" :: [Char], "EASY" :: [Char], "HARD" :: [Char]) |] )
 
 -- | 'postprocess' replaces uncommon functions like catamorphisms with well-known functions.
 postprocess :: Exp -> Exp
@@ -561,7 +568,7 @@ list2 = $(p [| (
                 lines            :: [Char] -> [[Char]],
                 words            :: [Char] -> [[Char]],
                 unlines            :: [[Char]] -> [Char],
-                unwords            :: [[Char]] -> [Char] ) |] )
+                unwords            :: [[Char]] -> [Char]) |] )
 
 list3 = $(p [| (reverse :: [a] -> [a],
                 and         :: (->) [Bool] Bool,

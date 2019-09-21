@@ -94,6 +94,7 @@ module MagicHaskeller(
        --   Functions suffixed with \"F\" (like 'everythingF', etc.) are filtered versions, where their results are filtered to totally remove semantic duplications. In general they are equivalent to applying 'everyF' afterwards.
        --   (Note that this is filtration AFTER the program generation, unlike the filtration by using 'ProgGenSF' is done DURING program generation.)
 
+       findDo,
        -- ** Quick start
        findOne, printOne, printAll, printAllF, io2pred,
 

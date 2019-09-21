@@ -13,7 +13,6 @@ data Problem = Problem {problemId :: ProblemId, rating :: Int} deriving Show
 getPredicate :: CFConfig -> ProblemId -> IO ((String -> String) -> Bool)
 getPredicate cfg problemId = do
   inputOutput <- getInputOutput cfg problemId
-  print inputOutput
   return $ \f -> and [f i =~= o | (i, o) <- inputOutput]
   where
     (=~=) :: String -> String -> Bool

@@ -1,13 +1,17 @@
 {-# LANGUAGE TemplateHaskell #-}
 module MagicCP where
 
+import Language.Haskell.TH as TH
+
+import CF
+import CF.CFConfig
+
 import MagicHaskeller
-import MagicHaskeller.LibTH(nat_para)
-import MagicHaskeller.ProgramGenerator
-import MagicHaskeller.PolyDynamic
+import MagicHaskeller.LibTH(initializeTest)
 
-import Data.IORef
-import Data.Array
-
-import Data.Maybe
-
+solvev0 :: ProblemId -> IO (Maybe TH.Exp)
+solvev0 pId = do
+  initializeTest
+  cfg <- getCFConfig
+  p <- getPredicate cfg pId
+  findDo (\e _ -> return (Just e)) True p

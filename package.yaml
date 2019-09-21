@@ -5,6 +5,7 @@ library:
   - CF
   - MagicCP
 dependencies:
+- template-haskell
 - array
 - text
 - aeson
