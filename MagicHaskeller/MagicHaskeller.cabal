@@ -61,6 +61,7 @@ Library
                  , MagicHaskeller.ProgGenSFIORef
                  , MagicHaskeller.Expression
                  , MagicHaskeller.LibTH
+                 , MagicHaskeller.LibTHDefinitions
                  , MagicHaskeller.Options
                  , MagicHaskeller.Classification
                  , MagicHaskeller.FastRatio

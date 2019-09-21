@@ -6,6 +6,7 @@ module MagicHaskeller.LibTH(module MagicHaskeller.LibTH, module MagicHaskeller) 
 
 import MagicHaskeller
 import MagicHaskeller.Types(size)
+import MagicHaskeller.LibTHDefinitions
 #ifdef TFRANDOM
 import System.Random.TF(seedTFGen)
 #else
@@ -25,6 +26,14 @@ import qualified Data.IntMap as IM
 import Data.Hashable
 
 import Prelude hiding (tail, gcd, enumFromThenTo)
+
+
+-- Nat paramorphism
+$(natParaDeclaration)
+$(hdDeclaration)
+$(natCataDeclaration)
+$(iFDeclaration)
+$(listParaDeclaration)
 
 -- whether succ is used only for numbers or not
 succOnlyForNumbers = False -- This is False, because we now use succ :: Char->Char.
@@ -79,9 +88,6 @@ mlistnatural = mkPG (list ++ natural ++ plusInteger)
 
 mnat_nc = mkMemo (nat ++ plusInt)
 
-hd :: [a] -> Maybe a
-hd []    = Nothing
-hd (x:_) = Just x
 
 -- Prefixed (->) means that the parameter can be matched as an assumption when 'constrL' option is True. Also, this info is used when 'guess' option is True. For example of maybe :: a -> (b->a) -> (->) (Maybe b) a,
 --   Gamma |- A   Gamma,B |- A
@@ -105,33 +111,11 @@ natural' = $(p [| (0 :: Integer, (1+) :: Integer->Integer, nat_cata :: (->) Inte
 plusInt = $(p [| (+) :: (->) Int ((->) Int Int) |])
 plusInteger = $(p [| (+) :: (->) Integer ((->) Integer Integer) |])
 
--- Nat paramorphism
-nat_para :: Integral i => i -> a -> (i -> a -> a) -> a
-nat_para i x f = np (abs i) -- Version 0.8 does not deal with partial functions very well.
-    where np 0 = x
-          np i = let i' = i-1
-                 in f i' (np i')
-
--- Nat paramorphism.  nat_cata i x f == iterate f x `genericIndex` abs i holds, but the following implementation is much more efficient (and thus safer).
-nat_cata :: Integral i => i -> a -> (a -> a) -> a
-nat_cata i x f = nc (abs i) -- Version 0.8 does not deal with partial functions very well.
-    where nc 0 = x
-          nc i = f (nc (i-1))
-
 list'' = $(p [| ([] :: [a], (:), flip . flip foldr :: a -> (->) [b] ((b -> a -> a) -> a), tail :: (->) [a] [a]) |] ) -- foldr's argument order makes the synthesis slower:)
 list' = $(p [| ([] :: [a], (:), foldr :: (b -> a -> a) -> a -> (->) [b] a, tail :: (->) [a] [a]) |] ) -- foldr's argument order makes the synthesis slower:)
 list  = $(p [| ([] :: [a], (:), list_para :: (->) [b] (a -> (b -> [b] -> a -> a) -> a)) |] )
 
--- List paramorphism
-list_para :: [b] -> a -> (b -> [b] -> a -> a) -> a
-list_para []     x f = x
-list_para (y:ys) x f = f y ys (list_para ys x f)
-
 bool = $(p [| (True, False, iF :: (->) Bool (a -> a -> a)) |] )
-
-iF :: Bool -> a -> a -> a
-iF True  t f = t
-iF False t f = f
 
 -- | 'postprocess' replaces uncommon functions like catamorphisms with well-known functions.
 postprocess :: Exp -> Exp
@@ -861,3 +845,11 @@ fromPrelDouble= [ $(p [| (1      :: Double,
                           atan2 :: Double -> Double -> Double
                          ) |]),
                   [] ]
+
+
+
+
+
+
+
+
