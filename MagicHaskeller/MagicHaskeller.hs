@@ -32,7 +32,7 @@ module MagicHaskeller(
        --   (just like when using the dynamic expression of Concurrent Clean), and thus
        --   you may write @'setPrimitives' $('p' [| \'A\' |])@,
        --   while you have to write @'setPrimitives' $('p' [| [] :: [a] |])@ instead of @'setPrimitives' $('p' [| [] |])@.
-       p, setPrimitives, mkPG, setPG,
+       p, setPrimitives, mkPG, setPG, getPG,
 
        -- | Older versions prohibited data types holding functions such as @[a->b]@, @(Int->Char, Bool)@, etc. just for efficiency reasons.
        --   They are still available if you use 'mkMemo' and 'mkMemoSF' instead of 'mkPG' and 'mkPGSF' respectively, though actually this limitation does not affect the efficiency a lot.
@@ -126,7 +126,6 @@ module MagicHaskeller(
        -- other stuff which will not be documented by Haddock
        unsafeCoerce#, {- unifyablePos, -} exprToTHExp, trToTHType, printAny, p1, Filtrable, zipAppend, mapIO, fpIO, fIO, fpartial, fpartialIO, ftotalIO, etup, mkCurriedDecls
 
-      , refmemodeb
       ) where
 
 import Data.Generics(everywhere, mkT, Data)
@@ -560,6 +559,9 @@ mkDepths = concat . zipWith (\i xs -> map (const i) xs) [0..]
 
 setPG :: ProgGen -> IO ()
 setPG = writeIORef refmemodeb
+
+getPG :: IO ProgGen
+getPG = readIORef refmemodeb
 
 -- | @setPrimitives@ creates a @ProgGen@ from the given set of primitives using the current set of options, and sets it as the current program generator.
 --   It used to be equivalent to @setPG . mkPG@ which overwrites the options with the default, but it is not now.
