@@ -44,16 +44,29 @@ unqCons :: TH.Name -> TH.Name
 unqCons n = mkName (nameBase n)
 
 
-solvev0 :: ProblemId -> IO Verdict
+solvev0 :: ProblemId -> IO Exp
 solvev0 pId = do
   checkInitialized
   cfg <- getCFConfig
   p <- getPredicate cfg pId
-  Just exp <- findDo (\e _ -> return (Just e)) True p
-  generateFile cfg pId exp
-  testVerd <- testSolution cfg pId
-  case testVerd of
-    Accepted -> submitSolution cfg pId
-    r@Rejected{} -> do
-      putStrLn "Failed Sample Tests"
-      return r
+  findDo (continuator cfg) True p
+  where
+    continuator cfg exp cont = do
+      generateFile cfg pId exp
+      testVerd <- testSolution cfg pId
+      case testVerd of
+        Accepted -> do
+          putStrLn "Submitting to codeforces"
+          submitVerd <- submitSolution cfg pId
+          case submitVerd of
+            Accepted -> do
+              putStrLn $ "Solution accepted in codeforces:\n" <>
+                pprintUC exp
+              return exp
+            Rejected subm msg -> do
+              putStrLn $ "sumbission #:" <> show subm <> " failed with: " <>
+                drop 2 (dropWhile (/= ':') msg)
+              cont
+        Rejected{} -> do
+          putStrLn "Failed Sample Tests"
+          cont
