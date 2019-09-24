@@ -12,19 +12,26 @@ packages:
   original:
     hackage: curl-aeson-0.0.4
 - completed:
-    hackage: mueval-0.9.3@sha256:9ecdbdc8f28ed7bc3f6f6cb5c2708e69f3b099db812bd2b8a51730915f7dab9e,2077
-    pantry-tree:
-      size: 740
-      sha256: 23275f1644942f15e09fa774fa7036dfd219eaf8ea942bb5418208d649e5145c
-  original:
-    hackage: mueval-0.9.3
-- completed:
     hackage: exceptions-0.10.2@sha256:de2be08eb73e1fb4115135c62f5d5f7ed9bdb9affff318687ac6cc0438b497f0,2360
     pantry-tree:
       size: 907
       sha256: fa7427f86f94b5e830b4ed027f7ea2a4f9651da2bf85db9bce3307b97fb7f351
   original:
     hackage: exceptions-0.10.2
+- completed:
+    hackage: http-conduit-2.3.7.1@sha256:45fa0403c59eab3237b407a86451976d948639a77db4d8ff24f5dd7e6d57b456,2968
+    pantry-tree:
+      size: 784
+      sha256: 3cc303adfaedac70c7e3809a66b4df1d502da1d7ea886c76311074bff453acdb
+  original:
+    hackage: http-conduit-2.3.7.1
+- completed:
+    hackage: mueval-0.9.3@sha256:9ecdbdc8f28ed7bc3f6f6cb5c2708e69f3b099db812bd2b8a51730915f7dab9e,2077
+    pantry-tree:
+      size: 740
+      sha256: 23275f1644942f15e09fa774fa7036dfd219eaf8ea942bb5418208d649e5145c
+  original:
+    hackage: mueval-0.9.3
 - completed:
     hackage: show-0.6@sha256:073c283f62d56cab2a2de5455125c7fc2d55642bac4cf0e778ed6525226a44ec,903
     pantry-tree:

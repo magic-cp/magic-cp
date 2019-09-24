@@ -18,9 +18,11 @@ extra-deps:
   # - exceptions-0.10.2
   # - show-0.6
 - curl-aeson-0.0.4
-- mueval-0.9.3
 - exceptions-0.10.2
+- http-conduit-2.3.7.1
+- mueval-0.9.3
 - show-0.6
+
 
 # Override default flag values for local packages and extra-deps
 flags: {}

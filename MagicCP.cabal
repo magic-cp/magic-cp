@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 95f2522b3378d923d2e1851a0f108120e37a8521e603edfa0a3eba1b6226a3bf
+-- hash: 86fd612703c1a97a0cbbe486bf5a3a1ecba7b6c820581e55e31b7f85ed81b2e4
 
 name:           MagicCP
 version:        0.0.0
@@ -17,6 +17,7 @@ library
   other-modules:
       CF.CFAPI
       CF.CFConfig
+      CF.CFHTML
       CF.CFToolWrapper
       Paths_MagicCP
   hs-source-dirs:
@@ -26,14 +27,18 @@ library
     , aeson
     , array
     , base
+    , bytestring
     , configurator
     , curl-aeson
     , directory
     , filepath
+    , html-conduit
+    , http-conduit
     , process
     , syb
     , template-haskell
     , text
     , time
     , unix
+    , xml-conduit
   default-language: Haskell2010
