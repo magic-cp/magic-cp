@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 73b4e70e4937ab29f1bcafc5c792fb5d4d7941f9fa1d3c8c8ddd47f3fe514205
+-- hash: 4d48d0d1dff3c788210a03a8c8a3790040ed387439baabe697a26034530d4e94
 
 name:           MagicCP
 version:        0.0.0
@@ -31,6 +31,7 @@ library
     , directory
     , filepath
     , process
+    , syb
     , template-haskell
     , text
     , unix

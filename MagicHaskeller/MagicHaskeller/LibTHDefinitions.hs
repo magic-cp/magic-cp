@@ -12,6 +12,9 @@ declare s dsQ = do
   ds@(SigD ni _ : _) <- dsQ
   return (everywhere (mkT $ changeName ni nf) ds)
 
+allDeclarations :: DecsQ
+allDeclarations = concat <$> (sequence [natParaDeclaration, hdDeclaration, natCataDeclaration, iFDeclaration, listParaDeclaration])
+
 -- Nat paramorphism
 natParaDeclaration :: DecsQ
 natParaDeclaration = declare "nat_para"

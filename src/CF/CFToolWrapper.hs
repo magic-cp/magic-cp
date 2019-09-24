@@ -1,5 +1,5 @@
 {-# LANGUAGE RecordWildCards #-}
-module CF.CFToolWrapper(getInputOutput, testSolution) where
+module CF.CFToolWrapper(getInputOutput, Verdict(..), testSolution, submitSolution) where
 
 import Control.Monad( liftM2 )
 

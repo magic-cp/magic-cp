@@ -3,6 +3,8 @@ module CF where
 
 import Data.Maybe
 
+import Debug.Trace
+
 import CF.CFAPI
 import CF.CFConfig
 import CF.CFToolWrapper
