@@ -8,6 +8,7 @@ import Control.Monad( when )
 import Data.Array( elems )
 import Data.Char( toLower )
 import Data.Generics(everywhere, mkT, Data)
+import Data.Time.Clock( getCurrentTime )
 import Debug.Trace
 import System.FilePath.Posix( (</>) )
 
@@ -27,12 +28,13 @@ checkInitialized = do
 
 generateFile :: CFConfig -> ProblemId -> TH.Exp -> IO ()
 generateFile CFConfig{..} (cId, pIndex) e = do
+  time <- getCurrentTime
   program <- runQ $ concat <$> sequence
     [ allDeclarations
     , (:[]) <$> funD (mkName "solve") [clause [] (normalB $ return e) []]
     , [d| main = getContents >>= \c -> putStrLn (solve c) |]
     ]
-  writeFile fileName (pprintUC program)
+  writeFile fileName ("-- " <> show time <> "\n" <> pprintUC program)
   where
     fileName = cfparse_dir </> show cId </> [toLower pIndex] </> (toLower pIndex:".hs")
 
