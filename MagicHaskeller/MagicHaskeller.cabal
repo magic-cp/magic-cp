@@ -68,6 +68,7 @@ Library
                  , MagicHaskeller.CoreLang
                  , MagicHaskeller.PolyDynamic
                  , MagicHaskeller.Instantiate
+                 , MagicHaskeller.TimeOut
   Other-modules: MagicHaskeller.MemoToFiles
                , MagicHaskeller.ShortString
                , MagicHaskeller.Types
@@ -78,7 +79,6 @@ Library
                , MagicHaskeller.FakeDynamic
                , MagicHaskeller.ReadTypeRep
                , MagicHaskeller.ReadTHType
-               , MagicHaskeller.TimeOut
                , MagicHaskeller.Execute
                , MagicHaskeller.T10
                , MagicHaskeller.Classify

@@ -11,15 +11,20 @@ import Data.Generics(everywhere, mkT, Data)
 import Data.Time.Clock( getCurrentTime )
 import Debug.Trace
 import System.FilePath.Posix( (</>) )
+import           System.IO                      ( stderr
+                                                , hPutStrLn
+                                                )
 
 import CF
 import CF.CFConfig
 import CF.CFToolWrapper
+import CF.CFHTML
 
 import MagicHaskeller hiding ( TH(..) )
 import MagicHaskeller.ProgramGenerator
 import MagicHaskeller.LibTH( initializeTest )
 import MagicHaskeller.LibTHDefinitions
+import MagicHaskeller.TimeOut( maybeWithTO )
 
 checkInitialized :: IO ()
 checkInitialized = do
@@ -45,28 +50,41 @@ unqCons n = mkName (nameBase n)
 
 
 solvev0 :: ProblemId -> IO Exp
-solvev0 pId = do
+solvev0 pId@(cId, _) = do
   checkInitialized
   cfg <- getCFConfig
-  p <- getPredicate cfg pId
-  findDo (continuator cfg) True p
+  pred <- getPredicate cfg pId
+
+  et <- getEverything True
+  md <- getPG
+  let mpto = timeout $ opt $ extractCommon md
+  f cfg mpto pred (concat et)
   where
-    continuator cfg exp cont = do
-      generateFile cfg pId exp
-      testVerd <- testSolution cfg pId
-      case testVerd of
-        Accepted -> do
-          putStrLn "Submitting to codeforces"
-          submitVerd <- submitSolution cfg pId
-          case submitVerd of
+    f cfg mpto pred ((e, a):ts) = do
+      result <- maybeWithTO seq mpto (return (pred a))
+      case result of
+        Just True -> do
+          generateFile cfg pId e
+          testVerd <- testSolution cfg pId
+          case testVerd of
             Accepted -> do
-              putStrLn $ "Solution accepted in codeforces:\n" <>
-                pprintUC exp
-              return exp
-            Rejected subm msg -> do
-              putStrLn $ "sumbission #" <> show subm <> " failed with: " <>
-                drop 2 (dropWhile (/= ':') msg)
-              cont
-        Rejected{} -> do
-          putStrLn "Failed Sample Tests"
-          cont
+              putStrLn "Submitting to codeforces"
+              submitVerd <- submitSolution cfg pId
+              case submitVerd of
+                Accepted -> do
+                  putStrLn $ "Solution accepted in codeforces:\n" <>
+                    pprintUC e
+                  return e
+                Rejected subm msg -> do
+                  putStrLn $ "sumbission #" <> show subm <> " failed with: " <>
+                    drop 2 (dropWhile (/= ':') msg)
+                  mtc <- getLastTestCase cId subm
+                  case mtc of
+                    Just io -> f cfg mpto (extendPredicate pred io) ts
+                    Nothing -> f cfg mpto pred ts
+
+            Rejected{} -> do
+              putStrLn "Failed Sample Tests"
+              f cfg mpto pred ts
+        Just False -> f cfg mpto pred ts
+        Nothing    -> hPutStrLn stderr ("timeout on "++pprintUC e) >> f cfg mpto pred ts

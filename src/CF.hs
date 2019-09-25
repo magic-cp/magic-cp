@@ -12,15 +12,22 @@ import CF.CFToolWrapper
 type ProblemId = (Int, Char)
 data Problem = Problem {problemId :: ProblemId, rating :: Int} deriving Show
 
+(=~=) :: String -> String -> Bool
+s1 =~= s2 = clean s1 == clean s2
+  where
+    clean :: String -> String
+    clean s = reverse (dropWhile (=='\n') $ reverse s)
+
 getPredicate :: CFConfig -> ProblemId -> IO ((String -> String) -> Bool)
 getPredicate cfg problemId = do
   inputOutput <- getInputOutput cfg problemId
   return $ \f -> and [f i =~= o | (i, o) <- inputOutput]
-  where
-    (=~=) :: String -> String -> Bool
-    s1 =~= s2 = clean s1 == clean s2
-    clean :: String -> String
-    clean s = reverse (dropWhile (=='\n') $ reverse s)
+
+extendPredicate
+  :: ((String -> String) -> Bool)
+  -> (String, String)
+  -> ((String -> String) -> Bool)
+extendPredicate p (i, o) = \f -> p f && (f i =~= o)
 
 getProblems :: IO [Problem]
 getProblems =  map apiProbToProb <$> getAPIProblems

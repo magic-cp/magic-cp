@@ -94,7 +94,6 @@ module MagicHaskeller(
        --   Functions suffixed with \"F\" (like 'everythingF', etc.) are filtered versions, where their results are filtered to totally remove semantic duplications. In general they are equivalent to applying 'everyF' afterwards.
        --   (Note that this is filtration AFTER the program generation, unlike the filtration by using 'ProgGenSF' is done DURING program generation.)
 
-       findDo,
        -- ** Quick start
        findOne, printOne, printAll, printAllF, io2pred,
 
@@ -808,11 +807,7 @@ findDo op withAbsents pred = do
                      md <- readIORef refmemodeb
                      let mpto = timeout $ opt $ extractCommon md
                      fp mpto (concat et)
-    where fp mpto ((e,a):ts) = do -- hPutStrLn stderr ("trying" ++ pprintUC e)
-                                  --putStr "TH.Expression in findDo: "
-                                  --print e
-                                  --putStrLn ""
-                                  result <- maybeWithTO seq mpto (return (pred a))
+    where fp mpto ((e,a):ts) = do result <- maybeWithTO seq mpto (return (pred a))
                                   case result of Just True  -> e `op` fp mpto ts
                                                  Just False -> fp mpto ts
                                                  Nothing    -> hPutStrLn stderr ("timeout on "++pprintUC e) >> fp mpto ts
