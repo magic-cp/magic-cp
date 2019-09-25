@@ -26,6 +26,7 @@ import MagicHaskeller.LibTH( initializeTest )
 import MagicHaskeller.LibTHDefinitions
 import MagicHaskeller.TimeOut( maybeWithTO )
 
+
 checkInitialized :: IO ()
 checkInitialized = do
   pg <- extractCommon <$> getPG
@@ -53,8 +54,11 @@ solvev0 :: ProblemId -> IO Exp
 solvev0 pId@(cId, _) = do
   checkInitialized
   cfg <- getCFConfig
+
+  putStrLn "Parsing problem"
   pred <- getPredicate cfg pId
 
+  putStrLn "Starting search"
   et <- getEverything True
   md <- getPG
   let mpto = timeout $ opt $ extractCommon md
@@ -80,8 +84,12 @@ solvev0 pId@(cId, _) = do
                     drop 2 (dropWhile (/= ':') msg)
                   mtc <- getLastTestCase cId subm
                   case mtc of
-                    Just io -> f cfg mpto (extendPredicate pred io) ts
-                    Nothing -> f cfg mpto pred ts
+                    Just io -> do
+                      putStrLn "Got new test case"
+                      f cfg mpto (extendPredicate pred io) ts
+                    Nothing -> do
+                      putStrLn "Couldn't get new test case"
+                      f cfg mpto pred ts
 
             Rejected{} -> do
               putStrLn "Failed Sample Tests"
