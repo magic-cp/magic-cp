@@ -86,14 +86,15 @@ maybeWithTO' dsq (Just t) action = do tid <- myThreadId
                                       bracket (forkIO (threadDelay t >> -- hPutStrLn stderr "throwing Timeout" >>
                                                                         throwTo tid (ErrorCall "Timeout")))
                                               ({- block . -} killThread)
-                                              (\_ -> Just <$> action (yield>>))
-                                        `Control.Exception.catch` \(e :: SomeException) ->
+                                              (\_ -> Just <$> action (undefined>>))
+                                        `Control.Exception.catch` \(e :: ErrorCall) ->
                                                                          -- trace ("within maybeWithTO': " ++ show e) $
                                                                          return Nothing
 
 --  'withTO' creates CHTO every time it is called. Currently unused.
 -- withTO :: DeepSeq a => Int -> IO a -> IO (Maybe a)
 -- withTO timeInMicroSecs action = withTO' deepSeq timeInMicroSecs (const action)
+{-
 withTO' :: (a -> IO () -> IO ()) -> Int -> ((IO b -> IO b) -> IO a) -> IO (Maybe a)
 withTO' dsq timeInMicroSecs action
     = do -- clk_tck <- getSysVar ClockTick
@@ -116,6 +117,7 @@ withTO' dsq timeInMicroSecs action
                                    killThread chtid))
            hPutStrLn stderr "reading MV"
            readMVar resMV
+-}
 
 wrapExecution = id
 --wrapExecution = measureExecutionTime

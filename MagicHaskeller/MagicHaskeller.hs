@@ -32,7 +32,7 @@ module MagicHaskeller(
        --   (just like when using the dynamic expression of Concurrent Clean), and thus
        --   you may write @'setPrimitives' $('p' [| \'A\' |])@,
        --   while you have to write @'setPrimitives' $('p' [| [] :: [a] |])@ instead of @'setPrimitives' $('p' [| [] |])@.
-       p, setPrimitives, mkPG, setPG, getPG,
+       p, setPrimitives, mkPG, setPG, getPG, defaultMD,
 
        -- | Older versions prohibited data types holding functions such as @[a->b]@, @(Int->Char, Bool)@, etc. just for efficiency reasons.
        --   They are still available if you use 'mkMemo' and 'mkMemoSF' instead of 'mkPG' and 'mkPGSF' respectively, though actually this limitation does not affect the efficiency a lot.

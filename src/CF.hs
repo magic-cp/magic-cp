@@ -8,6 +8,7 @@ import Debug.Trace
 import CF.CFAPI
 import CF.CFConfig
 import CF.CFToolWrapper
+import           Text.Read                      ( readMaybe )
 
 type ProblemId = (Int, Char)
 data Problem = Problem {problemId :: ProblemId, rating :: Int} deriving Show
@@ -18,6 +19,7 @@ s1 =~= s2 = clean s1 == clean s2
     clean :: String -> String
     clean s = reverse (dropWhile (=='\n') $ reverse s)
 
+{-
 getPredicate :: CFConfig -> ProblemId -> IO ((String -> String) -> Bool)
 getPredicate cfg problemId = do
   inputOutput <- getInputOutput cfg problemId
@@ -29,6 +31,7 @@ extendPredicate
   -> (String, String)
   -> ((String -> String) -> Bool)
 extendPredicate p (i, o) = trace (show (i, o)) $ \f -> p f && (f i =~= o)
+-}
 
 getProblems :: IO [Problem]
 getProblems =  map apiProbToProb <$> getAPIProblems

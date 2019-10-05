@@ -25,22 +25,22 @@ import MagicHaskeller.ProgGenSF(mkTrieOptSFIO)
 import qualified Data.IntMap as IM
 import Data.Hashable
 
-import Prelude hiding (tail, gcd, enumFromThenTo)
+import Prelude hiding (gcd, enumFromThenTo)
 
 
 -- Nat paramorphism
 $(natParaDeclaration)
 $(hdDeclaration)
+$(tlDeclaration)
 $(natCataDeclaration)
 $(iFDeclaration)
 $(listParaDeclaration)
-
+$(magicIfDeclaration)
 -- whether succ is used only for numbers or not
 succOnlyForNumbers = False -- This is False, because we now use succ :: Char->Char.
 
 -- total variants of prelude functions
 last' = (\x xs -> last (x:xs))
-tail = drop 1
 -- init xs = zipWith const xs (drop 1 xs)
 -- gcd in the latest library is total, but with older versions gcd 0 0 causes an error.
 gcd x y =  gcd' (abs x) (abs y)
@@ -58,7 +58,7 @@ enumFromThenTo l m n = map toEnum $
         mint = fromEnum m
         nint = fromEnum n
 initializeTest :: IO ()
-initializeTest = do setPrimitives (test ++ list ++ bool ++ $(p [| hd :: (->) [a] (Maybe a) |]))
+initializeTest = do setPrimitives (test ++ bool ++ list ++ nat ++ natural ++ mb )
                     setDepth 10
 
 initialize, init075, inittv1 :: IO ()
@@ -115,14 +115,13 @@ natural' = $(p [| (0 :: Integer, (1+) :: Integer->Integer, nat_cata :: (->) Inte
 plusInt = $(p [| (+) :: (->) Int ((->) Int Int) |])
 plusInteger = $(p [| (+) :: (->) Integer ((->) Integer Integer) |])
 
-list'' = $(p [| ([] :: [a], (:), flip . flip foldr :: a -> (->) [b] ((b -> a -> a) -> a), tail :: (->) [a] [a]) |] ) -- foldr's argument order makes the synthesis slower:)
-list' = $(p [| ([] :: [a], (:), foldr :: (b -> a -> a) -> a -> (->) [b] a, tail :: (->) [a] [a]) |] ) -- foldr's argument order makes the synthesis slower:)
+list'' = $(p [| ([] :: [a], (:), flip . flip foldr :: a -> (->) [b] ((b -> a -> a) -> a), tl :: (->) [a] [a]) |] ) -- foldr's argument order makes the synthesis slower:)
+list' = $(p [| ([] :: [a], (:), foldr :: (b -> a -> a) -> a -> (->) [b] a, tl :: (->) [a] [a]) |] ) -- foldr's argument order makes the synthesis slower:)
 list  = $(p [| ([] :: [a], (:), list_para :: (->) [b] (a -> (b -> [b] -> a -> a) -> a)) |] )
 
-bool = $(p [| (True, False, iF :: (->) Bool (a -> a -> a)) |] )
+bool = $(p [| (True, False, iF :: (->) Bool ((->) a ((->) a a))) |] )
 
-test = $(p [| ((==) :: [Char] -> [Char] -> Bool, words :: [Char] -> [[Char]], tail :: (->) [a] [a],
-          "0" :: [Char], "1" :: [Char], "EASY" :: [Char], "HARD" :: [Char], all :: ([Char] -> Bool) -> (->) [[Char]] Bool) |] )
+test = $(p [| ("EASY" :: [Char], "HARD" :: [Char]) |] )
 
 -- | 'postprocess' replaces uncommon functions like catamorphisms with well-known functions.
 postprocess :: Exp -> Exp
@@ -163,7 +162,7 @@ postprocess (AppE (InfixE Nothing    op m@(Just _)) e) = postprocess (InfixE (Ju
 postprocess (AppE v@(VarE name) e)
     = case nameBase name of
 --        'b':'y':'1':'_':nm -> VarE $ mkName$ by1 nm
-        "tail"   -> ppdrop 1 e
+        "tl"   -> ppdrop 1 e
         "negate" -> case ppe of LitE (IntegerL i)        -> LitE $ IntegerL $ (-i)
                                 LitE (RationalL r)       -> LitE $ RationalL $ (-r)
                                 _                        -> AppE v ppe
@@ -302,7 +301,7 @@ ppLambda pats            e         = LamE pats e
 
 
 ppv e@(VarE name) | nameBase name `elem` ["iF", "nat_cata"] = LamE [ VarP n | n <- names ] (postprocess (AppE (AppE (AppE e p) t) f))
-                  | nameBase name == "last'"                = LamE [ VarP n | n <- tail names ] (postprocess (AppE (AppE e t) f))
+                  | nameBase name == "last'"                = LamE [ VarP n | n <- tl names ] (postprocess (AppE (AppE e t) f))
                   | otherwise                               = VarE $ ppopn name
     where names   = [ mkName [n] | n <- "ptf" ]
           [p,t,f] = map VarE names
@@ -587,6 +586,9 @@ nats = $(p [| (1 ::Int, 2 :: Int, 3 :: Int) |])
 
 reallyall :: ProgramGenerator pg => pg
 reallyall = mkPG rich
+
+reallyalltest :: ProgramGenerator pg => pg
+reallyalltest = mkPG (rich ++ test)
 
 nrnds = repeat 5
 

@@ -7,7 +7,6 @@ import Data.Maybe
 import Network.Curl.Aeson
 import Data.Aeson.TH
 
-import GHC.Generics
 data APIResponse = APIResponse
   { status :: String
   , result :: APIResponseProblems

@@ -222,10 +222,10 @@ generateFuns rec memodeb@(_, _, (primgen,primmono),cmn) avail reqret
           lenavails = genericLength avail
 --          fe :: Type -> Type -> [CoreExpr] -> [CoreExpr] -- ^ heuristic filtration
           fe        = filtExprs (guess $ opt cmn)
-          rg = retGen -- | (trace (show (tv0 $ opt cmn, tv1 $ opt cmn)) False) = undefined
---               | tv0 $ opt cmn = retGenTV0
---               | tv1 $ opt cmn = retGenTV1
---               | otherwise = retGen
+          rg -- | (trace (show (tv0 $ opt cmn, tv1 $ opt cmn)) False) = undefined
+               | tv0 $ opt cmn = retGenTV0
+               | tv1 $ opt cmn = retGenTV1
+               | otherwise = retGen
       in fromAssumptions cmn lenavails behalf mguPS reqret avail `mplus`
          mapSum (rg cmn lenavails fe undefined undefined behalf reqret) primgen `mplus`
          mapSum (retPrimMono cmn lenavails undefined undefined behalf mguPS reqret) primmono
