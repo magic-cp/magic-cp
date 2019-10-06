@@ -20,6 +20,8 @@ class ParseInputOutput a where
   extendPredicate :: Parser -> (a -> Bool) -> (String, String) -> Maybe (a -> Bool)
   extendPredicate parser p io = (p &&&) <$> getSinglePredicate parser io
 
+  wut :: a -> String
+
 instance ParseInputOutput (Int -> [Int] -> String) where
   getSinglePredicate 0 (i, o) = do
     trace ("trying to parse: " ++ show (i, o)) $ Just ()
@@ -34,6 +36,8 @@ instance ParseInputOutput (Int -> [Int] -> String) where
     when (length los /= 1) Nothing
 
     Just (\f -> f n as == head los)
+  wut _ = "int -> [int] -> string"
 
 instance ParseInputOutput (String -> String) where
   getSinglePredicate 0 (i, o) = Just (\f -> f i == o)
+  wut _ = "string -> string"

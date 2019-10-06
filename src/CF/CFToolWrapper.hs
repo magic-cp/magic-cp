@@ -1,5 +1,5 @@
 {-# LANGUAGE RecordWildCards #-}
-module CF.CFToolWrapper(getInputOutput, Verdict(..), testSolution, submitSolution) where
+module CF.CFToolWrapper(getInputOutput, getCurrentInputOutput, Verdict(..), testSolution, submitSolution) where
 
 import Control.Monad( liftM2 )
 
@@ -7,7 +7,7 @@ import Data.Char( toLower )
 import Data.List( partition, isPrefixOf, sort, isInfixOf )
 
 import System.Directory( createDirectoryIfMissing, removePathForcibly
-                       , renameDirectory ,listDirectory, removeDirectory
+                       , renameDirectory ,listDirectory
                        )
 import System.FilePath.Posix( (</>) )
 import System.Process( readProcess )
@@ -21,11 +21,18 @@ problemIdToStrings :: (Int, Char) -> (String, String)
 problemIdToStrings (cIdInt, pIdChar) = (show cIdInt, [toLower pIdChar])
 
 getInputOutput :: CFConfig -> (Int, Char) -> IO [(String, String)]
-getInputOutput CFConfig{..} problemId = do
+getInputOutput cfconf@CFConfig{..} problemId = do
   createDirectoryIfMissing True cfparse_dir
   changeWorkingDirectory cfparse_dir
+  removePathForcibly $ cfparse_dir </> cId </> pId
   _ <- readProcess (cftool_path </> "cf") ["parse", cId, pId] ""
+  changeWorkingDirectory project_root
+  getCurrentInputOutput cfconf problemId
+  where
+    (cId, pId) = problemIdToStrings problemId
 
+getCurrentInputOutput :: CFConfig -> (Int, Char) -> IO [(String, String)]
+getCurrentInputOutput CFConfig{..} problemId = do
   dir <- listDirectory $ cfparse_dir </> cId </> pId
   let ins = filter ("in" `isPrefixOf`) dir
       outs = filter ("ans" `isPrefixOf`) dir
@@ -34,7 +41,7 @@ getInputOutput CFConfig{..} problemId = do
   where
     (cId, pId) = problemIdToStrings problemId
     readFile' :: FilePath -> IO String
-    readFile' fp = readFile $ cfparse_dir </> cId </> pId </> fp
+    readFile' fname = readFile $ cfparse_dir </> cId </> pId </> fname
 
 testSolution :: CFConfig -> (Int, Char) -> IO Verdict
 testSolution CFConfig{..} problemId = do

@@ -9,7 +9,10 @@ module MagicCP where
 
 import qualified Language.Haskell.TH as TH
 
-import Control.Monad( when )
+import           Control.Monad                  ( when
+                                                , mplus
+                                                , liftM2
+                                                )
 import           Control.Exception
 import           Control.Concurrent             ( myThreadId
                                                 , forkIO
@@ -69,13 +72,20 @@ pprintUC =  pprint . everywhere (mkT unqCons)
 unqCons :: TH.Name -> TH.Name
 unqCons n = mkName (nameBase n)
 
-
+solveWithAllParsers :: IO (Maybe Exp)
 solveWithAllParsers = do
-  e <- solveWithLimits (solvev0 :: ((Int -> [Int] -> String) -> ProblemId -> IO Exp)) (1030, 'a')
-  print e
-  e <- solveWithLimits (solvev0 :: ((String -> String) -> ProblemId -> IO Exp)) (1030, 'a')
-  print e
-  return ()
+  let l = [ solveWithLimits (solvev0 :: ((Int -> [Int] -> String) -> ProblemId -> IO Exp)) (1030, 'a')
+          , solveWithLimits (solvev0 :: ((String -> String) -> ProblemId -> IO Exp)) (1030, 'a')
+          ]
+  solveUntilJust l
+  where
+    solveUntilJust :: [IO (Maybe Exp)] -> IO (Maybe Exp)
+    solveUntilJust [] = return Nothing
+    solveUntilJust (f:l) = do
+      me <- f
+      case me of
+        Just _ -> return me
+        Nothing -> solveUntilJust l
 
 
 solveWithLimits :: ParseInputOutput b => (b -> ProblemId -> IO Exp) -> ProblemId -> IO (Maybe Exp)
@@ -100,10 +110,12 @@ solveWithLimits solve pId = do
         checkLimits tid (tout - 5) memLimit
 
 
+-- solvev0 (undefined :: (Int -> [Int] -> String)) (1030, 'a')
 solvev0 :: forall b . (Typeable b, ParseInputOutput b) => b -> ProblemId -> IO Exp
-solvev0 _ pId@(cId, _) = do
+solvev0 hoge pId@(cId, _) = do
   checkInitialized
   cfg <- getCFConfig
+  putStrLn (wut hoge)
 
   putStrLn "Parsing problem"
   ios <- getInputOutput cfg pId
@@ -126,27 +138,24 @@ solvev0 _ pId@(cId, _) = do
           testVerd <- testSolution cfg pId
           case testVerd of
             Accepted -> do
-              --callCommand "beep -f 800 -l 3000 -d 200 -n -f 800 -l 800"
+              callCommand "beep -f 800 -l 200 -d 200 -n -f 800 -l 300"
               putStrLn "Submitting to codeforces"
               submitVerd <- submitSolution cfg pId
               case submitVerd of
                 Accepted -> do
-                  --callCommand "beep -f 800 -l 1000 -d 200 -n -f 1200 -l 1000"
+                  callCommand "beep -f 800 -l 200 -d 200 -n -f 1200 -l 300"
                   putStrLn $ "Solution accepted in codeforces:\n" <>
                     pprintUC e
                   return e
                 Rejected subm msg -> do
-                  --callCommand "beep -f 800 -l 1000 -d 200 -n -f 600 -l 1000"
+                  callCommand "beep -f 800 -l 200 -d 200 -n -f 600 -l 300"
                   putStrLn $ "sumbission #" <> show subm <> " failed with: " <>
                     drop 2 (dropWhile (/= ':') msg)
-                  mtc <- getLastTestCase cId subm
-                  case mtc of
-                    Just io -> do
-                      putStrLn "Got new test case"
-                      f cfg mpto (fromJust $ extendPredicate 0 pred io) ts
-                    Nothing -> do
-                      putStrLn "Couldn't get new test case"
-                      f cfg mpto pred ts
+                  putStrLn "add new test cases in folder (if you want) and press F"
+                  getChar
+                  ios <- getCurrentInputOutput cfg pId
+                  let pred' = fromJust $ getPredicate 0 ios
+                  f cfg mpto pred' ts
 
             Rejected{} -> do
               putStrLn "Failed Sample Tests"
