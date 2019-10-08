@@ -3,15 +3,27 @@ module MagicCP.ParserDefinitions where
 
 import Language.Haskell.TH
 
-allParserDefinitions :: DecsQ
-allParserDefinitions = concat <$> sequence [parser1Def]
-
-parser1Def :: DecsQ
-parser1Def =
+parse1InputDec :: DecsQ
+parse1InputDec  =
   [d|
-  parser1 :: String -> (Int, [Int])
-  parser1 i = (n, as)
-    where [l1, l2] = lines i
-          n = read l1
-          as = map read $ words l2
+  parse1Input :: String -> Maybe (Int, [Int])
+  parse1Input i = do
+    let ls = lines i
+    when (length ls /= 2) Nothing
+    let [l1, l2] = ls
+    n <- readMaybe l1 :: Maybe Int
+    as <- mapM readMaybe $ words l2 :: Maybe [Int]
+    return (n, as)
+    |]
+
+parse2InputDec :: DecsQ
+parse2InputDec  =
+  [d|
+  parse2Input :: String -> Maybe (Int, Int, Int)
+  parse2Input i = do
+    when (length (lines i) /= 1) Nothing
+    ns <- mapM readMaybe $ words i :: Maybe [Int]
+    when (length ns /= 3) Nothing
+    let [a, b, c] = ns
+    return (a, b, c)
     |]

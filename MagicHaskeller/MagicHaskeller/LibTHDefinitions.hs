@@ -31,6 +31,8 @@ natParaDeclaration =
                  in f i' (np i')
     |]
 
+-- f = \n -> nat_para n (iF (n `mod` 2 == 0) "I hate it" "I love it") (\f i s -> iF ((n-i) `mod` 2 == 0) "I hate that " "I love that "  ++ s)
+
 hdDeclaration :: DecsQ
 hdDeclaration =
   [d|

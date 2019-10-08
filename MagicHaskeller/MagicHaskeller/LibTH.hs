@@ -58,8 +58,13 @@ enumFromThenTo l m n = map toEnum $
         mint = fromEnum m
         nint = fromEnum n
 initializeTest :: IO ()
-initializeTest = do setPrimitives (test ++ bool ++ list ++ nat ++ natural ++ mb )
+initializeTest = do setPrimitives (test ++ bool ++ nat)
                     setDepth 10
+
+initializeWith :: [Primitive] -> IO ()
+initializeWith custom = do setPrimitives (custom ++ bool ++ list ++ nat ++ natural ++ mb )
+--initializeWith custom = do setPrimitives (custom ++ bool)
+                           setDepth 10
 
 initialize, init075, inittv1 :: IO ()
 initialize = do setPrimitives (list ++ nat ++ natural ++ mb ++ bool ++ $(p [| hd :: (->) [a] (Maybe a) |]) ++ plusInt ++ plusInteger)
@@ -121,7 +126,14 @@ list  = $(p [| ([] :: [a], (:), list_para :: (->) [b] (a -> (b -> [b] -> a -> a)
 
 bool = $(p [| (True, False, iF :: (->) Bool ((->) a ((->) a a))) |] )
 
-test = $(p [| ("EASY" :: [Char], "HARD" :: [Char]) |] )
+--test = $(p [| ("EASY" :: [Char], "HARD" :: [Char]) |] )
+test = $(p [| ("I hate that " :: [Char], "I love that " :: [Char],
+               "I hate it" :: [Char], "I love it" :: [Char],
+              (++) :: [Char] -> [Char] -> [Char], (\x -> (x `mod` 2) == 0) :: Int -> Bool,
+              (-) :: Int -> Int -> Int, (flip (-) 1) :: Int -> Int) |] )
+--test = $(p [| ( "I love it" :: [Char]
+              --, "I hate it" :: [Char]
+              --, (\x -> (x `mod` 2) == 0) :: Int -> Bool) |] )
 
 -- | 'postprocess' replaces uncommon functions like catamorphisms with well-known functions.
 postprocess :: Exp -> Exp

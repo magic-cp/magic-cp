@@ -22,6 +22,7 @@ import           Control.Concurrent             ( myThreadId
                                                 )
 import Data.Array( elems )
 import Data.Char( toLower )
+import Data.List
 import Data.Generics(everywhere, mkT, Data)
 import Data.Time.Clock( getCurrentTime )
 import           Data.Maybe                     ( fromJust )
@@ -31,6 +32,8 @@ import           System.IO                      ( stderr
                                                 , hPutStrLn
                                                 )
 import           System.Process                 ( callCommand )
+
+import Unsafe.Coerce(unsafeCoerce)
 
 import CF
 import CF.CFConfig
@@ -43,9 +46,10 @@ import MagicCP.ParseInputOutput
 import MagicHaskeller hiding ( TH(..) )
 import MagicHaskeller.ProgGenSF
 import MagicHaskeller.ProgramGenerator
-import MagicHaskeller.LibTH( initializeTest, reallyalltest )
+import MagicHaskeller.LibTH( initializeTest, reallyalltest, initializeWith )
 import MagicHaskeller.LibTHDefinitions
 import MagicHaskeller.TimeOut( maybeWithTO )
+
 
 import MagicCP.ParserDefinitions
 
@@ -54,16 +58,21 @@ checkInitialized = do
   pg <- extractCommon <$> getPG
   when (null $ elems (vl pg) ++ elems (pvl pg)) $ putStrLn "ProgramGenerator not initialized."
 
-generateFile :: CFConfig -> ProblemId -> TH.Exp -> IO ()
-generateFile CFConfig{..} (cId, pIndex) e = do
+generateFile :: CFConfig -> ProblemId -> DecsQ -> TH.Exp -> IO ()
+generateFile CFConfig{..} (cId, pIndex) parserDecs e = do
   time <- getCurrentTime
   program <- runQ $ concat <$> sequence
     [ allDeclarations
-    , parser1Def
+    , parserDecs
     , (:[]) <$> funD (mkName "solve") [clause [] (normalB $ return e) []]
-    , [d| main = getContents >>= \c -> putStrLn (uncurry solve (parser1 c)) |]
+    , [d| main = getContents >>= \c -> putStrLn (uncurry' solve (parser c)) |]
     ]
-  writeFile fileName ("-- " <> show time <> "\n" <> pprintUC program)
+  writeFile fileName $
+    "-- " <> show time <> "\n" <>
+    "import Data.Maybe\n" <>
+    "import Control.Monad\n" <>
+    "import Text.Read\n" <>
+    pprintUC program
   where
     fileName = cfparse_dir </> show cId </> [toLower pIndex] </> (toLower pIndex:".hs")
 
@@ -72,10 +81,16 @@ pprintUC =  pprint . everywhere (mkT unqCons)
 unqCons :: TH.Name -> TH.Name
 unqCons n = mkName (nameBase n)
 
-solveWithAllParsers :: IO (Maybe Exp)
-solveWithAllParsers = do
-  let l = [ solveWithLimits (solvev0 :: ((Int -> [Int] -> String) -> ProblemId -> IO Exp)) (1030, 'a')
-          , solveWithLimits (solvev0 :: ((String -> String) -> ProblemId -> IO Exp)) (1030, 'a')
+solveWithAllParsers :: ProblemId -> IO (Maybe Exp)
+solveWithAllParsers pId = do
+  --initializeWith ([ (unsafeCoerce "HARD", LitE (StringL "HARD") , AppT (ConT ''[]) (ConT ''Char)),
+                   --(unsafeCoerce "EASY", LitE (StringL "EASY") , AppT (ConT ''[]) (ConT ''Char))
+                 --] :: [Primitive])
+  initializeTest
+  let l = [ solveWithLimits (solvev0 :: ((Int -> Int -> Int -> String) -> ProblemId -> IO Exp)) pId
+          , solveWithLimits (solvev0 :: ((Int -> [Int] -> String) -> ProblemId -> IO Exp)) pId
+          , solveWithLimits (solvev0 :: ((Int -> String) -> ProblemId -> IO Exp)) pId
+          , solveWithLimits (solvev0 :: ((String -> String) -> ProblemId -> IO Exp)) pId
           ]
   solveUntilJust l
   where
@@ -91,36 +106,34 @@ solveWithAllParsers = do
 solveWithLimits :: ParseInputOutput b => (b -> ProblemId -> IO Exp) -> ProblemId -> IO (Maybe Exp)
 solveWithLimits solve pId = do
   tid <- myThreadId
-  let timeout = 60*60*4
+  let timeout = 60*60*5
       memoPerc = 90
   bracket
     ( forkIO $ checkLimits tid timeout memoPerc )
     killThread
     ( \_ -> Just <$> solve undefined pId )
     `catch` \(e :: SomeException) -> return Nothing
-
   where
   checkLimits tid tout memLimit = do
     memusage <- getMemoUsage
     putStrLn $ "checking limits: " ++ show tout ++ "  " ++ show memusage
-    if (memusage > memLimit || tout < 0)
+    if memusage > memLimit || tout < 0
        then killThread tid
        else do
         threadDelay 5000000
         checkLimits tid (tout - 5) memLimit
-
 
 -- solvev0 (undefined :: (Int -> [Int] -> String)) (1030, 'a')
 solvev0 :: forall b . (Typeable b, ParseInputOutput b) => b -> ProblemId -> IO Exp
 solvev0 hoge pId@(cId, _) = do
   checkInitialized
   cfg <- getCFConfig
-  putStrLn (wut hoge)
 
   putStrLn "Parsing problem"
   ios <- getInputOutput cfg pId
-  --let pred = fromJust $ getPredicate 0 ios :: ((Int -> [Int] -> String) -> Bool)
-  let pred = fromJust $ (getPredicate 0 ios :: Maybe (b -> Bool))
+  let pred = fromJust (getPredicate 0 ios :: Maybe (b -> Bool))
+      custom = getConstantPrimitives (typeOf hoge) (map snd ios)
+  initializeWith $ custom ++ $(p [| ((&&) :: Bool -> Bool -> Bool, (>=) :: Int -> Int -> Bool) |] )
 
   putStrLn "Starting search"
   md <- getPG
@@ -129,26 +142,32 @@ solvev0 hoge pId@(cId, _) = do
       mpto = timeout $ opt $ extractCommon md
   f cfg mpto pred (concat et)
   where
-    f :: (ParseInputOutput a) => CFConfig -> Maybe Int -> (a -> Bool) -> [(Exp, a)] -> IO Exp
+    f :: (ParseInputOutput a)
+      => CFConfig
+      -> Maybe Int
+      -> (a -> Bool)
+      -> [(Exp, a)]
+      -> IO Exp
     f cfg mpto pred ((e, a):ts) = do
+      --putStrLn (pprintUC e)
       result <- maybeWithTO undefined mpto (return (pred a))
       case result of
         Just True -> do
-          generateFile cfg pId e
+          generateFile cfg pId (wut hoge) e
           testVerd <- testSolution cfg pId
           case testVerd of
             Accepted -> do
-              callCommand "beep -f 800 -l 200 -d 200 -n -f 800 -l 300"
+              submitBeep
               putStrLn "Submitting to codeforces"
               submitVerd <- submitSolution cfg pId
               case submitVerd of
                 Accepted -> do
-                  callCommand "beep -f 800 -l 200 -d 200 -n -f 1200 -l 300"
+                  acceptedBeep
                   putStrLn $ "Solution accepted in codeforces:\n" <>
                     pprintUC e
                   return e
                 Rejected subm msg -> do
-                  callCommand "beep -f 800 -l 200 -d 200 -n -f 600 -l 300"
+                  rejectedBeep
                   putStrLn $ "sumbission #" <> show subm <> " failed with: " <>
                     drop 2 (dropWhile (/= ':') msg)
                   putStrLn "add new test cases in folder (if you want) and press F"
@@ -156,12 +175,29 @@ solvev0 hoge pId@(cId, _) = do
                   ios <- getCurrentInputOutput cfg pId
                   let pred' = fromJust $ getPredicate 0 ios
                   f cfg mpto pred' ts
-
             Rejected{} -> do
               putStrLn "Failed Sample Tests"
               f cfg mpto pred ts
-        Just False -> do
-          --tid <- myThreadId
-          --trace (show tid) $ return ()
+        Just False ->
           f cfg mpto pred ts
-        Nothing    -> hPutStrLn stderr ("timeout on "++pprintUC e) >> f cfg mpto pred ts
+        Nothing -> do
+          hPutStrLn stderr ("timeout on "++pprintUC e)
+          f cfg mpto pred ts
+    submitBeep = callCommand "beep -f 800 -l 200 -d 200 -n -f 800 -l 300"
+    acceptedBeep = callCommand "beep -f 800 -l 200 -d 200 -n -f 1200 -l 300"
+    rejectedBeep = callCommand "beep -f 800 -l 200 -d 200 -n -f 600 -l 300"
+
+
+getConstantPrimitives :: TypeRep -> [String] -> [Primitive]
+getConstantPrimitives t ss =
+  let a@(cons, args) = splitTyConApp t
+      b@(conss, argss) = splitTyConApp (typeRep "hoge")
+   in if a == b
+         then trace (show ss') $ map buildPrim ss'
+         else case args of
+                [] -> []
+                [ta1] -> getConstantPrimitives ta1 ss
+                [_, ta2] -> getConstantPrimitives ta2 ss
+  where
+    buildPrim ss = (HV (unsafeCoerce ss), LitE (StringL ss) , AppT (ConT ''[]) (ConT ''Char))
+    ss' = map (\s -> reverse (dropWhile (=='\n') $ reverse s))$ nub $ sort ss
