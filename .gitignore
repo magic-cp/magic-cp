@@ -25,3 +25,4 @@ cf-tool
 parsed/
 config.cfg
 venv/
+__pycache__
