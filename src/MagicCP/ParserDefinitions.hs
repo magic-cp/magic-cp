@@ -27,3 +27,18 @@ parse2InputDec  =
     let [a, b, c] = ns
     return (a, b, c)
     |]
+
+
+parse3InputDec :: DecsQ
+parse3InputDec  =
+  [d|
+  parse3Input :: String -> Maybe [Int]
+  parse3Input i = do
+    let ls = lines i
+    when (length ls /= 2) Nothing
+    let [l1, l2] = ls
+    n <- readMaybe l1 :: Maybe Int
+    as <- mapM readMaybe $ words l2 :: Maybe [Int]
+    when (length as /= n) Nothing
+    return as
+    |]

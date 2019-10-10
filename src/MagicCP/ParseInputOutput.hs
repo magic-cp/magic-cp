@@ -43,6 +43,22 @@ instance ParseInputOutput (Int -> [Int] -> String) where
     parse1InputDec
                                ]
 
+$(parse3InputDec)
+instance ParseInputOutput ([Int] -> String) where
+  getSinglePredicate 0 (i, o) = do
+    as <- parse3Input i
+    let los = lines o
+    when (length los /= 1) Nothing
+    return (\f -> f as == head los)
+  wut _ = concat <$> sequence [
+    [d|
+    uncurry' = id
+    parser :: String -> [Int]
+    parser = fromJust . parse3Input
+      |],
+    parse3InputDec
+                               ]
+
 instance ParseInputOutput (String -> String) where
   getSinglePredicate 0 (i, o) = Just (\f -> f i == o)
   wut _ =

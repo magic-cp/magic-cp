@@ -88,6 +88,7 @@ solveWithAllParsers pId = do
                  --] :: [Primitive])
   initializeTest
   let l = [ solveWithLimits (solvev0 :: ((Int -> Int -> Int -> String) -> ProblemId -> IO Exp)) pId
+          , solveWithLimits (solvev0 :: (([Int] -> String) -> ProblemId -> IO Exp)) pId
           , solveWithLimits (solvev0 :: ((Int -> [Int] -> String) -> ProblemId -> IO Exp)) pId
           , solveWithLimits (solvev0 :: ((Int -> String) -> ProblemId -> IO Exp)) pId
           , solveWithLimits (solvev0 :: ((String -> String) -> ProblemId -> IO Exp)) pId
