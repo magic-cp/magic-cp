@@ -134,6 +134,7 @@ solvev0 hoge pId@(cId, _) = do
   let pred = fromJust (getPredicate 0 ios :: Maybe (b -> Bool))
       custom = getConstantPrimitives (typeOf hoge) (map snd ios)
   initializeWith $ custom ++ $(p [| ((&&) :: Bool -> Bool -> Bool, (>=) :: Int -> Int -> Bool) |] )
+  --initializeWith custom
 
   putStrLn "Starting search"
   md <- getPG
@@ -170,11 +171,15 @@ solvev0 hoge pId@(cId, _) = do
                   rejectedBeep
                   putStrLn $ "sumbission #" <> show subm <> " failed with: " <>
                     drop 2 (dropWhile (/= ':') msg)
-                  putStrLn "add new test cases in folder (if you want) and press F"
-                  getChar
-                  ios <- getCurrentInputOutput cfg pId
-                  let pred' = fromJust $ getPredicate 0 ios
-                  f cfg mpto pred' ts
+
+                  mtc <- getLastTestCase2 cfg cId subm
+                  case mtc of
+                    Just io -> do
+                      putStrLn "Got new test case"
+                      f cfg mpto (fromJust $ extendPredicate 0 pred io) ts
+                    Nothing -> do
+                      putStrLn "Couldn't get new test case"
+                      f cfg mpto pred ts
             Rejected{} -> do
               putStrLn "Failed Sample Tests"
               f cfg mpto pred ts
@@ -186,6 +191,8 @@ solvev0 hoge pId@(cId, _) = do
     submitBeep = callCommand "beep -f 800 -l 200 -d 200 -n -f 800 -l 300"
     acceptedBeep = callCommand "beep -f 800 -l 200 -d 200 -n -f 1200 -l 300"
     rejectedBeep = callCommand "beep -f 800 -l 200 -d 200 -n -f 600 -l 300"
+
+
 
 
 getConstantPrimitives :: TypeRep -> [String] -> [Primitive]
