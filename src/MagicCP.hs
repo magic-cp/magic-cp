@@ -86,7 +86,6 @@ solveWithAllParsers pId = do
   --initializeWith ([ (unsafeCoerce "HARD", LitE (StringL "HARD") , AppT (ConT ''[]) (ConT ''Char)),
                    --(unsafeCoerce "EASY", LitE (StringL "EASY") , AppT (ConT ''[]) (ConT ''Char))
                  --] :: [Primitive])
-  initializeTest
   let l = [ solveWithLimits (solvev0 :: ((Int -> Int -> Int -> String) -> ProblemId -> IO Exp)) pId
           , solveWithLimits (solvev0 :: (([Int] -> String) -> ProblemId -> IO Exp)) pId
           , solveWithLimits (solvev0 :: ((Int -> [Int] -> String) -> ProblemId -> IO Exp)) pId
@@ -107,8 +106,8 @@ solveWithAllParsers pId = do
 solveWithLimits :: ParseInputOutput b => (b -> ProblemId -> IO Exp) -> ProblemId -> IO (Maybe Exp)
 solveWithLimits solve pId = do
   tid <- myThreadId
-  let timeout = 60*60*5
-      memoPerc = 90
+  let timeout = 60*7
+      memoPerc = 80
   bracket
     ( forkIO $ checkLimits tid timeout memoPerc )
     killThread
@@ -127,7 +126,6 @@ solveWithLimits solve pId = do
 -- solvev0 (undefined :: (Int -> [Int] -> String)) (1030, 'a')
 solvev0 :: forall b . (Typeable b, ParseInputOutput b) => b -> ProblemId -> IO Exp
 solvev0 hoge pId@(cId, _) = do
-  checkInitialized
   cfg <- getCFConfig
 
   putStrLn "Parsing problem"

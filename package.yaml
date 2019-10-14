@@ -4,6 +4,13 @@ library:
   exposed-modules:
   - CF
   - MagicCP
+
+executable:
+  main: Main.hs
+  source-dirs: exe
+  dependencies:
+    - MagicCP
+
 dependencies:
 - MagicHaskeller
 - aeson

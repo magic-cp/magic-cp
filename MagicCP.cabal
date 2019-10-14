@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 01c6ec7040fe94070b998f2d56dce486921c535ab131c722bb72679c5dc98f39
+-- hash: 4bed34d82fd66eda8477df5b6baf2275683449928f25db48a129e0cbd782f68d
 
 name:           MagicCP
 version:        0.0.0
@@ -27,6 +27,34 @@ library
       src
   build-depends:
       MagicHaskeller
+    , aeson
+    , array
+    , base
+    , bytestring
+    , configurator
+    , curl-aeson
+    , directory
+    , filepath
+    , html-conduit
+    , http-conduit
+    , process
+    , syb
+    , template-haskell
+    , text
+    , time
+    , unix
+    , xml-conduit
+  default-language: Haskell2010
+
+executable MagicCP
+  main-is: Main.hs
+  other-modules:
+      Paths_MagicCP
+  hs-source-dirs:
+      exe
+  build-depends:
+      MagicCP
+    , MagicHaskeller
     , aeson
     , array
     , base
