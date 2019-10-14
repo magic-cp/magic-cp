@@ -567,7 +567,6 @@ getPG = readIORef refmemodeb
 setPrimitives :: [Primitive] -> IO ()
 setPrimitives tups = do PG (_,_,_,cmn) <- readIORef refmemodeb
                         setPG $ mkPGOpt ((opt cmn){primopt=Nothing}) tups
--- setPrimitives tups = writeIORef refmemodeb (mkPG tups) -- This definition overwrites the old configuration.
 
 -- zipAppend is like zipWith (++), but the length of the resulting list is the same as that of the longer of the two list arguments.
 zipAppend :: [[a]] -> [[a]] -> [[a]]

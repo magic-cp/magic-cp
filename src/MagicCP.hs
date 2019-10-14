@@ -46,7 +46,7 @@ import MagicCP.ParseInputOutput
 import MagicHaskeller hiding ( TH(..) )
 import MagicHaskeller.ProgGenSF
 import MagicHaskeller.ProgramGenerator
-import MagicHaskeller.LibTH( initializeTest, reallyalltest, initializeWith )
+import MagicHaskeller.LibTH( reallyalltest, mkPGWithDefaults )
 import MagicHaskeller.LibTHDefinitions
 import MagicHaskeller.TimeOut( maybeWithTO )
 
@@ -83,14 +83,11 @@ unqCons n = mkName (nameBase n)
 
 solveWithAllParsers :: ProblemId -> IO (Maybe Exp)
 solveWithAllParsers pId = do
-  --initializeWith ([ (unsafeCoerce "HARD", LitE (StringL "HARD") , AppT (ConT ''[]) (ConT ''Char)),
-                   --(unsafeCoerce "EASY", LitE (StringL "EASY") , AppT (ConT ''[]) (ConT ''Char))
-                 --] :: [Primitive])
-  let l = [ solveWithLimits (solvev0 :: ((Int -> Int -> Int -> String) -> ProblemId -> IO Exp)) pId
-          , solveWithLimits (solvev0 :: (([Int] -> String) -> ProblemId -> IO Exp)) pId
-          , solveWithLimits (solvev0 :: ((Int -> [Int] -> String) -> ProblemId -> IO Exp)) pId
-          , solveWithLimits (solvev0 :: ((Int -> String) -> ProblemId -> IO Exp)) pId
-          , solveWithLimits (solvev0 :: ((String -> String) -> ProblemId -> IO Exp)) pId
+  let l = [-- solveWithLimits (solvev0 :: ((Int -> Int -> Int -> String) -> ProblemId -> IO Exp)) pId
+          --, solveWithLimits (solvev0 :: (([Int] -> String) -> ProblemId -> IO Exp)) pId
+          --, solveWithLimits (solvev0 :: ((Int -> [Int] -> String) -> ProblemId -> IO Exp)) pId
+          --, solveWithLimits (solvev0 :: ((Int -> String) -> ProblemId -> IO Exp)) pId
+          solveWithLimits (solvev0 :: ((String -> String) -> ProblemId -> IO Exp)) pId
           ]
   solveUntilJust l
   where
@@ -106,17 +103,19 @@ solveWithAllParsers pId = do
 solveWithLimits :: ParseInputOutput b => (b -> ProblemId -> IO Exp) -> ProblemId -> IO (Maybe Exp)
 solveWithLimits solve pId = do
   tid <- myThreadId
-  let timeout = 60*7
-      memoPerc = 80
+  let timeout = 60*60*7
+      memoPerc = 85
   bracket
     ( forkIO $ checkLimits tid timeout memoPerc )
     killThread
     ( \_ -> Just <$> solve undefined pId )
-    `catch` \(e :: SomeException) -> return Nothing
+    `catch` \(e :: SomeException) -> do
+      callCommand "beep -f 800 -l 300 -d 200 -n -f 600 -l 200 -n -f 300 -l 200 -n -f 100 -l 500"
+      return Nothing
   where
   checkLimits tid tout memLimit = do
     memusage <- getMemoUsage
-    putStrLn $ "checking limits: " ++ show tout ++ "  " ++ show memusage
+    when (tout `mod` 60 == 0) $ putStrLn $ "checking limits: " ++ show tout ++ "  " ++ show memusage
     if memusage > memLimit || tout < 0
        then killThread tid
        else do
@@ -132,11 +131,14 @@ solvev0 hoge pId@(cId, _) = do
   ios <- getInputOutput cfg pId
   let pred = fromJust (getPredicate 0 ios :: Maybe (b -> Bool))
       custom = getConstantPrimitives (typeOf hoge) (map snd ios)
-  initializeWith $ custom ++ $(p [| ((&&) :: Bool -> Bool -> Bool, (>=) :: Int -> Int -> Bool) |] )
-  --initializeWith custom
+      md = mkPGWithDefaults $
+          custom ++
+          $(p [| ((&&) :: Bool -> Bool -> Bool, (>=) :: Int -> Int -> Bool
+                 , words :: [Char] -> [[Char]]
+                 , all :: (a -> Bool) -> (->) [a] Bool
+                 , ("0" ==)) |] )
 
   putStrLn "Starting search"
-  md <- getPG
   --let md = reallyalltest::ProgGenSF
   let et = everything md True
       mpto = timeout $ opt $ extractCommon md

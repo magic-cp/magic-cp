@@ -61,10 +61,8 @@ initializeTest :: IO ()
 initializeTest = do setPrimitives (test ++ bool ++ nat)
                     setDepth 10
 
-initializeWith :: [Primitive] -> IO ()
-initializeWith custom = do setPrimitives (custom ++ bool ++ list ++ nat ++ natural ++ mb )
---initializeWith custom = do setPrimitives (custom ++ bool)
-                           setDepth 10
+mkPGWithDefaults :: [Primitive] -> ProgGen
+mkPGWithDefaults custom = mkPG (custom ++ bool ++ list ++ nat ++ natural ++ mb)
 
 initialize, init075, inittv1 :: IO ()
 initialize = do setPrimitives (list ++ nat ++ natural ++ mb ++ bool ++ $(p [| hd :: (->) [a] (Maybe a) |]) ++ plusInt ++ plusInteger)
