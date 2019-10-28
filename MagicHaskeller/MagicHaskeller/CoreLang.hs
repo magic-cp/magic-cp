@@ -87,6 +87,11 @@ arityCE (Lambda e)    = 1 + arityCE e
 arityCE (FunLambda e) = 1 + arityCE e
 arityCE _             = 0
 
+isAbsentWithLambdas :: Int -> CoreExpr -> Bool
+isAbsentWithLambdas numArgs expr = isAbsent numArgs (stripLambdas numArgs expr)
+  where stripLambdas 0 e = e
+        stripLambdas n (Lambda e) = stripLambdas (n-1) e
+        stripLambdas n e = error $ "Not enough lambdas in stripLambdas " ++ show n ++ " " ++ show e
 isAbsent :: Int -> CoreExpr -> Bool
 isAbsent numArgs expr = isa (2^numArgs - 1) expr /= 0
 isa :: Integer -> CoreExpr -> Integer

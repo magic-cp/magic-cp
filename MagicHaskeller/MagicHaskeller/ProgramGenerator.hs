@@ -56,7 +56,7 @@ class WithCommon a => ProgramGenerator a where
                          -- error "This program generator does not take an optional primitive set."
     matchingPrograms, matchingProgramsWOAbsents, unifyingPrograms :: Search m => Type -> a -> m AnnExpr
     matchingPrograms ty memodeb = unifyingPrograms (quantify ty) memodeb
-    matchingProgramsWOAbsents ty memodeb = mapDepth (filter (not . isAbsent (getArity ty) . toCE)) $ matchingPrograms ty memodeb
+    matchingProgramsWOAbsents ty memodeb = mapDepth (filter (not . isAbsentWithLambdas (getArity ty) . toCE)) $ matchingPrograms ty memodeb
 class WithCommon a => ProgramGeneratorIO a where
     -- | |mkTrie| creates the generator with the default parameters.
     mkTrieIO :: Common -> [Typed [CoreExpr]] -> [[Typed [CoreExpr]]] -> IO a

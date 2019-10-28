@@ -224,7 +224,7 @@ mfa f       t = mzero
 
 
 
-pushArgsCPS :: Integral i => (i -> i -> [Type] -> Type -> a) -> [Type] -> Type -> a
+pushArgsCPS :: (Integral i, Show i) => (i -> i -> [Type] -> Type -> a) -> [Type] -> Type -> a
 pushArgsCPS f = pa 0 0
   where
         pa c n args (t0:->t1)        = pa c (n+1) (t0:args) t1
@@ -237,12 +237,13 @@ pushArgs = pushArgsCPS (\_ _ a r -> (a,r))
 
 getRet  = pushArgsCPS (\_ _ _ r -> r) undefined
 getArgs = pushArgsCPS (\_ _ a _ -> a) []
-getNumCxts, getArity :: Integral i => Type -> i
+getNumCxts, getArity :: (Integral i, Show i) => Type -> i
 getNumCxts = pushArgsCPS (\c _ _ _ -> c) undefined
-getArity   = pushArgsCPS (\_ i _ _ -> i) undefined
-getArities :: Integral i => Type -> (i,i)
+getArity ty = let ans = pushArgsCPS (\_ i _ _ -> i) undefined ty
+               in Trace.trace (show ty ++ " : " ++ show ans) ans
+getArities :: (Integral i, Show i) => Type -> (i,i)
 getArities = pushArgsCPS (\c i _ _ -> (c,i)) undefined
-getAritiesRet :: Integral i => Type -> (i,i,Type)
+getAritiesRet :: (Integral i, Show i) => Type -> (i,i,Type)
 getAritiesRet = pushArgsCPS (\c i _ r -> (c,i,r)) undefined
 
 

@@ -83,11 +83,11 @@ unqCons n = mkName (nameBase n)
 
 solveWithAllParsers :: ProblemId -> IO (Maybe Exp)
 solveWithAllParsers pId = do
-  let l = [-- solveWithLimits (solvev0 :: ((Int -> Int -> Int -> String) -> ProblemId -> IO Exp)) pId
-          --, solveWithLimits (solvev0 :: (([Int] -> String) -> ProblemId -> IO Exp)) pId
-          --, solveWithLimits (solvev0 :: ((Int -> [Int] -> String) -> ProblemId -> IO Exp)) pId
-          --, solveWithLimits (solvev0 :: ((Int -> String) -> ProblemId -> IO Exp)) pId
-          solveWithLimits (solvev0 :: ((String -> String) -> ProblemId -> IO Exp)) pId
+  let l = [ solveWithLimits (solvev0 :: ((Int -> Int -> Int -> String) -> ProblemId -> IO Exp)) pId
+          , solveWithLimits (solvev0 :: (([Int] -> String) -> ProblemId -> IO Exp)) pId
+          , solveWithLimits (solvev0 :: ((Int -> [Int] -> String) -> ProblemId -> IO Exp)) pId
+          , solveWithLimits (solvev0 :: ((Int -> String) -> ProblemId -> IO Exp)) pId
+          , solveWithLimits (solvev0 :: ((String -> String) -> ProblemId -> IO Exp)) pId
           ]
   solveUntilJust l
   where
@@ -110,7 +110,7 @@ solveWithLimits solve pId = do
     killThread
     ( \_ -> Just <$> solve undefined pId )
     `catch` \(e :: SomeException) -> do
-      callCommand "beep -f 800 -l 300 -d 200 -n -f 600 -l 200 -n -f 300 -l 200 -n -f 100 -l 500"
+      callCommand "beep -f 800 -l 30 -d 200 -n -f 600 -l 20 -n -f 300 -l 20 -n -f 100 -l 50"
       return Nothing
   where
   checkLimits tid tout memLimit = do
@@ -133,14 +133,10 @@ solvev0 hoge pId@(cId, _) = do
       custom = getConstantPrimitives (typeOf hoge) (map snd ios)
       md = mkPGWithDefaults $
           custom ++
-          $(p [| ((&&) :: Bool -> Bool -> Bool, (>=) :: Int -> Int -> Bool
-                 , words :: [Char] -> [[Char]]
-                 , all :: (a -> Bool) -> (->) [a] Bool
-                 , ("0" ==)) |] )
+          $(p [| ((&&) :: Bool -> Bool -> Bool, (>=) :: Int -> Int -> Bool) |] )
 
   putStrLn "Starting search"
-  --let md = reallyalltest::ProgGenSF
-  let et = everything md True
+  let et = everything md False
       mpto = timeout $ opt $ extractCommon md
   f cfg mpto pred (concat et)
   where
