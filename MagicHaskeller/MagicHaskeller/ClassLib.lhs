@@ -1,4 +1,4 @@
--- 
+--
 -- (c) Susumu Katayama
 --
 \begin{code}
@@ -54,7 +54,7 @@ lookupFunsPoly behalf memodeb@(mt,_,cmn) reqret
               let (tn, decoder) = encode reqret mx
               in -- ifDepth (<= memodepth (opt cmn))
                          (fmap (\ (exprs, sub, m) -> (exprs, retrieve decoder sub `plusSubst` subst, mx+m)) $ fromMemo $ lmt mt tn)
-                 --        (unPS (behalf memodeb reqret) subst mx) 
+                 --        (unPS (behalf memodeb reqret) subst mx)
          )
                          -- 条件によって再計算したいときはuncommentすべし。メモりは食わないはずなので、常にmemoizeで問題ないはず。
 
@@ -99,6 +99,41 @@ generateFuns rec memodeb@(_mt, primmono,cmn) reqret
           behalf    = rec memodeb
           lltbehalf = error "generateFuns: cannot happen."
           lenavails = 0
-      in mapSum (retPrimMono cmn lenavails clbehalf lltbehalf behalf mguPS reqret) primmono
+      in mapSum (retPrimMono2 cmn lenavails clbehalf lltbehalf behalf mguPS reqret) primmono
+
+{-# SPECIALIZE retPrimMono2 :: (Search m) => Common -> Int -> (Type -> PriorSubsts m [CoreExpr]) -> (Type -> PriorSubsts m [CoreExpr]) -> (Type -> PriorSubsts m [CoreExpr]) -> (Type -> Type -> PriorSubsts m ()) -> Type -> Prim -> PriorSubsts m [CoreExpr] #-}
+retPrimMono2
+  :: (Search m, Expression e)
+  => Common
+  -> Int
+  -> (Type -> PriorSubsts m [e]) -- undefined
+  -> (Type -> PriorSubsts m [e]) -- undefined
+  -> (Type -> PriorSubsts m [e])
+  -> (Type -> Type -> PriorSubsts m ())
+  -> Type
+  -> Prim
+  -> PriorSubsts m [e]
+--retPrimMono2 cmn lenavails _ _ behalf mps reqret (numcxts, arity, retty, numtvs, xs:::ty) | trace (show xs ++ ":::" ++ show ty) False = undefined
+retPrimMono2 cmn lenavails _ _ behalf mps reqret (_, arity, retty, numtvs, xs:::ty) = do
+       tvid <- reserveTVars numtvs
+       mps (mapTV (tvid+) retty) reqret
+       convertPS (ndelay $ fromIntegral arity) $
+                 funApSub2 behalf (mapTV (tvid+) ty) (map (fromCE undefined) xs)
+
+funApSub2
+  :: (Search m, Expression e)
+  => (Type -> PriorSubsts m [e])
+  -> Type
+  -> [e]
+  -> PriorSubsts m [e]
+funApSub2 = funApSubOp2 (MagicHaskeller.Expression.<$>)
+funApSubOp2 op behalf = faso
+    where faso (t:=>ts) funs = undefined
+          faso (t:> ts) funs = undefined
+          -- original.
+          faso (t:->ts) funs
+              = do args <- behalf t
+                   faso ts (liftM2 op funs args)
+          faso _        funs = return funs
 
 \end{code}
