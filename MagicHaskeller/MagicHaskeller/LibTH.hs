@@ -61,11 +61,28 @@ initializeTest :: IO ()
 initializeTest = do setPrimitives (test ++ bool ++ nat)
                     setDepth 10
 
+--test = $(p [| ("EASY" :: [Char], "HARD" :: [Char]) |] )
+test = $(p [| ("I hate that " :: [Char], "I love that " :: [Char],
+               "I hate it" :: [Char], "I love it" :: [Char],
+              (++) :: [Char] -> [Char] -> [Char], (\x -> (x `mod` 2) == 0) :: Int -> Bool,
+              (-) :: Int -> Int -> Int, (flip (-) 1) :: Int -> Int) |] )
+--test = $(p [| ( "I love it" :: [Char]
+              --, "I hate it" :: [Char]
+              --, (\x -> (x `mod` 2) == 0) :: Int -> Bool) |] )
+              --
 mkPGWithDefaults :: [Primitive] -> ProgGen
-mkPGWithDefaults custom = mkPG (custom ++ bool ++ list ++ nat ++ natural ++ mb)
+mkPGWithDefaults custom = mkPG (custom ++ bool ++ list ++ nat ++ natural ++ mb ++ $(p [| hd :: (->) [a] (Maybe a) |]) ++ plusInt ++ plusInteger)
 
 initialize, init075, inittv1 :: IO ()
-initialize = do setPrimitives (list ++ nat ++ natural ++ mb ++ bool ++ $(p [| hd :: (->) [a] (Maybe a) |]) ++ plusInt ++ plusInteger)
+-- bool : 3 | 0
+-- list : 3 | 3
+-- nat : 3 | 6
+-- natural : 3 | 9
+-- mb : 3 | 12
+-- hd : 1 | 15
+-- plusInt : 1 | 16
+-- plusInteger : 1 | 17
+initialize = do setPrimitives (bool ++ list ++ nat ++ natural ++ mb ++ $(p [| hd :: (->) [a] (Maybe a) |]) ++ plusInt ++ plusInteger)
                 setDepth 10
 -- MagicHaskeller version 0.8 ignores the setDepth value and always memoizes.
 
@@ -124,14 +141,6 @@ list  = $(p [| ([] :: [a], (:), list_para :: (->) [b] (a -> (b -> [b] -> a -> a)
 
 bool = $(p [| (True, False, iF :: (->) Bool ((->) a ((->) a a))) |] )
 
---test = $(p [| ("EASY" :: [Char], "HARD" :: [Char]) |] )
-test = $(p [| ("I hate that " :: [Char], "I love that " :: [Char],
-               "I hate it" :: [Char], "I love it" :: [Char],
-              (++) :: [Char] -> [Char] -> [Char], (\x -> (x `mod` 2) == 0) :: Int -> Bool,
-              (-) :: Int -> Int -> Int, (flip (-) 1) :: Int -> Int) |] )
---test = $(p [| ( "I love it" :: [Char]
-              --, "I hate it" :: [Char]
-              --, (\x -> (x `mod` 2) == 0) :: Int -> Bool) |] )
 
 -- | 'postprocess' replaces uncommon functions like catamorphisms with well-known functions.
 postprocess :: Exp -> Exp
@@ -598,7 +607,7 @@ reallyall :: ProgramGenerator pg => pg
 reallyall = mkPG rich
 
 reallyalltest :: ProgramGenerator pg => pg
-reallyalltest = mkPG (rich ++ test)
+reallyalltest = mkPG rich
 
 nrnds = repeat 5
 
