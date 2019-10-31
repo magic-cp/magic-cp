@@ -180,10 +180,15 @@ fap behalf ts funs = do args <- mapM behalf ts
                         return (foldl (liftM2 (<$>)) funs args)
 -}
 fap :: Monad m => (Type -> PriorSubsts m [CoreExpr]) -> [Type] -> [CoreExpr] -> PriorSubsts m [CoreExpr]
-fap behalf ts funs = foldM (\fs t -> do args <- behalf t
-                                        return $ liftM2 (<$>) fs args)
-                            funs
-                            ts
+fap behalf ts funs = foldM
+  (\fs t -> do args <- behalf t
+               return [fun :$ arg | fun <- funs, arg <- args, adHocOpt (fun :$ arg)])
+  funs
+  ts
+  where
+    adHocOpt e = trace (">>" ++ show e ++ " filtered") adHocOpt' e
+    adHocOpt' _ = True
+
 
 -- fap behalf ts funs = mapAndFoldM (liftM2 (<$>)) funs behalf ts
 -- mapAndFoldM op n f []     = return n
@@ -208,16 +213,16 @@ mguAssumptions_' assumptions patty = msum $ map (mguPS patty) assumptions
 
 {-# SPECIALIZE retPrimMono :: (Search m) => Common -> Int -> (Type -> PriorSubsts m [CoreExpr]) -> (Type -> PriorSubsts m [CoreExpr]) -> (Type -> PriorSubsts m [CoreExpr]) -> (Type -> Type -> PriorSubsts m ()) -> Type -> Prim -> PriorSubsts m [CoreExpr] #-}
 retPrimMono
-  :: (Search m, Expression e)
+  :: (Search m)
   => Common
   -> Int
-  -> (Type -> PriorSubsts m [e]) -- undefined
-  -> (Type -> PriorSubsts m [e]) -- undefined
-  -> (Type -> PriorSubsts m [e])
+  -> (Type -> PriorSubsts m [CoreExpr]) -- undefined
+  -> (Type -> PriorSubsts m [CoreExpr]) -- undefined
+  -> (Type -> PriorSubsts m [CoreExpr])
   -> (Type -> Type -> PriorSubsts m ())
   -> Type
   -> Prim
-  -> PriorSubsts m [e]
+  -> PriorSubsts m [CoreExpr]
 --retPrimMono cmn lenavails _ _ behalf mps reqret (numcxts, arity, retty, numtvs, xs:::ty) | trace (show xs ++ ":::" ++ show ty) False = undefined
 retPrimMono cmn lenavails _ _ behalf mps reqret (_, arity, retty, numtvs, xs:::ty) = do
        tvid <- reserveTVars numtvs
@@ -226,20 +231,39 @@ retPrimMono cmn lenavails _ _ behalf mps reqret (_, arity, retty, numtvs, xs:::t
                  funApSub behalf (mapTV (tvid+) ty) (map (fromCE undefined) xs)
 
 funApSub
-  :: (Search m, Expression e)
-  => (Type -> PriorSubsts m [e])
+  :: (Search m)
+  => (Type -> PriorSubsts m [CoreExpr])
   -> Type
-  -> [e]
-  -> PriorSubsts m [e]
-funApSub = funApSubOp (<$>)
+  -> [CoreExpr]
+  -> PriorSubsts m [CoreExpr]
+funApSub = funApSubOp (:$)
+funApSubOp
+  :: (Search m)
+  => (CoreExpr -> CoreExpr -> CoreExpr)
+  -> (Type -> PriorSubsts m [CoreExpr])
+  -> Type
+  -> [CoreExpr]
+  -> PriorSubsts m [CoreExpr]
 funApSubOp op behalf = faso
     where faso (t:=>ts) funs = undefined
           faso (t:> ts) funs = undefined
           -- original.
           faso (t:->ts) funs
               = do args <- behalf t
-                   faso ts (liftM2 op funs args)
+                   faso ts [ op fun arg | fun <- funs, arg <- args, adHocOpt (op fun arg)]
           faso _        funs = return funs
+          adHocOpt = adHocOpt'
+          --adHocOpt e = if adHocOpt' e
+                          --then True
+                          --else trace (">>" ++ show e ++ " filtered") False
+          adHocOpt' (Primitive {primId = 2} :$ PrimCon {primId = 1}) = False
+          adHocOpt' (Primitive {primId = 2} :$ PrimCon {primId = 0}) = False
+          adHocOpt' (Primitive {primId = 3} :$ PrimCon {primId = 1}) = False
+          adHocOpt' (Primitive {primId = 3} :$ PrimCon {primId = 0}) = False
+          adHocOpt' ((Primitive {primId = 3} :$ _) :$ PrimCon {primId = 1}) = False
+          adHocOpt' ((Primitive {primId = 3} :$ _) :$ PrimCon {primId = 0}) = False
+          adHocOpt' ((Primitive {primId = 3} :$ e1) :$ e2) = e1 >= e2
+          adHocOpt' _ = True
 -- originalでrevGetArgs経由にすると，foldMを使った場合と同じ効率になる．
 {-
 funApSub behalf t funs = fap behalf (revGetArgs t) funs
@@ -250,16 +274,16 @@ revGetArgs _       = []
 
 {-# SPECIALIZE retGen :: (Search m) => Common -> Int -> (Type -> Type -> [CoreExpr] -> [CoreExpr]) -> (Type -> PriorSubsts m [CoreExpr]) -> (Type -> PriorSubsts m [CoreExpr]) -> (Type -> PriorSubsts m [CoreExpr]) -> Type -> Prim -> PriorSubsts m [CoreExpr] #-}
 retGen, retGenOrd, retGenTV1
-  :: (Search m, Expression e)
+  :: (Search m)
   => Common
   -> Int
-  -> (Type -> Type -> [e] -> [e])
-  -> (Type -> PriorSubsts m [e])
-  -> (Type -> PriorSubsts m [e])
-  -> (Type -> PriorSubsts m [e])
+  -> (Type -> Type -> [CoreExpr] -> [CoreExpr])
+  -> (Type -> PriorSubsts m [CoreExpr])
+  -> (Type -> PriorSubsts m [CoreExpr])
+  -> (Type -> PriorSubsts m [CoreExpr])
   -> Type
   -> Prim
-  -> PriorSubsts m [e]
+  -> PriorSubsts m [CoreExpr]
 retGen cmn lenavails fe _ _ behalf = retGen' (funApSub behalf) cmn lenavails fe behalf
 --retGen' fas cmn lenavails fe behalf reqret (numcxts, arity, _, numtvs, xs:::ty) | trace ("retGen: " ++ show xs ++ ":::" ++ show ty) False = undefined
 retGen' fas cmn lenavails fe behalf reqret (_, arity, _, numtvs, xs:::ty)

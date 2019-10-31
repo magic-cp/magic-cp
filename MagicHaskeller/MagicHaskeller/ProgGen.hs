@@ -32,8 +32,8 @@ import Debug.Trace
 
 import MagicHaskeller.MemoToFiles hiding (freezePS,fps)
 
---import System.IO.Unsafe(unsafePerformIO)
---import Data.IORef
+-- import System.IO.Unsafe(unsafePerformIO)
+-- import Data.IORef
 
 traceTy _    = id
 --traceTy fty = trace ("lookup "++ show fty)
@@ -72,12 +72,14 @@ lookupFunsShared memodeb@(_,mt,_,_) avail reqret
         PS (\subst mx ->
         fromRc $ Rc $ \d -> -- d+1 is the maximum number of arguments to use.
         concat [ let (tn, decoder) = encode (popArgs newavails reqret) mx
+                  --in (\x -> trace (show x) x) $
                   in map (decodeVarsPos ixs) $ -- applies the new Var Names (X n)
                      map (\ (exprs, sub, m) -> (exprs, retrieve decoder sub `plusSubst` subst, mx+m)) -- apply PS input(?)
                      (unMx (lmt mt tn) !! d) :: [Possibility CoreExpr]
                        | annAvs <- combs (d+1) annAvails,
                          let (ixs, newavails) = unzip annAvs
                ] :: [Possibility CoreExpr])
+
 
 {- {{{ IORef cnts
 
@@ -89,24 +91,6 @@ cntluFunShcnt = do
   modifyIORef luFunShcnt (+1)
   val <- readIORef luFunShcnt
   putStrLn $ "luFunShcnt = " ++ show val
-
-{-# NOINLINE pscnt #-}
-pscnt :: IORef Int
-pscnt  = unsafePerformIO (newIORef 0)
-cntpscnt  :: IO ()
-cntpscnt = do
-  modifyIORef pscnt (+1)
-  val <- readIORef pscnt
-  putStrLn $ "pscnt = " ++ show val
-
-{-# NOINLINE dcnt #-}
-dcnt :: IORef Int
-dcnt  = unsafePerformIO (newIORef 0)
-cntdcnt  :: IO ()
-cntdcnt = do
-  modifyIORef dcnt (+1)
-  val <- readIORef dcnt
-  putStrLn $ "dcnt = " ++ show val
 
 }}} -}
 
