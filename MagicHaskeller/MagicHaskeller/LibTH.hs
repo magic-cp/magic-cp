@@ -71,7 +71,7 @@ test = $(p [| ("I hate that " :: [Char], "I love that " :: [Char],
               --, (\x -> (x `mod` 2) == 0) :: Int -> Bool) |] )
               --
 mkPGWithDefaults :: [Primitive] -> ProgGen
-mkPGWithDefaults custom = mkPG (custom ++ bool ++ list ++ nat ++ natural ++ mb ++ $(p [| hd :: (->) [a] (Maybe a) |]) ++ plusInt ++ plusInteger)
+mkPGWithDefaults custom = mkPG (bool ++ list ++ nat ++ natural ++ mb ++ $(p [| hd :: (->) [a] (Maybe a) |]) ++ plusInt ++ plusInteger ++ custom)
 
 initialize, init075, inittv1 :: IO ()
 -- bool : 3 | 0

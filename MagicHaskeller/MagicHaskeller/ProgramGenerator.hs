@@ -256,13 +256,17 @@ funApSubOp op behalf = faso
           --adHocOpt e = if adHocOpt' e
                           --then True
                           --else trace (">>" ++ show e ++ " filtered") False
-          adHocOpt' (Primitive {primId = 2} :$ PrimCon {primId = 1}) = False
-          adHocOpt' (Primitive {primId = 2} :$ PrimCon {primId = 0}) = False
-          adHocOpt' (Primitive {primId = 3} :$ PrimCon {primId = 1}) = False
-          adHocOpt' (Primitive {primId = 3} :$ PrimCon {primId = 0}) = False
-          adHocOpt' ((Primitive {primId = 3} :$ _) :$ PrimCon {primId = 1}) = False
-          adHocOpt' ((Primitive {primId = 3} :$ _) :$ PrimCon {primId = 0}) = False
-          adHocOpt' ((Primitive {primId = 3} :$ e1) :$ e2) = e1 >= e2
+          adHocOpt' (Primitive {primId = 2} :$ PrimCon{}) = False -- iF True
+          adHocOpt' (Primitive {primId = 5} :$ PrimCon{}) = False   -- list_para []
+          adHocOpt' (Primitive {primId = 8} :$ PrimCon{}) = False   -- nat_para 0
+          adHocOpt' (Primitive {primId = 11} :$ PrimCon{}) = False   -- nat_para 0
+          adHocOpt' (Primitive {primId = 14} :$ _ :$ _ :$ PrimCon{}) = False -- maybe _ _ Nothing
+          adHocOpt' ((Primitive {primId = 16} :$ e1) :$ ((Primitive {primId = 16} :$ e2) :$ e3)) = e1 <= e2 -- + conm assoc
+          adHocOpt' ((Primitive {primId = 16} :$ e1) :$ e2) = e1 >= e2 -- ^
+
+          adHocOpt' (Primitive {primId = 18} :$ PrimCon{}) = False -- && True
+          adHocOpt' ((Primitive {primId = 18} :$ _) :$ PrimCon {}) = False -- && _ True
+          adHocOpt' ((Primitive {primId = 18} :$ e1) :$ e2) = e1 >= e2  -- && conm
           adHocOpt' _ = True
 -- originalでrevGetArgs経由にすると，foldMを使った場合と同じ効率になる．
 {-

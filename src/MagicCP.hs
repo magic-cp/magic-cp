@@ -132,8 +132,8 @@ solvev0 hoge pId@(cId, _) = do
   let pred = fromJust (getPredicate 0 ios :: Maybe (b -> Bool))
       custom = getConstantPrimitives (typeOf hoge) (map snd ios)
       md = mkPGWithDefaults $
-          custom ++
           $(p [| ((&&) :: Bool -> Bool -> Bool, (>=) :: Int -> Int -> Bool) |] )
+          ++ custom
 
   putStrLn "Starting search"
   let et = everything md False

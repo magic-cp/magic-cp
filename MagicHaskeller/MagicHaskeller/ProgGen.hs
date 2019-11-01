@@ -73,12 +73,19 @@ lookupFunsShared memodeb@(_,mt,_,_) avail reqret
         fromRc $ Rc $ \d -> -- d+1 is the maximum number of arguments to use.
         concat [ let (tn, decoder) = encode (popArgs newavails reqret) mx
                   --in (\x -> trace (show x) x) $
-                  in map (decodeVarsPos ixs) $ -- applies the new Var Names (X n)
+                  --in map (\(lce, foo, bar) -> (filter adHocOpt' lce, foo, bar)) $
+                  in
+                     map (decodeVarsPos ixs) $ -- applies the new Var Names (X n)
                      map (\ (exprs, sub, m) -> (exprs, retrieve decoder sub `plusSubst` subst, mx+m)) -- apply PS input(?)
                      (unMx (lmt mt tn) !! d) :: [Possibility CoreExpr]
                        | annAvs <- combs (d+1) annAvails,
                          let (ixs, newavails) = unzip annAvs
                ] :: [Possibility CoreExpr])
+  --where
+    --adHocOpt' ((Primitive {primId = 16} :$ e1) :$ e2) = trace (show e1 ++ "+" ++ show e2) $ e1 >= e2
+    --adHocOpt' ((Primitive {primId = 17} :$ e1) :$ e2) = trace (show e1 ++ "(+)" ++ show e2) $ e1 >= e2
+    --adHocOpt' (e1 :$ e2) = adHocOpt' e1 && adHocOpt' e2
+    --adHocOpt' _ = True
 
 
 {- {{{ IORef cnts
