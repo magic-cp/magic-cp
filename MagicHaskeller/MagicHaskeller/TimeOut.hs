@@ -6,6 +6,7 @@ module MagicHaskeller.TimeOut where
 
 import Control.Concurrent(forkIO, killThread, myThreadId, ThreadId, threadDelay, yield)
 import Control.Concurrent.MVar
+import Control.DeepSeq
 import Control.Exception -- (catch, Exception(..))
 -- import System.Posix.Unistd(getSysVar, SysVar(..))
 -- import System.Posix.Process(getProcessTimes, ProcessTimes(..))
@@ -51,6 +52,10 @@ unsafeWithPTO pto a = unsafePerformIO $ wrapExecution (
 maybeWithTO :: (a -> IO () -> IO ()) -- ^ seq or deepSeq(=Control.Parallel.Strategies.sforce). For our purposes seq is enough, because @a@ is either 'Bool' or 'Ordering'.
             -> Maybe Int -> IO a -> IO (Maybe a)
 maybeWithTO sq mbt action = maybeWithTO' sq mbt (const action)
+
+maybeWithTO2 :: Maybe Int -> Bool -> IO (Maybe Bool)
+maybeWithTO2 mbt action = maybeWithTO2' mbt action
+
 newPTO t = return t
 {- x
 -- x #else
@@ -86,10 +91,25 @@ maybeWithTO' dsq (Just t) action = do tid <- myThreadId
                                       bracket (forkIO (threadDelay t >> -- hPutStrLn stderr "throwing Timeout" >>
                                                                         throwTo tid (ErrorCall "Timeout")))
                                               ({- block . -} killThread)
-                                              (\_ -> Just <$> action (undefined>>))
-                                        `Control.Exception.catch` \(e :: ErrorCall) ->
+                                              (\_ -> Just <$> action (yield >>))
+                                        `Control.Exception.catch` \(e :: SomeException) ->
                                                                          -- trace ("within maybeWithTO': " ++ show e) $
                                                                          return Nothing
+
+maybeWithTO2' :: Maybe Int -> Bool -> IO (Maybe Bool)
+maybeWithTO2' Nothing  result = let a = force result
+                                 in return (Just a)
+maybeWithTO2' (Just t) result = do tid <- myThreadId
+                                   bracket (forkIO (threadDelay t >> -- hPutStrLn stderr "throwing Timeout" >>
+                                                                    throwTo tid (ErrorCall "Timeout")))
+                                          ({- block . -} killThread)
+                                          (\_ -> do
+                                            result `deepseq` return ()
+                                            return . Just  $ result
+                                          )
+                                    `Control.Exception.catch` \(e :: ErrorCall) ->
+                                                                     -- trace ("within maybeWithTO': " ++ show e) $
+                                                                     return Nothing
 
 --  'withTO' creates CHTO every time it is called. Currently unused.
 -- withTO :: DeepSeq a => Int -> IO a -> IO (Maybe a)

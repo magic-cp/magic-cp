@@ -39,6 +39,13 @@ packages:
       sha256: 3b4495eda11d340bac942b24d34c43c8bfb757c3861e166f94cb1dec897f6042
   original:
     hackage: show-0.6
+- completed:
+    hackage: deepseq-1.4.4.0@sha256:76902b99ee97fc059311ddb0df9488c54969adf0a212efa39705981761f06b55,2918
+    pantry-tree:
+      size: 385
+      sha256: edf7ecb1e7195bf2c1b595f462343b8a237351acf73e4d0e66e005fc5baa62f4
+  original:
+    hackage: deepseq-1.4.4.0
 snapshots:
 - completed:
     size: 523443

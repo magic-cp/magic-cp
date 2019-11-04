@@ -53,6 +53,7 @@ Library
                , syb
                , template-haskell
                , time
+               , deepseq
   Exposed-modules: Control.Monad.Search.Combinatorial
                  , MagicHaskeller
                  , MagicHaskeller.ProgramGenerator

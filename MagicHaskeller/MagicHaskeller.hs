@@ -807,7 +807,7 @@ findDo op withAbsents pred = do
                      let mpto = timeout $ opt $ extractCommon md
                      fp mpto (concat et)
     where fp mpto ((e,a):ts) = do -- putStrLn $ pprintUC e
-                                  result <- maybeWithTO seq mpto (return (pred a))
+                                  result <- maybeWithTO2 mpto (pred a)
                                   case result of Just True  -> e `op` fp mpto ts
                                                  Just False -> fp mpto ts
                                                  Nothing    -> hPutStrLn stderr ("timeout on "++pprintUC e) >> fp mpto ts

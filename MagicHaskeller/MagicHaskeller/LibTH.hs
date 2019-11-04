@@ -71,18 +71,17 @@ test = $(p [| ("I hate that " :: [Char], "I love that " :: [Char],
               --, (\x -> (x `mod` 2) == 0) :: Int -> Bool) |] )
               --
 mkPGWithDefaults :: [Primitive] -> ProgGen
-mkPGWithDefaults custom = mkPG (bool ++ list ++ nat ++ natural ++ mb ++ $(p [| hd :: (->) [a] (Maybe a) |]) ++ plusInt ++ plusInteger ++ custom)
+mkPGWithDefaults custom = mkPG (bool ++ list ++ nat ++ natural ++ $(p [| hd :: (->) [Int] Int |]) ++ plusInt ++ plusInteger ++ custom)
 
 initialize, init075, inittv1 :: IO ()
 -- bool : 3 | 0
 -- list : 3 | 3
 -- nat : 3 | 6
 -- natural : 3 | 9
--- mb : 3 | 12
--- hd : 1 | 15
--- plusInt : 1 | 16
--- plusInteger : 1 | 17
-initialize = do setPrimitives (bool ++ list ++ nat ++ natural ++ mb ++ $(p [| hd :: (->) [a] (Maybe a) |]) ++ plusInt ++ plusInteger)
+-- hd : 1 | 12
+-- plusInt : 1 | 13
+-- plusInteger : 1 | 14
+initialize = do setPrimitives (bool ++ list ++ nat ++ natural ++ $(p [| hd :: [Int] -> Int |]) ++ plusInt ++ plusInteger)
                 setDepth 10
 -- MagicHaskeller version 0.8 ignores the setDepth value and always memoizes.
 
@@ -94,7 +93,7 @@ init075 = do setPG $ mkMemo075 (list ++ nat ++ natural ++ mb ++ bool ++ plusInt 
 -- because @forall a b c. E1(a->b->c) -> E2(a->b->c) -> ... -> En(a->b->c) -> a -> b -> c@ and @forall a b c. E1((a,b)->c) -> E2((a,b)->c) -> ... -> En((a,b)->c) -> (a,b) -> c@ are isomorphic, and thus the latter can always be used instead of the former.
 
 inittv1 = do setPG $ mkPGOpt (options{primopt = Nothing, tv1 = True})
-                             (list ++ nat ++ natural ++ mb ++ bool ++ tuple ++ $(p [| (hd :: (->) [a] (Maybe a)) |]) ++ plusInt ++ plusInteger )
+                             (list ++ nat ++ natural ++ mb ++ bool ++ tuple ++ $(p [| (hd :: (->) [a] a) |]) ++ plusInt ++ plusInteger )
              setDepth 10
 
 tuple = $(p [| ((,) :: a -> b -> (a,b), uncurry :: (a->b->c) -> (->) (a,b) c) |])
@@ -102,7 +101,7 @@ tuple' = $(p [| ((,) :: a -> b -> (a,b), flip uncurry :: (->) (a,b) ((a->b->c) -
 
 -- Specialized memoization tables. Choose one for quicker results.
 mall, mlist, mlist', mnat, mlistnat, mnat_nc, mnatural, mlistnatural  :: ProgramGenerator pg => pg
-mall  = mkPG (list ++ nat ++ natural ++ mb ++ bool ++ $(p [| hd :: (->) [a] (Maybe a) |]) ++ plusInt ++ plusInteger)
+mall  = mkPG (list ++ nat ++ natural ++ mb ++ bool ++ $(p [| hd :: (->) [a] a |]) ++ plusInt ++ plusInteger)
 mlist = mkPG list
 mlist' = mkPG list'
 mnat  = mkPG (nat ++ plusInt)

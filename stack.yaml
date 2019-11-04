@@ -22,6 +22,8 @@ extra-deps:
 - http-conduit-2.3.7.1
 - mueval-0.9.3
 - show-0.6
+- deepseq-1.4.4.0
+
 
 
 # Override default flag values for local packages and extra-deps

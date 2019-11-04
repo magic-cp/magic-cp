@@ -258,16 +258,26 @@ funApSubOp op behalf = faso
                           --else trace (">>" ++ show e ++ " filtered") False
           adHocOpt' (Primitive {primId = 2} :$ PrimCon{}) = False -- iF True
           adHocOpt' (Primitive {primId = 5} :$ PrimCon{}) = False   -- list_para []
+          adHocOpt' e@(Primitive {primId = 5} :$ e1 :$ e2 :$ Lambda (Lambda (Lambda e3))) = varIsUsed 0 e3-- && trace (show e) True
           adHocOpt' (Primitive {primId = 8} :$ PrimCon{}) = False   -- nat_para 0
+          adHocOpt' e@(Primitive {primId = 8} :$ e1 :$ e2 :$ Lambda (Lambda e3)) = varIsUsed 0 e3-- && trace (show e) True
           adHocOpt' (Primitive {primId = 11} :$ PrimCon{}) = False   -- nat_para 0
-          adHocOpt' (Primitive {primId = 14} :$ _ :$ _ :$ PrimCon{}) = False -- maybe _ _ Nothing
-          adHocOpt' ((Primitive {primId = 16} :$ e1) :$ ((Primitive {primId = 16} :$ e2) :$ e3)) = e1 <= e2 -- + conm assoc
-          adHocOpt' ((Primitive {primId = 16} :$ e1) :$ e2) = e1 >= e2 -- ^
-
-          adHocOpt' (Primitive {primId = 18} :$ PrimCon{}) = False -- && True
-          adHocOpt' ((Primitive {primId = 18} :$ _) :$ PrimCon {}) = False -- && _ True
-          adHocOpt' ((Primitive {primId = 18} :$ e1) :$ e2) = e1 >= e2  -- && conm
+          adHocOpt' e@(Primitive {primId = 11} :$ e1 :$ e2 :$ Lambda (Lambda e3)) = varIsUsed 0 e3-- && trace (show e) True
+          adHocOpt' ((Primitive {primId = 13} :$ e1) :$ ((Primitive {primId = 13} :$ e2) :$ e3)) = e1 <= e2 -- + conm assoc
+          adHocOpt' ((Primitive {primId = 13} :$ e1) :$ e2) = e1 >= e2 -- ^
+          adHocOpt' ((Primitive {primId = 14} :$ e1) :$ ((Primitive {primId = 14} :$ e2) :$ e3)) = e1 <= e2 -- + conm assoc
+          adHocOpt' ((Primitive {primId = 14} :$ e1) :$ e2) = e1 >= e2 -- ^
+          adHocOpt' (Primitive {primId = 15} :$ PrimCon{}) = False -- && True
+          adHocOpt' ((Primitive {primId = 15} :$ _) :$ PrimCon {}) = False -- && _ True
+          adHocOpt' ((Primitive {primId = 15} :$ e1) :$ e2) = e1 >= e2  -- && conm
           adHocOpt' _ = True
+          varIsUsed v (X u) = v==u
+          varIsUsed v (Lambda e) = varIsUsed (v+1) e
+          varIsUsed v Primitive{} = False
+          varIsUsed v PrimCon{} = False
+          varIsUsed v (e1 :$ e2) = varIsUsed v e1 && varIsUsed v e2
+          varIsUsed v e = trace ("unhandled pattern in varIsUded: " ++ show e) True
+
 -- originalでrevGetArgs経由にすると，foldMを使った場合と同じ効率になる．
 {-
 funApSub behalf t funs = fap behalf (revGetArgs t) funs

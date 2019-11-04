@@ -48,7 +48,7 @@ import MagicHaskeller.ProgGenSF
 import MagicHaskeller.ProgramGenerator
 import MagicHaskeller.LibTH( reallyalltest, mkPGWithDefaults )
 import MagicHaskeller.LibTHDefinitions
-import MagicHaskeller.TimeOut( maybeWithTO )
+import MagicHaskeller.TimeOut( maybeWithTO2 )
 
 
 import MagicCP.ParserDefinitions
@@ -134,6 +134,7 @@ solvev0 hoge pId@(cId, _) = do
       md = mkPGWithDefaults $
           $(p [| ((&&) :: Bool -> Bool -> Bool, (>=) :: Int -> Int -> Bool) |] )
           ++ custom
+  pred `seq` return ()
 
   putStrLn "Starting search"
   let et = everything md False
@@ -148,7 +149,7 @@ solvev0 hoge pId@(cId, _) = do
       -> IO Exp
     f cfg mpto pred ((e, a):ts) = do
       --putStrLn (pprintUC e)
-      result <- maybeWithTO undefined mpto (return (pred a))
+      result <- maybeWithTO2 mpto (pred a)
       case result of
         Just True -> do
           generateFile cfg pId (wut hoge) e

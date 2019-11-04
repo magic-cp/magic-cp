@@ -36,9 +36,9 @@ natParaDeclaration =
 hdDeclaration :: DecsQ
 hdDeclaration =
   [d|
-  hd :: [a] -> Maybe a
-  hd []    = Nothing
-  hd (x:_) = Just x
+  hd :: [a] -> a
+  hd [] = error "empty head"
+  hd (a:as) = a
     |]
 
 tlDeclaration :: DecsQ
