@@ -252,30 +252,32 @@ funApSubOp op behalf = faso
               = do args <- behalf t
                    faso ts [ op fun arg | fun <- funs, arg <- args, adHocOpt (op fun arg)]
           faso _        funs = return funs
+          notConstantAsFirstArg = [2, 5, 8, 11, 12, 15]
+          notConstantAsSecondArg = [15]
+          commAndAssoc = [13, 14, 15]
+
+          secondAndThirdArgDifferent = [2]
+          firstAndSecondArgDifferent = [15, 16, 17]
+
+          thirdArgOfThirdArgUsed = [5]
+          secondArgOfThirdArgUsed = [8, 11]
+
           adHocOpt = adHocOpt'
-          --adHocOpt e = if adHocOpt' e
-                          --then True
-                          --else trace (">>" ++ show e ++ " filtered") False
-          adHocOpt' (Primitive {primId = 2} :$ PrimCon{}) = False -- iF True
-          adHocOpt' (Primitive {primId = 5} :$ PrimCon{}) = False   -- list_para []
-          adHocOpt' e@(Primitive {primId = 5} :$ e1 :$ e2 :$ Lambda (Lambda (Lambda e3))) = varIsUsed 0 e3-- && trace (show e) True
-          adHocOpt' (Primitive {primId = 8} :$ PrimCon{}) = False   -- nat_para 0
-          adHocOpt' e@(Primitive {primId = 8} :$ e1 :$ e2 :$ Lambda (Lambda e3)) = varIsUsed 0 e3-- && trace (show e) True
-          adHocOpt' (Primitive {primId = 11} :$ PrimCon{}) = False   -- nat_para 0
-          adHocOpt' e@(Primitive {primId = 11} :$ e1 :$ e2 :$ Lambda (Lambda e3)) = varIsUsed 0 e3-- && trace (show e) True
-          adHocOpt' ((Primitive {primId = 13} :$ e1) :$ ((Primitive {primId = 13} :$ e2) :$ e3)) = e1 <= e2 -- + conm assoc
-          adHocOpt' ((Primitive {primId = 13} :$ e1) :$ e2) = e1 >= e2 -- ^
-          adHocOpt' ((Primitive {primId = 14} :$ e1) :$ ((Primitive {primId = 14} :$ e2) :$ e3)) = e1 <= e2 -- + conm assoc
-          adHocOpt' ((Primitive {primId = 14} :$ e1) :$ e2) = e1 >= e2 -- ^
-          adHocOpt' (Primitive {primId = 15} :$ PrimCon{}) = False -- && True
-          adHocOpt' ((Primitive {primId = 15} :$ _) :$ PrimCon {}) = False -- && _ True
-          adHocOpt' ((Primitive {primId = 15} :$ e1) :$ e2) = e1 >= e2  -- && conm
+          --adHocOpt e = adHocOpt' e || trace (">>" ++ show e ++ " filtered") False
+          adHocOpt' (Primitive {primId = x} :$ PrimCon{}) | x `elem` notConstantAsFirstArg = False -- iF True
+          adHocOpt' (Primitive {primId = x} :$ _ :$ PrimCon{}) | x `elem` notConstantAsSecondArg = False -- iF True
+          adHocOpt' (Primitive {primId = x} :$ e1 :$ e2) | x `elem` firstAndSecondArgDifferent && e1 == e2 = False
+          adHocOpt' (Primitive {primId = x} :$ _ :$ e2 :$ e3) | x `elem` secondAndThirdArgDifferent && e2 == e3 = False
+          adHocOpt' (Primitive {primId = x} :$ e1 :$ ((Primitive {primId = y} :$ e2) :$ e3)) | x==y && x `elem` commAndAssoc && e1 > e2 = False
+          adHocOpt' (Primitive {primId = x} :$ e1 :$ e2) | x `elem` commAndAssoc && e1 < e2 = False
+          adHocOpt' (Primitive {primId = x} :$ e1 :$ e2 :$ Lambda (Lambda (Lambda e3))) | x `elem` thirdArgOfThirdArgUsed && not (varIsUsed 0 e3) = False
+          adHocOpt' (Primitive {primId = x} :$ e1 :$ e2 :$ Lambda (Lambda e3)) | x `elem` secondArgOfThirdArgUsed && not (varIsUsed 0 e3) = False
           adHocOpt' _ = True
           varIsUsed v (X u) = v==u
           varIsUsed v (Lambda e) = varIsUsed (v+1) e
           varIsUsed v Primitive{} = False
           varIsUsed v PrimCon{} = False
-          varIsUsed v (e1 :$ e2) = varIsUsed v e1 && varIsUsed v e2
+          varIsUsed v (e1 :$ e2) = varIsUsed v e1 || varIsUsed v e2
           varIsUsed v e = trace ("unhandled pattern in varIsUded: " ++ show e) True
 
 -- originalでrevGetArgs経由にすると，foldMを使った場合と同じ効率になる．

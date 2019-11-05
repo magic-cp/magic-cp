@@ -132,7 +132,8 @@ solvev0 hoge pId@(cId, _) = do
   let pred = fromJust (getPredicate 0 ios :: Maybe (b -> Bool))
       custom = getConstantPrimitives (typeOf hoge) (map snd ios)
       md = mkPGWithDefaults $
-          $(p [| ((&&) :: Bool -> Bool -> Bool, (>=) :: Int -> Int -> Bool) |] )
+          $(p [| ((&&) :: Bool -> Bool -> Bool, (>=) :: Int -> Int -> Bool
+                 ,(==) :: Int -> Int -> Bool) |] )
           ++ custom
   pred `seq` return ()
 
