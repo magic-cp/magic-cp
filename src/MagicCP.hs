@@ -46,7 +46,7 @@ import MagicCP.ParseInputOutput
 import MagicHaskeller hiding ( TH(..) )
 import MagicHaskeller.ProgGenSF
 import MagicHaskeller.ProgramGenerator
-import MagicHaskeller.LibTH( reallyalltest, mkPGWithDefaults )
+import MagicHaskeller.LibTH( reallyalltest, mkPGWithDefaultsOpts )
 import MagicHaskeller.LibTHDefinitions
 import MagicHaskeller.TimeOut( maybeWithTO2 )
 
@@ -131,10 +131,12 @@ solvev0 hoge pId@(cId, _) = do
   ios <- getInputOutput cfg pId
   let pred = fromJust (getPredicate 0 ios :: Maybe (b -> Bool))
       custom = getConstantPrimitives (typeOf hoge) (map snd ios)
-      md = mkPGWithDefaults $
-          $(p [| ((&&) :: Bool -> Bool -> Bool, (>=) :: Int -> Int -> Bool
-                 ,(==) :: Int -> Int -> Bool) |] )
-          ++ custom
+      md = mkPGWithDefaultsOpts  $
+          $(pOpt [| ( ((&&) :: Bool -> Bool -> Bool, [NotConstantAsFirstArg, NotConstantAsSecondArg, CommAndAssoc, FirstAndSecondArgDifferent])
+                    , ((>=) :: Int -> Int -> Bool, [FirstAndSecondArgDifferent])
+                    , ((==) :: Int -> Int -> Bool, [CommAndAssoc, FirstAndSecondArgDifferent])
+                    ) |] )
+          ++ zip custom (repeat [])
   pred `seq` return ()
 
   putStrLn "Starting search"
@@ -149,7 +151,7 @@ solvev0 hoge pId@(cId, _) = do
       -> [(Exp, a)]
       -> IO Exp
     f cfg mpto pred ((e, a):ts) = do
-      --putStrLn (pprintUC e)
+      putStrLn (pprintUC e)
       result <- maybeWithTO2 mpto (pred a)
       case result of
         Just True -> do

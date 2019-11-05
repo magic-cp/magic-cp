@@ -57,21 +57,34 @@ enumFromThenTo l m n = map toEnum $
   where lint = fromEnum l
         mint = fromEnum m
         nint = fromEnum n
-initializeTest :: IO ()
-initializeTest = do setPrimitives (test ++ bool ++ nat)
-                    setDepth 10
 
---test = $(p [| ("EASY" :: [Char], "HARD" :: [Char]) |] )
-test = $(p [| ("I hate that " :: [Char], "I love that " :: [Char],
-               "I hate it" :: [Char], "I love it" :: [Char],
-              (++) :: [Char] -> [Char] -> [Char], (\x -> (x `mod` 2) == 0) :: Int -> Bool,
-              (-) :: Int -> Int -> Int, (flip (-) 1) :: Int -> Int) |] )
---test = $(p [| ( "I love it" :: [Char]
-              --, "I hate it" :: [Char]
-              --, (\x -> (x `mod` 2) == 0) :: Int -> Bool) |] )
-              --
+boolOpt, listOpt, natOpt, naturalOpt, headOpt, plusIntOpt, plusIntegerOpt :: [PrimitiveWithOpt]
+boolOpt = $(pOpt [| ( (True, [])
+                 , (False, [])
+                 , (iF :: Bool -> a -> a -> a, [NotConstantAsFirstArg, SecondAndThirdArgDifferent])
+                 ) |] )
+listOpt = $(pOpt [| ( ([] :: [a], [])
+                 , ((:), [])
+                 , (list_para :: (->) [b] (a -> (b -> [b] -> a -> a) -> a), [NotConstantAsFirstArg, ThirdArgOfThirdArgUsed])
+                 ) |] )
+natOpt = $(pOpt [| ( (0 :: Int, [])
+                   , ((1+) :: Int->Int, [])
+                   , (nat_para :: (->) Int (a -> (Int -> a -> a) -> a), [NotConstantAsFirstArg, SecondArgOfThirdArgUsed])
+                   ) |] )
+naturalOpt = $(pOpt [| ( (0 :: Integer, [])
+                       , ((1+) :: Integer->Integer, [])
+                       , (nat_para :: (->) Integer (a -> (Integer -> a -> a) -> a), [NotConstantAsFirstArg, SecondArgOfThirdArgUsed])
+                       ) |] )
+headOpt = $(pOptSingle [| (hd :: (->) [Int] Int, [NotConstantAsFirstArg]) |])
+plusIntOpt = $(pOptSingle [| ((+) :: (->) Int ((->) Int Int), [CommAndAssoc]) |])
+plusIntegerOpt = $(pOptSingle [| ((+) :: (->) Integer ((->) Integer Integer), [CommAndAssoc]) |])
+
 mkPGWithDefaults :: [Primitive] -> ProgGen
 mkPGWithDefaults custom = mkPG (bool ++ list ++ nat ++ natural ++ $(p [| hd :: (->) [Int] Int |]) ++ plusInt ++ plusInteger ++ custom)
+
+mkPGWithDefaultsOpts :: [PrimitiveWithOpt] -> ProgGen
+mkPGWithDefaultsOpts customOpts = mkPGWithOpt (boolOpt ++ listOpt ++ natOpt ++ naturalOpt ++ headOpt ++ plusIntOpt ++ plusIntegerOpt ++ customOpts)
+
 
 initialize, init075, inittv1 :: IO ()
 -- bool : 3 | 0
@@ -81,7 +94,7 @@ initialize, init075, inittv1 :: IO ()
 -- hd : 1 | 12
 -- plusInt : 1 | 13
 -- plusInteger : 1 | 14
-initialize = do setPrimitives (bool ++ list ++ nat ++ natural ++ $(p [| hd :: [Int] -> Int |]) ++ plusInt ++ plusInteger)
+initialize = do setPrimitives (map fst boolOpt ++ list ++ nat ++ natural ++ $(p [| hd :: [Int] -> Int |]) ++ plusInt ++ plusInteger)
                 setDepth 10
 -- MagicHaskeller version 0.8 ignores the setDepth value and always memoizes.
 

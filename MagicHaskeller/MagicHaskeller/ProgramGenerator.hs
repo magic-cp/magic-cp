@@ -1,3 +1,4 @@
+{-# LANGUAGE RecordWildCards, DeriveGeneric, DeriveAnyClass #-}
 --
 -- (c) Susumu Katayama
 --
@@ -9,11 +10,13 @@ import MagicHaskeller.Types
 import MagicHaskeller.TyConLib
 import Control.Monad
 import Data.Monoid
+import Data.Default.Class
 import MagicHaskeller.CoreLang
 import Control.Monad.Search.Combinatorial
 import MagicHaskeller.PriorSubsts
 import Data.List(partition, sortBy, genericLength)
 import Data.Ix(inRange)
+import GHC.Generics
 
 import MagicHaskeller.Instantiate
 
@@ -24,7 +27,6 @@ import qualified Data.Map as Map
 
 import Debug.Trace
 
-import Data.Monoid
 import System.Random
 
 import MagicHaskeller.MyDynamic
@@ -77,7 +79,16 @@ extractRTrie = rt . extractCommon
 reducer :: Common -> CoreExpr -> Dynamic
 reducer cmn = execute (opt cmn) (vl cmn)
 
-data Common = Cmn {opt :: Opt (), tcl :: TyConLib, vl :: VarLib, pvl :: VarLib, vpl :: VarPriorityLib, rt :: RTrie}
+data AdHocOptLists = AdHocOptLists
+  { notConstantAsFirstArg :: [Var]
+  , notConstantAsSecondArg :: [Var]
+  , commAndAssoc :: [Var]
+  , secondAndThirdArgDifferent :: [Var]
+  , firstAndSecondArgDifferent :: [Var]
+  , thirdArgOfThirdArgUsed :: [Var]
+  , secondArgOfThirdArgUsed :: [Var]
+  } deriving (Generic, Default)
+data Common = Cmn {opt :: Opt (), tcl :: TyConLib, vl :: VarLib, pvl :: VarLib, vpl :: VarPriorityLib, rt :: RTrie, adHocOptLists :: AdHocOptLists}
 
 mkCommon :: Options -> [Primitive] -> [Primitive] -> [Int] -> Common
 mkCommon opts totals partials priorities
@@ -93,6 +104,7 @@ initCommon opts totals = let
                                 , vl = undefined
                                 , pvl = undefined
                                 , vpl = undefined
+                                , adHocOptLists = undefined
                                 }
 -- | 'updateCommon' can be used for incremetal learning
 updateCommon :: [PD.Dynamic] -> [PD.Dynamic] -> [Int] -> Common -> Common
@@ -228,11 +240,13 @@ retPrimMono cmn lenavails _ _ behalf mps reqret (_, arity, retty, numtvs, xs:::t
        tvid <- reserveTVars numtvs
        mps (mapTV (tvid+) retty) reqret
        convertPS (ndelay $ fromIntegral arity) $
-                 funApSub behalf (mapTV (tvid+) ty) (map (fromCE undefined) xs)
+                 funApSub (adHocOptLists cmn) behalf (mapTV (tvid+) ty) (map (fromCE undefined) xs)
+
 
 funApSub
   :: (Search m)
-  => (Type -> PriorSubsts m [CoreExpr])
+  => AdHocOptLists
+  -> (Type -> PriorSubsts m [CoreExpr])
   -> Type
   -> [CoreExpr]
   -> PriorSubsts m [CoreExpr]
@@ -240,11 +254,12 @@ funApSub = funApSubOp (:$)
 funApSubOp
   :: (Search m)
   => (CoreExpr -> CoreExpr -> CoreExpr)
+  -> AdHocOptLists
   -> (Type -> PriorSubsts m [CoreExpr])
   -> Type
   -> [CoreExpr]
   -> PriorSubsts m [CoreExpr]
-funApSubOp op behalf = faso
+funApSubOp op AdHocOptLists{..} behalf = faso
     where faso (t:=>ts) funs = undefined
           faso (t:> ts) funs = undefined
           -- original.
@@ -252,20 +267,11 @@ funApSubOp op behalf = faso
               = do args <- behalf t
                    faso ts [ op fun arg | fun <- funs, arg <- args, adHocOpt (op fun arg)]
           faso _        funs = return funs
-          notConstantAsFirstArg = [2, 5, 8, 11, 12, 15]
-          notConstantAsSecondArg = [15]
-          commAndAssoc = [13, 14, 15]
-
-          secondAndThirdArgDifferent = [2]
-          firstAndSecondArgDifferent = [15, 16, 17]
-
-          thirdArgOfThirdArgUsed = [5]
-          secondArgOfThirdArgUsed = [8, 11]
 
           adHocOpt = adHocOpt'
           --adHocOpt e = adHocOpt' e || trace (">>" ++ show e ++ " filtered") False
-          adHocOpt' (Primitive {primId = x} :$ PrimCon{}) | x `elem` notConstantAsFirstArg = False -- iF True
-          adHocOpt' (Primitive {primId = x} :$ _ :$ PrimCon{}) | x `elem` notConstantAsSecondArg = False -- iF True
+          adHocOpt' (Primitive {primId = x} :$ PrimCon{}) | x `elem` notConstantAsFirstArg = False
+          adHocOpt' (Primitive {primId = x} :$ _ :$ PrimCon{}) | x `elem` notConstantAsSecondArg = False
           adHocOpt' (Primitive {primId = x} :$ e1 :$ e2) | x `elem` firstAndSecondArgDifferent && e1 == e2 = False
           adHocOpt' (Primitive {primId = x} :$ _ :$ e2 :$ e3) | x `elem` secondAndThirdArgDifferent && e2 == e3 = False
           adHocOpt' (Primitive {primId = x} :$ e1 :$ ((Primitive {primId = y} :$ e2) :$ e3)) | x==y && x `elem` commAndAssoc && e1 > e2 = False
@@ -300,14 +306,14 @@ retGen, retGenOrd, retGenTV1
   -> Type
   -> Prim
   -> PriorSubsts m [CoreExpr]
-retGen cmn lenavails fe _ _ behalf = retGen' (funApSub behalf) cmn lenavails fe behalf
+retGen cmn lenavails fe _ _ behalf = retGen' (funApSub (adHocOptLists cmn) behalf) cmn lenavails fe behalf
 --retGen' fas cmn lenavails fe behalf reqret (numcxts, arity, _, numtvs, xs:::ty) | trace ("retGen: " ++ show xs ++ ":::" ++ show ty) False = undefined
 retGen' fas cmn lenavails fe behalf reqret (_, arity, _, numtvs, xs:::ty)
   = convertPS (ndelay $ fromIntegral arity) $
     do tvid <- reserveTVars numtvs
        -- let typ = apply (unitSubst tvid reqret) (mapTV (tvid+) ty)
        _ <- mkSubsts (tvndelay $ opt cmn) tvid reqret
-       exprs <- funApSub behalf (mapTV (tvid+) ty) (map (fromCE undefined) xs)
+       exprs <- funApSub (adHocOptLists cmn) behalf (mapTV (tvid+) ty) (map (fromCE undefined) xs)
        gentvar <- applyPS (TV tvid)
        guard (orderedAndUsedArgs gentvar)
        fas gentvar (fe gentvar ty exprs)
@@ -340,16 +346,16 @@ retGenTV1 cmn lenavails fe _ _ behalf reqret (_, arity, _, numtvs, xs:::ty)
   = convertPS (ndelay $ fromIntegral arity) $
     do tvid <- reserveTVars numtvs
        _ <- mkSubst (tvndelay $ opt cmn) tvid reqret
-       exprs <- funApSub behalf (mapTV (tvid+) ty) (map (fromCE undefined) xs)
+       exprs <- funApSub (adHocOptLists cmn) behalf (mapTV (tvid+) ty) (map (fromCE undefined) xs)
        gentvar <- applyPS (TV tvid)
        guard (usedArg (tvid+1) gentvar)
-       funApSub behalf gentvar (fe gentvar ty exprs)
+       funApSub (adHocOptLists cmn) behalf gentvar (fe gentvar ty exprs)
 
 retGenTV0 cmn lenavails fe _ _ behalf reqret (_, arity, _, numtvs, xs:::ty)
   = convertPS (ndelay $ fromIntegral arity) $
     do tvid <- reserveTVars numtvs
        updatePS (unitSubst tvid reqret)
-       exprs <- funApSub behalf (mapTV (tvid+) ty) (map (fromCE undefined) xs)
+       exprs <- funApSub (adHocOptLists cmn) behalf (mapTV (tvid+) ty) (map (fromCE undefined) xs)
        gentvar <- applyPS (TV tvid)
        return $ fe gentvar ty exprs
 
@@ -543,4 +549,3 @@ combs 0 xs = [[]]
 combs n xs = []  : [ y:zs | y:ys <- tails xs, zs <- combs (n-1) ys ]
 tails []        = []
 tails xs@(_:ys) = xs : tails ys
-

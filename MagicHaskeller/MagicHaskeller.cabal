@@ -54,6 +54,7 @@ Library
                , template-haskell
                , time
                , deepseq
+               , data-default-class
   Exposed-modules: Control.Monad.Search.Combinatorial
                  , MagicHaskeller
                  , MagicHaskeller.ProgramGenerator

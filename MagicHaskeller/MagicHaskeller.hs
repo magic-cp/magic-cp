@@ -1,3 +1,4 @@
+{-# LANGUAGE RecordWildCards #-}
 --
 -- (c) Susumu Katayama
 --
@@ -32,7 +33,9 @@ module MagicHaskeller(
        --   (just like when using the dynamic expression of Concurrent Clean), and thus
        --   you may write @'setPrimitives' $('p' [| \'A\' |])@,
        --   while you have to write @'setPrimitives' $('p' [| [] :: [a] |])@ instead of @'setPrimitives' $('p' [| [] |])@.
-       p, setPrimitives, mkPG, setPG, getPG, defaultMD,
+       p, pOpt, pOptSingle, setPrimitives, mkPG, setPG, getPG, defaultMD,
+       AdHocOptimizations(..), PrimitiveWithOpt,
+       mkPGWithOpt,
 
        -- | Older versions prohibited data types holding functions such as @[a->b]@, @(Int->Char, Bool)@, etc. just for efficiency reasons.
        --   They are still available if you use 'mkMemo' and 'mkMemoSF' instead of 'mkPG' and 'mkPGSF' respectively, though actually this limitation does not affect the efficiency a lot.
@@ -138,6 +141,7 @@ import MagicHaskeller.ReadHsType(readHsTypeSigs)
 import MagicHaskeller.TyConLib
 import qualified Data.Map as Map
 import Data.Char
+import Data.Default.Class
 import Control.Monad(mplus)
 
 
@@ -258,6 +262,26 @@ p :: TH.ExpQ -- ^ Quote a tuple of primitive components here.
      -> TH.ExpQ -- ^ This becomes @[Primitive]@ when spliced.
 p eq = eq >>= \e -> case e of TupE es -> (return . ListE) =<< (mapM p1 es)
                               _       -> (return . ListE . return) =<< p1 e      -- This default pattern should also be defined, because it takes two (or more) to tuple!
+
+pOpt :: TH.ExpQ -- ^ Quote a tuple of primitive components here.
+     -> TH.ExpQ -- ^ This becomes @[Primitive]@ when spliced.
+pOpt eq = do
+  TupE es <- eq
+  es <- mapM p1Opt es
+  return (ListE es)
+pOptSingle
+  :: TH.ExpQ -- ^ Quote a tuple of primitive components here.
+  -> TH.ExpQ -- ^ This becomes @[Primitive]@ when spliced.
+pOptSingle eq = do
+  TupE [e, opts] <- eq
+  ePrim <- p1 e
+  return (ListE [TupE [ePrim, opts]])
+p1Opt :: TH.Exp -> TH.ExpQ
+p1Opt (TupE [e, opts]) = do
+  ePrim <- p1 e
+  return (TupE [ePrim, opts])
+
+
 p1 :: TH.Exp -> TH.ExpQ
 p1 (SigE e ty) = p1' (SigE e $ useArrowT ty) e ty
 p1 e@(ConE name)  = do
@@ -402,6 +426,38 @@ primitivesc tcl ps = dynamicsc (map (primitiveToDynamic tcl) ps)
 dynamicsc :: [PD.Dynamic] -> [Typed [CoreExpr]]
 dynamicsc ps = mergesortWithBy (\(x:::t) (y:::_) -> (x++y):::t) (\(_:::t) (_:::u) -> compare t u) $
                            map (\ dyn -> [Context $ Dict dyn] ::: {- toCxt (numCxts e) -} PD.dynType dyn) ps
+
+
+data AdHocOptimizations
+  = NotConstantAsFirstArg
+  | NotConstantAsSecondArg
+  | CommAndAssoc
+  | SecondAndThirdArgDifferent
+  | FirstAndSecondArgDifferent
+  | ThirdArgOfThirdArgUsed
+  | SecondArgOfThirdArgUsed
+
+type PrimitiveWithOpt = (Primitive, [AdHocOptimizations])
+
+mkPGWithOpt :: ProgramGenerator pg => [PrimitiveWithOpt] -> pg
+mkPGWithOpt = mkPGWithOpt' False [] . (:[])
+
+mkPGWithOpt' :: ProgramGenerator pg => Bool -> [Primitive] -> [[PrimitiveWithOpt]] -> pg
+mkPGWithOpt' cont classes tups =
+  case mkCommon options{contain=cont} totals totals depths of
+    cmn -> mkTrie cmn{adHocOptLists = mkAdHocLists} (primitivesc (tcl cmn) classes) (primitivesp (tcl cmn) (map (map fst) tups))
+  where totals = map fst (concat tups) ++ classes
+        depths = mkDepths (map (map fst) tups) ++ map (const 0) classes
+        mkAdHocLists = let opts' = zipWith (\(_, l) i -> (i, l)) (concat tups) [0..]
+                        in foldl (\acc (i, l) -> foldl (\acc' o -> addToOpts acc' i o) acc l) def opts'
+        addToOpts :: AdHocOptLists -> Var -> AdHocOptimizations -> AdHocOptLists
+        addToOpts a@AdHocOptLists{..} i NotConstantAsFirstArg = a{ notConstantAsFirstArg = i : notConstantAsFirstArg }
+        addToOpts a@AdHocOptLists{..} i NotConstantAsSecondArg = a{ notConstantAsSecondArg = i : notConstantAsSecondArg }
+        addToOpts a@AdHocOptLists{..} i CommAndAssoc = a{ commAndAssoc = i : commAndAssoc }
+        addToOpts a@AdHocOptLists{..} i SecondAndThirdArgDifferent = a{ secondAndThirdArgDifferent = i : secondAndThirdArgDifferent }
+        addToOpts a@AdHocOptLists{..} i FirstAndSecondArgDifferent = a{ firstAndSecondArgDifferent = i : firstAndSecondArgDifferent }
+        addToOpts a@AdHocOptLists{..} i ThirdArgOfThirdArgUsed = a{ thirdArgOfThirdArgUsed = i : thirdArgOfThirdArgUsed }
+        addToOpts a@AdHocOptLists{..} i SecondArgOfThirdArgUsed = a{ secondArgOfThirdArgUsed = i : secondArgOfThirdArgUsed }
 
 mkPG :: ProgramGenerator pg => [Primitive] -> pg
 mkPG   = mkPGX [] . (:[]) -- mkPGX [] [[]]
