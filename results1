@@ -1,0 +1,33 @@
+1128 no opts
+Time: 1211.222
+Expressions tried: 24164
+
+Submitting to codeforces (13.617s)
+Submitting to codeforces (82.690s)
+Submitting to codeforces (83.977s)
+Submitting to codeforces (1209.185s)
+Submitting to codeforces (1211.222s)
+
+
+
+
+1128 yes opts
+Time: 138.259
+Expressions tried: 1998
+
+Submitting to codeforces (5.714s)
+Submitting to codeforces (28.700s)
+Submitting to codeforces (28.945s)
+Submitting to codeforces (138.110s)
+Submitting to codeforces (138.259s)
+
+
+1128 yes opts but no _paras
+Time: 268.253
+Expressions tried: 10548
+
+Submitting to codeforces (10.193s)
+Submitting to codeforces (40.564s)
+Submitting to codeforces (41.625s)
+Submitting to codeforces (268.127s)
+Submitting to codeforces (268.253s)

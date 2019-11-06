@@ -104,7 +104,7 @@ initCommon opts totals = let
                                 , vl = undefined
                                 , pvl = undefined
                                 , vpl = undefined
-                                , adHocOptLists = undefined
+                                , adHocOptLists = def
                                 }
 -- | 'updateCommon' can be used for incremetal learning
 updateCommon :: [PD.Dynamic] -> [PD.Dynamic] -> [Int] -> Common -> Common

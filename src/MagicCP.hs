@@ -43,12 +43,13 @@ import CF.CFHTML
 
 import MagicCP.Util.Memory
 import qualified MagicCP.Util.Timer as Timer
+import qualified MagicCP.Util.ExpressionCnt as ECnt
 import MagicCP.ParseInputOutput
 
 import MagicHaskeller hiding ( TH(..) )
 import MagicHaskeller.ProgGenSF
 import MagicHaskeller.ProgramGenerator
-import MagicHaskeller.LibTH( reallyalltest, mkPGWithDefaultsOpts )
+import MagicHaskeller.LibTH( reallyalltest, mkPGWithDefaultsOpts, mkPGWithDefaults )
 import MagicHaskeller.LibTHDefinitions
 import MagicHaskeller.TimeOut( maybeWithTO2 )
 
@@ -140,11 +141,18 @@ solvev0 hoge pId@(cId, _) = do
                     , ((==) :: Int -> Int -> Bool, [CommAndAssoc, FirstAndSecondArgDifferent])
                     ) |] )
           ++ zip custom (repeat [])
+--      md = mkPGWithDefaults $
+--          $(p [| ( (&&) :: Bool -> Bool -> Bool
+--                    , (>=) :: Int -> Int -> Bool
+--                    , (==) :: Int -> Int -> Bool
+--                    ) |] )
+--          ++ custom
   pred `seq` return ()
 
   putStrLn "Starting search"
   Timer.reset
   Timer.start
+  ECnt.reset
   let et = everything md False
       mpto = timeout $ opt $ extractCommon md
   f cfg mpto pred (concat et)
@@ -157,6 +165,7 @@ solvev0 hoge pId@(cId, _) = do
       -> IO Exp
     f cfg mpto pred ((e, a):ts) = do
       --putStrLn (pprintUC e)
+      ECnt.cntExp
       result <- maybeWithTO2 mpto (pred a)
       case result of
         Just True -> do
@@ -167,7 +176,7 @@ solvev0 hoge pId@(cId, _) = do
             Accepted -> do
               submitBeep
               secs <- Timer.getTotalSecs
-              putStrLn $ printf "Submitting to codeforces (%.3f)" secs
+              putStrLn $ printf "Submitting to codeforces (%.3fs)" secs
               submitVerd <- submitSolution cfg pId
               case submitVerd of
                 Accepted -> do
@@ -175,7 +184,9 @@ solvev0 hoge pId@(cId, _) = do
                   putStrLn $ "Solution accepted in codeforces:\n" <>
                     pprintUC e
                   secs <- Timer.getTotalSecs
-                  putStrLn $ printf "Time: %.3f\n" secs
+                  putStrLn $ printf "Time: %.3f" secs
+                  es <- ECnt.getTotalExps
+                  putStrLn $ printf "Expressions tried: %d" es
                   return e
                 Rejected subm msg -> do
                   rejectedBeep

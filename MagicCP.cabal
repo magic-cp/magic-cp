@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 9e22b1a8a162ff5f8dda757522a8bc6b5dd088ef4cf84242980c36ce15dc9f39
+-- hash: 93e3684fd76715124bd6f0893756ae99b362df7ba84fd1c4b0677a5f70abfee1
 
 name:           MagicCP
 version:        0.0.0
@@ -21,6 +21,7 @@ library
       CF.CFToolWrapper
       MagicCP.ParseInputOutput
       MagicCP.ParserDefinitions
+      MagicCP.Util.ExpressionCnt
       MagicCP.Util.Memory
       MagicCP.Util.Timer
       Paths_MagicCP
