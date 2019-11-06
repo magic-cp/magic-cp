@@ -275,7 +275,7 @@ funApSubOp op AdHocOptLists{..} behalf = faso
           adHocOpt' (Primitive {primId = x} :$ e1 :$ e2) | x `elem` firstAndSecondArgDifferent && e1 == e2 = False
           adHocOpt' (Primitive {primId = x} :$ _ :$ e2 :$ e3) | x `elem` secondAndThirdArgDifferent && e2 == e3 = False
           adHocOpt' (Primitive {primId = x} :$ e1 :$ ((Primitive {primId = y} :$ e2) :$ e3)) | x==y && x `elem` commAndAssoc && e1 > e2 = False
-          adHocOpt' (Primitive {primId = x} :$ e1 :$ e2) | x `elem` commAndAssoc && e1 < e2 = False
+          adHocOpt' (Primitive {primId = x} :$ e1 :$ e2) | x `elem` commAndAssoc && e1 > e2 = False
           adHocOpt' (Primitive {primId = x} :$ e1 :$ e2 :$ Lambda (Lambda (Lambda e3))) | x `elem` thirdArgOfThirdArgUsed && not (varIsUsed 0 e3) = False
           adHocOpt' (Primitive {primId = x} :$ e1 :$ e2 :$ Lambda (Lambda e3)) | x `elem` secondArgOfThirdArgUsed && not (varIsUsed 0 e3) = False
           adHocOpt' _ = True

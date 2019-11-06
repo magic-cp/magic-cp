@@ -24,6 +24,7 @@ extra-deps:
 - show-0.6
 - deepseq-1.4.4.0
 - data-default-class-0.1.2.0
+- clock-0.8
 
 
 # Override default flag values for local packages and extra-deps

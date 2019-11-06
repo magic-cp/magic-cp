@@ -866,7 +866,7 @@ findDo op withAbsents pred = do
                                   result <- maybeWithTO2 mpto (pred a)
                                   case result of Just True  -> e `op` fp mpto ts
                                                  Just False -> fp mpto ts
-                                                 Nothing    -> hPutStrLn stderr ("timeout on "++pprintUC e) >> fp mpto ts
+                                                 Nothing    -> {-hPutStrLn stderr ("timeout on "++pprintUC e) >>-} fp mpto ts
 -- x 本当はrecompのままでやった方が速いはず．
 
 -- | 'filterFirst' is like 'printAll', but by itself it does not print anything. Instead, it creates a stream of expressions represented in tuples of 'TH.Exp' and the expressions themselves.

@@ -32,6 +32,7 @@ import           System.IO                      ( stderr
                                                 , hPutStrLn
                                                 )
 import           System.Process                 ( callCommand )
+import Text.Printf
 
 import Unsafe.Coerce(unsafeCoerce)
 
@@ -41,6 +42,7 @@ import CF.CFToolWrapper
 import CF.CFHTML
 
 import MagicCP.Util.Memory
+import qualified MagicCP.Util.Timer as Timer
 import MagicCP.ParseInputOutput
 
 import MagicHaskeller hiding ( TH(..) )
@@ -103,19 +105,20 @@ solveWithAllParsers pId = do
 solveWithLimits :: ParseInputOutput b => (b -> ProblemId -> IO Exp) -> ProblemId -> IO (Maybe Exp)
 solveWithLimits solve pId = do
   tid <- myThreadId
-  let timeout = 60*60*7
+  let timeout = 60*60*7 - 5
       memoPerc = 85
   bracket
     ( forkIO $ checkLimits tid timeout memoPerc )
     killThread
     ( \_ -> Just <$> solve undefined pId )
-    `catch` \(e :: SomeException) -> do
+    `catch` \(ErrorCall s) -> do
       callCommand "beep -f 800 -l 30 -d 200 -n -f 600 -l 20 -n -f 300 -l 20 -n -f 100 -l 50"
+      putStrLn s
       return Nothing
   where
   checkLimits tid tout memLimit = do
     memusage <- getMemoUsage
-    when (tout `mod` 60 == 0) $ putStrLn $ "checking limits: " ++ show tout ++ "  " ++ show memusage
+    when (tout `mod` 300 == 0) $ putStrLn $ "checking limits: " ++ show tout ++ "  " ++ show memusage
     if memusage > memLimit || tout < 0
        then killThread tid
        else do
@@ -129,7 +132,7 @@ solvev0 hoge pId@(cId, _) = do
 
   putStrLn "Parsing problem"
   ios <- getInputOutput cfg pId
-  let pred = fromJust (getPredicate 0 ios :: Maybe (b -> Bool))
+  let pred = fromJust' (getPredicate 0 ios :: Maybe (b -> Bool))
       custom = getConstantPrimitives (typeOf hoge) (map snd ios)
       md = mkPGWithDefaultsOpts  $
           $(pOpt [| ( ((&&) :: Bool -> Bool -> Bool, [NotConstantAsFirstArg, NotConstantAsSecondArg, CommAndAssoc, FirstAndSecondArgDifferent])
@@ -140,6 +143,8 @@ solvev0 hoge pId@(cId, _) = do
   pred `seq` return ()
 
   putStrLn "Starting search"
+  Timer.reset
+  Timer.start
   let et = everything md False
       mpto = timeout $ opt $ extractCommon md
   f cfg mpto pred (concat et)
@@ -151,22 +156,26 @@ solvev0 hoge pId@(cId, _) = do
       -> [(Exp, a)]
       -> IO Exp
     f cfg mpto pred ((e, a):ts) = do
-      putStrLn (pprintUC e)
+      --putStrLn (pprintUC e)
       result <- maybeWithTO2 mpto (pred a)
       case result of
         Just True -> do
+          Timer.pause
           generateFile cfg pId (wut hoge) e
           testVerd <- testSolution cfg pId
           case testVerd of
             Accepted -> do
               submitBeep
-              putStrLn "Submitting to codeforces"
+              secs <- Timer.getTotalSecs
+              putStrLn $ printf "Submitting to codeforces (%.3f)" secs
               submitVerd <- submitSolution cfg pId
               case submitVerd of
                 Accepted -> do
                   acceptedBeep
                   putStrLn $ "Solution accepted in codeforces:\n" <>
                     pprintUC e
+                  secs <- Timer.getTotalSecs
+                  putStrLn $ printf "Time: %.3f\n" secs
                   return e
                 Rejected subm msg -> do
                   rejectedBeep
@@ -177,24 +186,26 @@ solvev0 hoge pId@(cId, _) = do
                   case mtc of
                     Just io -> do
                       putStrLn "Got new test case"
+                      Timer.start
                       f cfg mpto (fromJust $ extendPredicate 0 pred io) ts
                     Nothing -> do
                       putStrLn "Couldn't get new test case"
+                      Timer.start
                       f cfg mpto pred ts
             Rejected{} -> do
               putStrLn "Failed Sample Tests"
+              Timer.start
               f cfg mpto pred ts
         Just False ->
           f cfg mpto pred ts
-        Nothing -> do
-          hPutStrLn stderr ("timeout on "++pprintUC e)
+        Nothing ->
+          --hPutStrLn stderr ("timeout on "++pprintUC e)
           f cfg mpto pred ts
     submitBeep = callCommand "beep -f 800 -l 200 -d 200 -n -f 800 -l 300"
     acceptedBeep = callCommand "beep -f 800 -l 200 -d 200 -n -f 1200 -l 300"
     rejectedBeep = callCommand "beep -f 800 -l 200 -d 200 -n -f 600 -l 300"
-
-
-
+    fromJust' (Just x) = x
+    fromJust' _ = error "Wrong parser"
 
 getConstantPrimitives :: TypeRep -> [String] -> [Primitive]
 getConstantPrimitives t ss =

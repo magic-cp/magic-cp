@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 4bed34d82fd66eda8477df5b6baf2275683449928f25db48a129e0cbd782f68d
+-- hash: 9e22b1a8a162ff5f8dda757522a8bc6b5dd088ef4cf84242980c36ce15dc9f39
 
 name:           MagicCP
 version:        0.0.0
@@ -22,6 +22,7 @@ library
       MagicCP.ParseInputOutput
       MagicCP.ParserDefinitions
       MagicCP.Util.Memory
+      MagicCP.Util.Timer
       Paths_MagicCP
   hs-source-dirs:
       src
@@ -31,6 +32,7 @@ library
     , array
     , base
     , bytestring
+    , clock
     , configurator
     , curl-aeson
     , directory
@@ -59,6 +61,7 @@ executable MagicCP
     , array
     , base
     , bytestring
+    , clock
     , configurator
     , curl-aeson
     , directory

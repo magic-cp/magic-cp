@@ -94,7 +94,7 @@ initialize, init075, inittv1 :: IO ()
 -- hd : 1 | 12
 -- plusInt : 1 | 13
 -- plusInteger : 1 | 14
-initialize = do setPrimitives (map fst boolOpt ++ list ++ nat ++ natural ++ $(p [| hd :: [Int] -> Int |]) ++ plusInt ++ plusInteger)
+initialize = do setPrimitives (bool ++ list ++ nat ++ natural ++ $(p [| hd :: [Int] -> Int |]) ++ plusInt ++ plusInteger)
                 setDepth 10
 -- MagicHaskeller version 0.8 ignores the setDepth value and always memoizes.
 

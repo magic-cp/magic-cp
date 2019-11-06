@@ -18,6 +18,7 @@ dependencies:
 - base
 - bytestring
 - configurator
+- clock
 - curl-aeson
 - directory
 - filepath
