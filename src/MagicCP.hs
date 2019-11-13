@@ -84,14 +84,24 @@ pprintUC =  pprint . everywhere (mkT unqCons)
 unqCons :: TH.Name -> TH.Name
 unqCons n = mkName (nameBase n)
 
-solveWithAllParsers :: ProblemId -> IO (Maybe Exp)
-solveWithAllParsers pId = do
-  let l = [ solveWithLimits (solvev0 :: ((Int -> Int -> Int -> String) -> ProblemId -> IO Exp)) pId
-          , solveWithLimits (solvev0 :: (([Int] -> String) -> ProblemId -> IO Exp)) pId
-          , solveWithLimits (solvev0 :: ((Int -> [Int] -> String) -> ProblemId -> IO Exp)) pId
-          , solveWithLimits (solvev0 :: ((Int -> String) -> ProblemId -> IO Exp)) pId
-          , solveWithLimits (solvev0 :: ((String -> String) -> ProblemId -> IO Exp)) pId
-          ]
+data WithOptimizations = WithOptimizations | WithoutOptimizations
+  deriving (Show, Eq)
+data WithAbsents = WithAbsents | WithoutAbsents
+  deriving (Show, Eq)
+
+solveWithAllParsers
+  :: WithOptimizations
+  -> WithAbsents
+  -> ProblemId
+  -> IO (Maybe Exp)
+solveWithAllParsers wOps wAbs pId = do
+  let l =
+        [ solveWithLimits (solvev0 wOps wAbs (undefined :: Int -> Int -> Int -> String)) pId
+        , solveWithLimits (solvev0 wOps wAbs (undefined :: [Int] -> String)) pId
+        , solveWithLimits (solvev0 wOps wAbs (undefined :: Int -> [Int] -> String)) pId
+        , solveWithLimits (solvev0 wOps wAbs (undefined :: Int -> String)) pId
+        , solveWithLimits (solvev0 wOps wAbs (undefined :: String -> String)) pId
+        ]
   solveUntilJust l
   where
     solveUntilJust :: [IO (Maybe Exp)] -> IO (Maybe Exp)
@@ -103,7 +113,7 @@ solveWithAllParsers pId = do
         Nothing -> solveUntilJust l
 
 
-solveWithLimits :: ParseInputOutput b => (b -> ProblemId -> IO Exp) -> ProblemId -> IO (Maybe Exp)
+solveWithLimits :: (ProblemId -> IO Exp) -> ProblemId -> IO (Maybe Exp)
 solveWithLimits solve pId = do
   tid <- myThreadId
   let timeout = 60*60*7 - 5
@@ -111,7 +121,7 @@ solveWithLimits solve pId = do
   bracket
     ( forkIO $ checkLimits tid timeout memoPerc )
     killThread
-    ( \_ -> Just <$> solve undefined pId )
+    ( \_ -> Just <$> solve pId )
     `catch` \(ErrorCall s) -> do
       callCommand "beep -f 800 -l 30 -d 200 -n -f 600 -l 20 -n -f 300 -l 20 -n -f 100 -l 50"
       putStrLn s
@@ -127,33 +137,44 @@ solveWithLimits solve pId = do
         checkLimits tid (tout - 5) memLimit
 
 -- solvev0 (undefined :: (Int -> [Int] -> String)) (1030, 'a')
-solvev0 :: forall b . (Typeable b, ParseInputOutput b) => b -> ProblemId -> IO Exp
-solvev0 hoge pId@(cId, _) = do
+solvev0
+  :: forall b . (Typeable b, ParseInputOutput b)
+  => WithOptimizations
+  -> WithAbsents
+  -> b
+  -> ProblemId
+  -> IO Exp
+solvev0 wOps wAbs hoge pId@(cId, _) = do
   cfg <- getCFConfig
 
   putStrLn "Parsing problem"
   ios <- getInputOutput cfg pId
   let pred = fromJust' (getPredicate 0 ios :: Maybe (b -> Bool))
       custom = getConstantPrimitives (typeOf hoge) (map snd ios)
-      md = mkPGWithDefaultsOpts  $
-          $(pOpt [| ( ((&&) :: Bool -> Bool -> Bool, [NotConstantAsFirstArg, NotConstantAsSecondArg, CommAndAssoc, FirstAndSecondArgDifferent])
-                    , ((>=) :: Int -> Int -> Bool, [FirstAndSecondArgDifferent])
-                    , ((==) :: Int -> Int -> Bool, [CommAndAssoc, FirstAndSecondArgDifferent])
-                    ) |] )
-          ++ zip custom (repeat [])
---      md = mkPGWithDefaults $
---          $(p [| ( (&&) :: Bool -> Bool -> Bool
---                    , (>=) :: Int -> Int -> Bool
---                    , (==) :: Int -> Int -> Bool
---                    ) |] )
---          ++ custom
+      md = if wOps == WithOptimizations
+              then mkPGWithDefaultsOpts $
+                $(pOpt [| ( ((&&) :: Bool -> Bool -> Bool, [ NotConstantAsFirstArg
+                                                           , NotConstantAsSecondArg
+                                                           , CommAndAssoc
+                                                           , FirstAndSecondArgDifferent ])
+                          , ((>=) :: Int -> Int -> Bool, [ FirstAndSecondArgDifferent ])
+                          , ((==) :: Int -> Int -> Bool, [ CommAndAssoc
+                                                         , FirstAndSecondArgDifferent ])
+                          ) |] )
+                ++ zip custom (repeat [])
+              else mkPGWithDefaults $
+                $(p [| ( (&&) :: Bool -> Bool -> Bool
+                       , (>=) :: Int -> Int -> Bool
+                       , (==) :: Int -> Int -> Bool
+                       ) |] )
+                  ++ custom
   pred `seq` return ()
 
   putStrLn "Starting search"
   Timer.reset
   Timer.start
   ECnt.reset
-  let et = everything md False
+  let et = everything md (wAbs == WithAbsents)
       mpto = timeout $ opt $ extractCommon md
   f cfg mpto pred (concat et)
   where
@@ -176,7 +197,8 @@ solvev0 hoge pId@(cId, _) = do
             Accepted -> do
               submitBeep
               secs <- Timer.getTotalSecs
-              putStrLn $ printf "Submitting to codeforces (%.3fs)" secs
+              es <- ECnt.getTotalExps
+              putStrLn $ printf "Submitting to codeforces (%.3fs, %d exps)" secs es
               submitVerd <- submitSolution cfg pId
               case submitVerd of
                 Accepted -> do
@@ -184,7 +206,7 @@ solvev0 hoge pId@(cId, _) = do
                   putStrLn $ "Solution accepted in codeforces:\n" <>
                     pprintUC e
                   secs <- Timer.getTotalSecs
-                  putStrLn $ printf "Time: %.3f" secs
+                  putStrLn $ printf "Time: %.3fs" secs
                   es <- ECnt.getTotalExps
                   putStrLn $ printf "Expressions tried: %d" es
                   return e
@@ -217,6 +239,7 @@ solvev0 hoge pId@(cId, _) = do
     rejectedBeep = callCommand "beep -f 800 -l 200 -d 200 -n -f 600 -l 300"
     fromJust' (Just x) = x
     fromJust' _ = error "Wrong parser"
+
 
 getConstantPrimitives :: TypeRep -> [String] -> [Primitive]
 getConstantPrimitives t ss =
