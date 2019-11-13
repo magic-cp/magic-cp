@@ -60,7 +60,10 @@ instance ParseInputOutput ([Int] -> String) where
                                ]
 
 instance ParseInputOutput (String -> String) where
-  getSinglePredicate 0 (i, o) = Just (\f -> f i == o)
+  getSinglePredicate 0 (i, o) = do
+    let los = lines o
+    when (length los /= 1) Nothing
+    Just (\f -> f i == head los)
   wut _ =
     [d|
     uncurry' = id
@@ -71,7 +74,9 @@ instance ParseInputOutput (String -> String) where
 instance ParseInputOutput (Int -> String) where
   getSinglePredicate 0 (i, o) = do
     ni <- readMaybe i
-    return (\f -> f ni == o)
+    let los = lines o
+    when (length los /= 1) Nothing
+    return (\f -> f ni == head los)
   wut _ =
     [d|
     uncurry' = id

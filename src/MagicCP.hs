@@ -116,7 +116,7 @@ solveWithAllParsers wOps wAbs pId = do
 solveWithLimits :: (ProblemId -> IO Exp) -> ProblemId -> IO (Maybe Exp)
 solveWithLimits solve pId = do
   tid <- myThreadId
-  let timeout = 60*60*7 - 5
+  let timeout = 60*60*1 - 5
       memoPerc = 85
   bracket
     ( forkIO $ checkLimits tid timeout memoPerc )
@@ -150,7 +150,7 @@ solvev0 wOps wAbs hoge pId@(cId, _) = do
   putStrLn "Parsing problem"
   ios <- getInputOutput cfg pId
   let pred = fromJust' (getPredicate 0 ios :: Maybe (b -> Bool))
-      custom = getConstantPrimitives (typeOf hoge) (map snd ios)
+      custom = getConstantPrimitives (typeOf hoge) (concatMap (words . snd) ios)
       md = if wOps == WithOptimizations
               then mkPGWithDefaultsOpts $
                 $(pOpt [| ( ((&&) :: Bool -> Bool -> Bool, [ NotConstantAsFirstArg
@@ -160,12 +160,17 @@ solvev0 wOps wAbs hoge pId@(cId, _) = do
                           , ((>=) :: Int -> Int -> Bool, [ FirstAndSecondArgDifferent ])
                           , ((==) :: Int -> Int -> Bool, [ CommAndAssoc
                                                          , FirstAndSecondArgDifferent ])
+                          , ((`mod` 2) :: Int -> Int, [ NotConstantAsFirstArg ])
+                          , ((\a b -> a ++ " " ++ b) :: [Char] -> [Char] -> [Char], [ NotConstantAsFirstArg
+                                                                                  , NotConstantAsSecondArg])
                           ) |] )
                 ++ zip custom (repeat [])
               else mkPGWithDefaults $
                 $(p [| ( (&&) :: Bool -> Bool -> Bool
                        , (>=) :: Int -> Int -> Bool
                        , (==) :: Int -> Int -> Bool
+                       , (`mod` 2) :: Int -> Int
+                       , (\a b -> a ++ " " ++ b) :: [Char] -> [Char] -> [Char]
                        ) |] )
                   ++ custom
   pred `seq` return ()
@@ -234,9 +239,9 @@ solvev0 wOps wAbs hoge pId@(cId, _) = do
         Nothing ->
           --hPutStrLn stderr ("timeout on "++pprintUC e)
           f cfg mpto pred ts
-    submitBeep = callCommand "beep -f 800 -l 200 -d 200 -n -f 800 -l 300"
-    acceptedBeep = callCommand "beep -f 800 -l 200 -d 200 -n -f 1200 -l 300"
-    rejectedBeep = callCommand "beep -f 800 -l 200 -d 200 -n -f 600 -l 300"
+    submitBeep = callCommand "beep -f 800 -l 20 -d 200 -n -f 800 -l 30"
+    acceptedBeep = callCommand "beep -f 800 -l 20 -d 200 -n -f 1200 -l 30"
+    rejectedBeep = callCommand "beep -f 800 -l 20 -d 200 -n -f 600 -l 30"
     fromJust' (Just x) = x
     fromJust' _ = error "Wrong parser"
 
