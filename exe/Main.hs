@@ -2,6 +2,8 @@
 import MagicCP
 import Text.Printf
 
+import MagicCP.SearchOptions
+
 testsolve wOps wAbs pId = do
   printf "%s %s\n" (show wOps) (show wAbs)
   me <- solveWithAllParsers wOps wAbs pId

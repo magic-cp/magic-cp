@@ -436,6 +436,7 @@ data AdHocOptimizations
   | FirstAndSecondArgDifferent
   | ThirdArgOfThirdArgUsed
   | SecondArgOfThirdArgUsed
+  deriving Show
 
 type PrimitiveWithOpt = (Primitive, [AdHocOptimizations])
 

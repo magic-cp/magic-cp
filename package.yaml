@@ -4,6 +4,7 @@ library:
   exposed-modules:
   - CF
   - MagicCP
+  - MagicCP.SearchOptions
 
 executable:
   main: Main.hs

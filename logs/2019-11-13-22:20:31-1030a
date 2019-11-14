@@ -1,0 +1,36 @@
+2019-11-13-22:20:31
+1030a
+WithOptimizations
+WithAbsents
+
+[Int] (ignoring size) to String
+
+True []
+False []
+iF [NotConstantAsFirstArg,SecondAndThirdArgDifferent]
+[] []
+(:) []
+list_para [NotConstantAsFirstArg,ThirdArgOfThirdArgUsed]
+0 []
+(1 +) []
+nat_para [NotConstantAsFirstArg,SecondArgOfThirdArgUsed]
+0 []
+(1 +) []
+nat_para [NotConstantAsFirstArg,SecondArgOfThirdArgUsed]
+hd [NotConstantAsFirstArg]
+(+) [CommAndAssoc]
+(+) [CommAndAssoc]
+(&&) [NotConstantAsFirstArg,NotConstantAsSecondArg,CommAndAssoc,FirstAndSecondArgDifferent]
+(>=) [FirstAndSecondArgDifferent]
+(==) [CommAndAssoc,FirstAndSecondArgDifferent]
+(`mod` 2) [NotConstantAsFirstArg]
+\a_6989586621679120934 b_6989586621679120935 -> a_6989586621679120934 ++ (" " ++ b_6989586621679120935) [NotConstantAsFirstArg,NotConstantAsSecondArg]
+"EASY" []
+"HARD" []
+
+
+Expression submited: \a -> list_para a "EASY" (\b _ d -> iF (0 >= b) d "HARD")
+Time: 0.939s
+Expressions tried: 2980
+Verdict: Accepted
+

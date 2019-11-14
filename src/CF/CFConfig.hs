@@ -15,6 +15,7 @@ data CFConfig = CFConfig
   { cftool_path :: FilePath
   , project_root :: FilePath
   , cfparse_dir :: FilePath
+  , log_root :: FilePath
   } deriving Show
 
 getCFConfig :: IO CFConfig
@@ -24,9 +25,11 @@ getCFConfig = do
     cftool_path <- require cfg "cf-tool-path"
     project_root <- require cfg "project-root"
     cf_parse_dir <- require cfg "cf-parse-dir"
+    log_root <- require cfg "log-root"
     return $ CFConfig { cftool_path = cftool_path
                       , project_root = project_root
                       , cfparse_dir = cf_parse_dir
+                      , log_root = log_root
                       }
   case cfg of
     Right cfg' -> return cfg'

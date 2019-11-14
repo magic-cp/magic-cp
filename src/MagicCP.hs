@@ -41,7 +41,9 @@ import CF.CFConfig
 import CF.CFToolWrapper
 import CF.CFHTML
 
+import MagicCP.SearchOptions
 import MagicCP.Util.Memory
+import qualified MagicCP.Util.Logger as Logger
 import qualified MagicCP.Util.Timer as Timer
 import qualified MagicCP.Util.ExpressionCnt as ECnt
 import MagicCP.ParseInputOutput
@@ -84,11 +86,6 @@ pprintUC =  pprint . everywhere (mkT unqCons)
 unqCons :: TH.Name -> TH.Name
 unqCons n = mkName (nameBase n)
 
-data WithOptimizations = WithOptimizations | WithoutOptimizations
-  deriving (Show, Eq)
-data WithAbsents = WithAbsents | WithoutAbsents
-  deriving (Show, Eq)
-
 solveWithAllParsers
   :: WithOptimizations
   -> WithAbsents
@@ -116,7 +113,7 @@ solveWithAllParsers wOps wAbs pId = do
 solveWithLimits :: (ProblemId -> IO Exp) -> ProblemId -> IO (Maybe Exp)
 solveWithLimits solve pId = do
   tid <- myThreadId
-  let timeout = 60*60*1 - 5
+  let timeout = 60*60 - 5
       memoPerc = 85
   bracket
     ( forkIO $ checkLimits tid timeout memoPerc )
@@ -151,29 +148,33 @@ solvev0 wOps wAbs hoge pId@(cId, _) = do
   ios <- getInputOutput cfg pId
   let pred = fromJust' (getPredicate 0 ios :: Maybe (b -> Bool))
       custom = getConstantPrimitives (typeOf hoge) (concatMap (words . snd) ios)
-      md = if wOps == WithOptimizations
-              then mkPGWithDefaultsOpts $
-                $(pOpt [| ( ((&&) :: Bool -> Bool -> Bool, [ NotConstantAsFirstArg
-                                                           , NotConstantAsSecondArg
-                                                           , CommAndAssoc
-                                                           , FirstAndSecondArgDifferent ])
-                          , ((>=) :: Int -> Int -> Bool, [ FirstAndSecondArgDifferent ])
-                          , ((==) :: Int -> Int -> Bool, [ CommAndAssoc
-                                                         , FirstAndSecondArgDifferent ])
-                          , ((`mod` 2) :: Int -> Int, [ NotConstantAsFirstArg ])
-                          , ((\a b -> a ++ " " ++ b) :: [Char] -> [Char] -> [Char], [ NotConstantAsFirstArg
-                                                                                  , NotConstantAsSecondArg])
-                          ) |] )
-                ++ zip custom (repeat [])
-              else mkPGWithDefaults $
-                $(p [| ( (&&) :: Bool -> Bool -> Bool
-                       , (>=) :: Int -> Int -> Bool
-                       , (==) :: Int -> Int -> Bool
-                       , (`mod` 2) :: Int -> Int
-                       , (\a b -> a ++ " " ++ b) :: [Char] -> [Char] -> [Char]
-                       ) |] )
-                  ++ custom
+      (md, prims) = if wOps == WithOptimizations
+              then let (md', lst) = mkPGWithDefaultsOpts $
+                        $(pOpt [| ( ((&&) :: Bool -> Bool -> Bool, [ NotConstantAsFirstArg
+                                                                   , NotConstantAsSecondArg
+                                                                   , CommAndAssoc
+                                                                   , FirstAndSecondArgDifferent ])
+                                  , ((>=) :: Int -> Int -> Bool, [ FirstAndSecondArgDifferent ])
+                                  , ((==) :: Int -> Int -> Bool, [ CommAndAssoc
+                                                                 , FirstAndSecondArgDifferent ])
+                                  , ((`mod` 2) :: Int -> Int, [ NotConstantAsFirstArg ])
+                                  , ((\a b -> a ++ " " ++ b) :: [Char] -> [Char] -> [Char], [ NotConstantAsFirstArg
+                                                                                          , NotConstantAsSecondArg])
+                                  ) |] ) ++ zip custom (repeat [])
+                    in (md', concatMap (\(prim, ops) -> pprintUC prim ++ " " ++ show ops ++ "\n") lst)
+              else let (md', lst) = mkPGWithDefaults $
+                        $(p [| ( (&&) :: Bool -> Bool -> Bool
+                               , (>=) :: Int -> Int -> Bool
+                               , (==) :: Int -> Int -> Bool
+                               , (`mod` 2) :: Int -> Int
+                               , (\a b -> a ++ " " ++ b) :: [Char] -> [Char] -> [Char]
+                               ) |] ) ++ custom
+                    in (md', concatMap (\prim -> pprintUC prim ++ "\n") lst)
   pred `seq` return ()
+
+  Logger.newLogger (log_root cfg) pId wOps wAbs
+  Logger.logParser hoge
+  Logger.logPrimitives prims
 
   putStrLn "Starting search"
   Timer.reset
@@ -196,7 +197,7 @@ solvev0 wOps wAbs hoge pId@(cId, _) = do
       case result of
         Just True -> do
           Timer.pause
-          generateFile cfg pId (wut hoge) e
+          generateFile cfg pId (parserDeclarations hoge) e
           testVerd <- testSolution cfg pId
           case testVerd of
             Accepted -> do
@@ -205,6 +206,7 @@ solvev0 wOps wAbs hoge pId@(cId, _) = do
               es <- ECnt.getTotalExps
               putStrLn $ printf "Submitting to codeforces (%.3fs, %d exps)" secs es
               submitVerd <- submitSolution cfg pId
+              Logger.logSubmission (pprintUC e) secs es submitVerd
               case submitVerd of
                 Accepted -> do
                   acceptedBeep

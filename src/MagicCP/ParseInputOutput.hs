@@ -25,7 +25,9 @@ class Typeable a => ParseInputOutput a where
   extendPredicate :: Parser -> (a -> Bool) -> (String, String) -> Maybe (a -> Bool)
   extendPredicate parser p io = (p &&&) <$> getSinglePredicate parser io
 
-  wut :: a -> DecsQ
+  parserDeclarations :: a -> DecsQ
+
+  parserName :: a -> String
 
 $(parse1InputDec)
 instance ParseInputOutput (Int -> [Int] -> String) where
@@ -34,7 +36,7 @@ instance ParseInputOutput (Int -> [Int] -> String) where
     let los = lines o
     when (length los /= 1) Nothing
     return (\f -> f n as == head los)
-  wut _ = concat <$> sequence [
+  parserDeclarations _ = concat <$> sequence [
     [d|
     uncurry' = uncurry
     parser :: String -> (Int, [Int])
@@ -42,6 +44,7 @@ instance ParseInputOutput (Int -> [Int] -> String) where
       |],
     parse1InputDec
                                ]
+  parserName _ = "[Int] with size to String"
 
 $(parse3InputDec)
 instance ParseInputOutput ([Int] -> String) where
@@ -50,7 +53,7 @@ instance ParseInputOutput ([Int] -> String) where
     let los = lines o
     when (length los /= 1) Nothing
     return (\f -> f as == head los)
-  wut _ = concat <$> sequence [
+  parserDeclarations _ = concat <$> sequence [
     [d|
     uncurry' = id
     parser :: String -> [Int]
@@ -58,18 +61,20 @@ instance ParseInputOutput ([Int] -> String) where
       |],
     parse3InputDec
                                ]
+  parserName _ = "[Int] (ignoring size) to String"
 
 instance ParseInputOutput (String -> String) where
   getSinglePredicate 0 (i, o) = do
     let los = lines o
     when (length los /= 1) Nothing
     Just (\f -> f i == head los)
-  wut _ =
+  parserDeclarations _ =
     [d|
     uncurry' = id
     parser :: String -> String
     parser = id
       |]
+  parserName _ = "String to String"
 
 instance ParseInputOutput (Int -> String) where
   getSinglePredicate 0 (i, o) = do
@@ -77,12 +82,13 @@ instance ParseInputOutput (Int -> String) where
     let los = lines o
     when (length los /= 1) Nothing
     return (\f -> f ni == head los)
-  wut _ =
+  parserDeclarations _ =
     [d|
     uncurry' = id
     parser :: String -> Int
     parser = read
       |]
+  parserName _ = "Int to String"
 
 
 $(parse2InputDec)
@@ -92,7 +98,7 @@ instance ParseInputOutput (Int -> Int -> Int -> String) where
     let los = lines o
     when (length los /= 1) Nothing
     return (\f -> f a b c == head los)
-  wut _ = concat <$> sequence [
+  parserDeclarations _ = concat <$> sequence [
     [d|
     uncurry' f (a,b,c) = f a b c
     parser :: String -> (Int, Int, Int)
@@ -100,3 +106,4 @@ instance ParseInputOutput (Int -> Int -> Int -> String) where
       |],
     parse2InputDec
                                ]
+  parserName _ = "Three Ints to String"
