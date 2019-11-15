@@ -87,6 +87,7 @@ data AdHocOptLists = AdHocOptLists
   , firstAndSecondArgDifferent :: [Var]
   , thirdArgOfThirdArgUsed :: [Var]
   , secondArgOfThirdArgUsed :: [Var]
+  , idempotent :: [Var]
   } deriving (Generic, Default)
 data Common = Cmn {opt :: Opt (), tcl :: TyConLib, vl :: VarLib, pvl :: VarLib, vpl :: VarPriorityLib, rt :: RTrie, adHocOptLists :: AdHocOptLists}
 
@@ -278,6 +279,7 @@ funApSubOp op AdHocOptLists{..} behalf = faso
           adHocOpt' (Primitive {primId = x} :$ e1 :$ e2) | x `elem` commAndAssoc && e1 > e2 = False
           adHocOpt' (Primitive {primId = x} :$ e1 :$ e2 :$ Lambda (Lambda (Lambda e3))) | x `elem` thirdArgOfThirdArgUsed && not (varIsUsed 0 e3) = False
           adHocOpt' (Primitive {primId = x} :$ e1 :$ e2 :$ Lambda (Lambda e3)) | x `elem` secondArgOfThirdArgUsed && not (varIsUsed 0 e3) = False
+          adHocOpt' (Primitive {primId = x} :$ (Primitive {primId = y} :$ _)) | x == y && x `elem` idempotent = False
           adHocOpt' _ = True
           varIsUsed v (X u) = v==u
           varIsUsed v (Lambda e) = varIsUsed (v+1) e

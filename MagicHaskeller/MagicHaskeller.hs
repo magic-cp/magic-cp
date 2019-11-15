@@ -436,6 +436,7 @@ data AdHocOptimizations
   | FirstAndSecondArgDifferent
   | ThirdArgOfThirdArgUsed
   | SecondArgOfThirdArgUsed
+  | Idempotent
   deriving Show
 
 type PrimitiveWithOpt = (Primitive, [AdHocOptimizations])
@@ -459,6 +460,7 @@ mkPGWithOpt' cont classes tups =
         addToOpts a@AdHocOptLists{..} i FirstAndSecondArgDifferent = a{ firstAndSecondArgDifferent = i : firstAndSecondArgDifferent }
         addToOpts a@AdHocOptLists{..} i ThirdArgOfThirdArgUsed = a{ thirdArgOfThirdArgUsed = i : thirdArgOfThirdArgUsed }
         addToOpts a@AdHocOptLists{..} i SecondArgOfThirdArgUsed = a{ secondArgOfThirdArgUsed = i : secondArgOfThirdArgUsed }
+        addToOpts a@AdHocOptLists{..} i Idempotent = a{ idempotent = i : idempotent }
 
 mkPG :: ProgramGenerator pg => [Primitive] -> pg
 mkPG   = mkPGX [] . (:[]) -- mkPGX [] [[]]
