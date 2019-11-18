@@ -1,0 +1,19 @@
+2019-11-14-22:23:43
+110a
+WithOptimizations
+WithoutAbsents
+
+String to String
+
+True []
+False []
+iF [NotConstantAsFirstArg,SecondAndThirdArgDifferent]
+[] []
+(:) []
+list_para [NotConstantAsFirstArg,ThirdArgOfThirdArgUsed]
+(&&) [NotConstantAsFirstArg,NotConstantAsSecondArg,CommAndAssoc,FirstAndSecondArgDifferent]
+(==) [CommAndAssoc,FirstAndSecondArgDifferent]
+'4' []
+'7' []
+
+

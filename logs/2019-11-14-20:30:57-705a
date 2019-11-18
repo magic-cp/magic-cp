@@ -1,0 +1,37 @@
+2019-11-14-20:30:57
+705a
+WithOptimizations
+WithoutAbsents
+
+Int to String
+
+True []
+False []
+iF [NotConstantAsFirstArg,SecondAndThirdArgDifferent]
+[] []
+(:) []
+list_para [NotConstantAsFirstArg,ThirdArgOfThirdArgUsed]
+0 []
+(1 +) []
+nat_para [NotConstantAsFirstArg,SecondArgOfThirdArgUsed]
+0 []
+(1 +) []
+nat_para [NotConstantAsFirstArg,SecondArgOfThirdArgUsed]
+hd [NotConstantAsFirstArg]
+(+) [CommAndAssoc]
+(+) [CommAndAssoc]
+(== 0) . (`mod` 2) [NotConstantAsFirstArg]
+\a_6989586621679120897 b_6989586621679120898 -> a_6989586621679120897 ++ (" " ++ b_6989586621679120898) [NotConstantAsFirstArg,NotConstantAsSecondArg]
+flip (-) 1 [NotConstantAsFirstArg]
+(-) [NotConstantAsFirstArg,NotConstantAsSecondArg]
+"I hate it" []
+"I love it" []
+"I hate that" []
+"I love that" []
+"I" []
+"hate" []
+"it" []
+"love" []
+"that" []
+
+

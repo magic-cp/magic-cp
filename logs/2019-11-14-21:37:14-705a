@@ -1,0 +1,16 @@
+2019-11-14-21:37:14
+705a
+WithOptimizations
+WithoutAbsents
+
+Int to String
+
+(== 0) . (`mod` 2) [NotConstantAsFirstArg]
+nat_para [NotConstantAsFirstArg,SecondArgOfThirdArgUsed]
+iF [NotConstantAsFirstArg,SecondAndThirdArgDifferent]
+flip (-) 1 [NotConstantAsFirstArg]
+(-) [NotConstantAsFirstArg,NotConstantAsSecondArg]
+("I hate that " ++) [NotConstantAsFirstArg]
+("I love that " ++) [NotConstantAsFirstArg]
+
+
