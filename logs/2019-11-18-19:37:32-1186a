@@ -1,0 +1,53 @@
+2019-11-18-19:37:32
+1186a
+WithOptimizations
+WithoutAbsents
+
+Three Ints to String
+
+True []
+False []
+iF [NotConstantAsFirstArg,SecondAndThirdArgDifferent]
+[] []
+(:) []
+list_para [NotConstantAsFirstArg,ThirdArgOfThirdArgUsed]
+0 []
+(1 +) []
+nat_para [NotConstantAsFirstArg,SecondArgOfThirdArgUsed]
+0 []
+(1 +) []
+nat_para [NotConstantAsFirstArg,SecondArgOfThirdArgUsed]
+hd [NotConstantAsFirstArg]
+(+) [CommAndAssoc]
+(+) [CommAndAssoc]
+(&&) [NotConstantAsFirstArg,NotConstantAsSecondArg,CommAndAssoc,FirstAndSecondArgDifferent]
+(>=) [FirstAndSecondArgDifferent]
+"No" []
+"Yes" []
+
+
+Expression submited: \a b c -> iF (c >= (b + a)) "No" "Yes"
+Time: 0.438s
+Expressions tried: 4
+Verdict: Rejected 65320699 "Wrong answer on test 7"
+
+Expression submited: \a b c -> iF (c >= b) "No" (nat_para a "Yes" (\_ e -> e))
+Time: 1.898s
+Expressions tried: 45
+Verdict: Rejected 65320719 "Wrong answer on test 4"
+
+Expression submited: \a b c -> iF (b >= a) "Yes" (nat_para c "No" (\_ e -> e))
+Time: 1.907s
+Expressions tried: 119
+Verdict: Rejected 65320757 "Wrong answer on test 8"
+
+Expression submited: \a b c -> iF ((c >= a) && (b >= c)) "Yes" "No"
+Time: 7.673s
+Expressions tried: 1314
+Verdict: Rejected 65320782 "Wrong answer on test 5"
+
+Expression submited: \a b c -> iF ((c >= a) && (b >= a)) "Yes" "No"
+Time: 7.675s
+Expressions tried: 1338
+Verdict: Accepted
+

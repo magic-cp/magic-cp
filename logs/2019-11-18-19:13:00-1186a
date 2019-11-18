@@ -1,0 +1,33 @@
+2019-11-18-19:13:00
+1186a
+WithOptimizations
+WithAbsents
+
+Three Ints to String
+
+True []
+False []
+iF [NotConstantAsFirstArg,SecondAndThirdArgDifferent]
+[] []
+(:) []
+list_para [NotConstantAsFirstArg,ThirdArgOfThirdArgUsed]
+0 []
+(1 +) []
+nat_para [NotConstantAsFirstArg,SecondArgOfThirdArgUsed]
+0 []
+(1 +) []
+nat_para [NotConstantAsFirstArg,SecondArgOfThirdArgUsed]
+hd [NotConstantAsFirstArg]
+(+) [CommAndAssoc]
+(+) [CommAndAssoc]
+(&&) [NotConstantAsFirstArg,NotConstantAsSecondArg,CommAndAssoc,FirstAndSecondArgDifferent]
+(>=) [FirstAndSecondArgDifferent]
+"No" []
+"Yes" []
+
+
+Expression submited: \_ b c -> iF (c >= (1 +) b) "No" "Yes"
+Time: 0.053s
+Expressions tried: 290
+Verdict: Rejected 65319998 "Wrong answer on test 5"
+

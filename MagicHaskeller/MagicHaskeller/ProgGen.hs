@@ -99,17 +99,46 @@ cntluFunShcnt = do
   val <- readIORef luFunShcnt
   putStrLn $ "luFunShcnt = " ++ show val
 
+
 }}} -}
 
-{- {{{ wasn't used
-lookupFunsPoly :: (Search m, Expression e) => Generator m e -> Generator m e
-lookupFunsPoly behalf memodeb@(_,mt,_,cmn) avail reqret
-    = PS (\subst mx ->
-              let (tn, decoder) = encode (popArgs avail reqret) mx
-              in ifDepth (<= memodepth (opt cmn))
-                         (fmap (\ (exprs, sub, m) -> (exprs, retrieve decoder sub `plusSubst` subst, mx+m)) $ fromMemo $ lmt mt tn)
-                         (unPS (behalf memodeb avail reqret) subst mx) )
-}}} -}
+--lookupFunsPolyOld :: Search m => Generator m CoreExpr -> Generator m CoreExpr
+--lookupFunsPolyOld behalf memodeb@(_,mt,_,cmn) avail reqret
+--    = PS (\subst mx ->
+--              let (tn, decoder) = encode (popArgs avail reqret) mx
+--              in ifDepth (<= memodepth (opt cmn))
+--                         (fmap (\ (exprs, sub, m) -> (exprs, retrieve decoder sub `plusSubst` subst, mx+m)) $ fromMemo $ lmt mt tn)
+--                         (unPS (behalf memodeb avail reqret) subst mx) )
+--
+--lookupFunsPoly :: Search m => Generator m CoreExpr -> Generator m CoreExpr
+--lookupFunsPoly behalf memodeb@(_,mt,_,cmn) avail reqret =
+--  let annAvails = zip [0..] avail -- [(0, targ2), (1, targ1), (2, targ0)]
+--   in PS (\subst mx ->
+--            ifDepth (<= memodepth (opt cmn))
+--              (fromRc $ Rc $ \d -> -- d+1 is the maximum number of arguments to use.
+--                concat [
+--                   let (tn, decoder) = encode (popArgs newavails reqret) mx
+--                    in        (
+--                               map (decodeVarsPos ixs) $ -- applies the new Var Names (X n)
+--                               map (\ (exprs, sub, m) -> (exprs, retrieve decoder sub `plusSubst` subst, mx+m)) (unMx (lmt mt tn) !! d))
+--                              --(unPS (behalf memodeb avail reqret) subst mx)
+--                      | annAvs <- combs (d+1) annAvails,
+--                        let (ixs, newavails) = unzip annAvs
+--                      ] :: [Possibility CoreExpr])
+--              (fromRc $ Rc $ \d -> -- d+1 is the maximum number of arguments to use.
+--                concat [
+--                   let (tn, decoder) = encode (popArgs newavails reqret) mx
+--                    in        (
+--                               map (decodeVarsPos ixs) $ -- applies the new Var Names (X n)
+--                               --map (\ (exprs, sub, m) -> (exprs, retrieve decoder sub `plusSubst` subst, mx+m)) (unMx (lmt mt tn) !! d)
+--                              unMx (toMx $ unPS (behalf memodeb newavails reqret) subst mx) !! d
+--                              )
+--                              --(unPS (behalf memodeb avail reqret) subst mx)
+--                      | annAvs <- combs (d+1) annAvails,
+--                        let (ixs, newavails) = unzip annAvs
+--                      ] :: [Possibility CoreExpr])
+--         )
+
 
 instance WithCommon ProgGen where
     extractCommon (PG (_,_,_,cmn)) = cmn
@@ -191,13 +220,11 @@ mguPrograms memodeb = applyDo (mguProgs memodeb)
 mguProgs memodeb =
   wind (>>= (return . fmap (mapCE Lambda))) (lookupFunsShared memodeb)
 
--- {{{
 --mguProgs memodeb = wind (>>= (return . fmap Lambda)) (\avail reqret -> reorganize (\newavail -> lookupFunsPoly mguFuns memodeb newavail reqret) avail)
-{- どっちがわかりやすいかは不明
-mguProgs memodeb avail (t0:->t1) = do result <- mguProgs memodeb (t0 : avail) t1
-                                      return (fmap Lambda result)
-mguProgs memodeb avail reqret = reorganize (\newavail -> lookupFunsPoly mguFuns memodeb newavail reqret) avail
-}}} -}
+--
+--mguProgs memodeb avail (t0:->t1) = do result <- mguProgs memodeb (t0 : avail) t1
+                                      --return (fmap Lambda result)
+--mguProgs memodeb avail reqret = reorganize (\newavail -> lookupFunsPoly mguFuns memodeb newavail reqret) avail
 
 mguFuns = generateFuns mguPrograms
 

@@ -49,7 +49,7 @@ import qualified MagicCP.Util.ExpressionCnt as ECnt
 import MagicCP.ParseInputOutput
 
 import MagicHaskeller hiding ( TH(..) )
-import MagicHaskeller.ProgGenSF
+import MagicHaskeller.ProgGen
 import MagicHaskeller.ProgramGenerator
 import MagicHaskeller.LibTH( reallyalltest, mkPGWithDefaultsOpts, mkPGWithDefaults )
 import MagicHaskeller.LibTHDefinitions
@@ -133,6 +133,30 @@ solveWithLimits solve pId = do
         threadDelay 5000000
         checkLimits tid (tout - 5) memLimit
 
+customLibrary :: [PrimitiveWithOpt]
+customLibrary = $(pOpt [|
+  (
+    ((&&) :: Bool -> Bool -> Bool, [ NotConstantAsFirstArg
+                                   , NotConstantAsSecondArg
+                                   , CommAndAssoc
+                                   , FirstAndSecondArgDifferent ])
+
+  --, ((||) :: Bool -> Bool -> Bool, [ NotConstantAsFirstArg
+                                   --, NotConstantAsSecondArg
+                                   --, CommAndAssoc
+                                   --, FirstAndSecondArgDifferent ])
+  , ((>=) :: Int -> Int -> Bool, [ FirstAndSecondArgDifferent ])
+  --, ((==) :: Char -> Char -> Bool, [ CommAndAssoc
+                                   --, FirstAndSecondArgDifferent ])
+  --(((== 0) . (`mod` 2)) :: Int -> Bool, [ NotConstantAsFirstArg ])
+  --, ((\a b -> a ++ " " ++ b) :: [Char] -> [Char] -> [Char], [ NotConstantAsFirstArg
+                                                            --, NotConstantAsSecondArg ])
+  --, ((flip (-) 1) :: Int->Int, [ NotConstantAsFirstArg ])
+  --, ((-) :: Int -> Int -> Int, [ NotConstantAsFirstArg, NotConstantAsSecondArg ])
+  --, ((\n -> iF (n `mod` 2 == 0) "I love it" "I hate it") :: Int -> [Char], [NotConstantAsFirstArg])
+  ) |] )
+
+
 -- solvev0 (undefined :: (Int -> [Int] -> String)) (1030, 'a')
 solvev0
   :: forall b . (Typeable b, ParseInputOutput b)
@@ -150,25 +174,10 @@ solvev0 wOps wAbs hoge pId@(cId, _) = do
       custom = getConstantPrimitives (typeOf hoge) (concatMap (words . snd) ios)
       (md, prims) = if wOps == WithOptimizations
               then let (md', lst) = mkPGWithDefaultsOpts $
-                        $(pOpt [| ( ((&&) :: Bool -> Bool -> Bool, [ NotConstantAsFirstArg
-                                                                   , NotConstantAsSecondArg
-                                                                   , CommAndAssoc
-                                                                   , FirstAndSecondArgDifferent ])
-                                  , ((>=) :: Int -> Int -> Bool, [ FirstAndSecondArgDifferent ])
-                                  , ((==) :: Int -> Int -> Bool, [ CommAndAssoc
-                                                                 , FirstAndSecondArgDifferent ])
-                                  , ((`mod` 2) :: Int -> Int, [ NotConstantAsFirstArg ])
-                                  , ((\a b -> a ++ " " ++ b) :: [Char] -> [Char] -> [Char], [ NotConstantAsFirstArg
-                                                                                          , NotConstantAsSecondArg])
-                                  ) |] ) ++ zip custom (repeat [])
+                        customLibrary ++ zip custom (repeat [])
                     in (md', concatMap (\(prim, ops) -> pprintUC prim ++ " " ++ show ops ++ "\n") lst)
               else let (md', lst) = mkPGWithDefaults $
-                        $(p [| ( (&&) :: Bool -> Bool -> Bool
-                               , (>=) :: Int -> Int -> Bool
-                               , (==) :: Int -> Int -> Bool
-                               , (`mod` 2) :: Int -> Int
-                               , (\a b -> a ++ " " ++ b) :: [Char] -> [Char] -> [Char]
-                               ) |] ) ++ custom
+                        map fst customLibrary ++ custom
                     in (md', concatMap (\prim -> pprintUC prim ++ "\n") lst)
   pred `seq` return ()
 
@@ -176,7 +185,8 @@ solvev0 wOps wAbs hoge pId@(cId, _) = do
   Logger.logParser hoge
   Logger.logPrimitives prims
 
-  putStrLn "Starting search"
+  putStrLn "Starting search!"
+
   Timer.reset
   Timer.start
   ECnt.reset
@@ -191,8 +201,9 @@ solvev0 wOps wAbs hoge pId@(cId, _) = do
       -> [(Exp, a)]
       -> IO Exp
     f cfg mpto pred ((e, a):ts) = do
-      --putStrLn (pprintUC e)
       ECnt.cntExp
+      es <- ECnt.getTotalExps
+      when (es `mod` 1000 == 0) $ putStrLn (pprintUC e)
       result <- maybeWithTO2 mpto (pred a)
       case result of
         Just True -> do
@@ -245,7 +256,7 @@ solvev0 wOps wAbs hoge pId@(cId, _) = do
     acceptedBeep = callCommand "beep -f 800 -l 20 -d 200 -n -f 1200 -l 30"
     rejectedBeep = callCommand "beep -f 800 -l 20 -d 200 -n -f 600 -l 30"
     fromJust' (Just x) = x
-    fromJust' _ = error "Wrong parser"
+    fromJust' _ = error $ "Wrong parser: " ++ parserName hoge
 
 
 getConstantPrimitives :: TypeRep -> [String] -> [Primitive]

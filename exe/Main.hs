@@ -15,8 +15,8 @@ main = do
   putStrLn "please (ContestId, problemLetter)"
   pId <- read <$> getLine :: IO (Int, Char)
   testsolve WithOptimizations WithoutAbsents pId
-  testsolve WithOptimizations WithAbsents pId
-  testsolve WithoutOptimizations WithoutAbsents pId
-  testsolve WithoutOptimizations WithAbsents pId
+  --testsolve WithOptimizations WithAbsents pId
+  --testsolve WithoutOptimizations WithoutAbsents pId
+  --testsolve WithoutOptimizations WithAbsents pId
 
 

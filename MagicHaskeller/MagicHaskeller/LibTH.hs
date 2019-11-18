@@ -17,10 +17,14 @@ import Data.List hiding (tail)
 import Data.Char
 import Data.Maybe
 -- import Data.Ratio
+import Debug.Trace
 import MagicHaskeller.FastRatio
 import qualified Data.Generics as G
 
 import MagicHaskeller.ProgGenSF(mkTrieOptSFIO)
+import MagicHaskeller.ProgGen
+import MagicHaskeller.ProgramGenerator(Common(opt))
+import MagicHaskeller.Options
 
 import qualified Data.IntMap as IM
 import Data.Hashable
@@ -91,13 +95,6 @@ mkPGWithDefaultsOpts customOpts =
 
 
 initialize, init075, inittv1 :: IO ()
--- bool : 3 | 0
--- list : 3 | 3
--- nat : 3 | 6
--- natural : 3 | 9
--- hd : 1 | 12
--- plusInt : 1 | 13
--- plusInteger : 1 | 14
 initialize = do setPrimitives (bool ++ list ++ nat ++ natural ++ $(p [| hd :: [Int] -> Int |]) ++ plusInt ++ plusInteger)
                 setDepth 10
 -- MagicHaskeller version 0.8 ignores the setDepth value and always memoizes.
@@ -889,10 +886,6 @@ fromPrelDouble= [ $(p [| (1      :: Double,
                           atan2 :: Double -> Double -> Double
                          ) |]),
                   [] ]
-
-
-
-
 
 
 
