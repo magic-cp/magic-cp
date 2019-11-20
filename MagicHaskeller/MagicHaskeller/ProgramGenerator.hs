@@ -85,6 +85,8 @@ data AdHocOptLists = AdHocOptLists
   , commAndAssoc :: [Var]
   , secondAndThirdArgDifferent :: [Var]
   , firstAndSecondArgDifferent :: [Var]
+  , firstArgOfFirstArgUsed :: [Var]
+  , secondArgOfFirstArgUsed :: [Var]
   , thirdArgOfThirdArgUsed :: [Var]
   , secondArgOfThirdArgUsed :: [Var]
   , idempotent :: [Var]
@@ -277,6 +279,9 @@ funApSubOp op AdHocOptLists{..} behalf = faso
           adHocOpt' (Primitive {primId = x} :$ _ :$ e2 :$ e3) | x `elem` secondAndThirdArgDifferent && e2 == e3 = False
           adHocOpt' (Primitive {primId = x} :$ e1 :$ ((Primitive {primId = y} :$ e2) :$ e3)) | x==y && x `elem` commAndAssoc && e1 > e2 = False
           adHocOpt' (Primitive {primId = x} :$ e1 :$ e2) | x `elem` commAndAssoc && e1 > e2 = False
+
+          adHocOpt' (Primitive {primId = x} :$ Lambda e1) | x `elem` firstArgOfFirstArgUsed && not (varIsUsed 0 e1) = False
+          adHocOpt' (Primitive {primId = x} :$ Lambda (Lambda e1)) | x `elem` secondArgOfFirstArgUsed && not (varIsUsed 0 e1) = False
           adHocOpt' (Primitive {primId = x} :$ e1 :$ e2 :$ Lambda (Lambda (Lambda e3))) | x `elem` thirdArgOfThirdArgUsed && not (varIsUsed 0 e3) = False
           adHocOpt' (Primitive {primId = x} :$ e1 :$ e2 :$ Lambda (Lambda e3)) | x `elem` secondArgOfThirdArgUsed && not (varIsUsed 0 e3) = False
           adHocOpt' (Primitive {primId = x} :$ (Primitive {primId = y} :$ _)) | x == y && x `elem` idempotent = False

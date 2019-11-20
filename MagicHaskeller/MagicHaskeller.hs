@@ -434,6 +434,8 @@ data AdHocOptimizations
   | CommAndAssoc
   | SecondAndThirdArgDifferent
   | FirstAndSecondArgDifferent
+  | FirstArgOfFirstArgUsed
+  | SecondArgOfFirstArgUsed
   | ThirdArgOfThirdArgUsed
   | SecondArgOfThirdArgUsed
   | Idempotent
@@ -458,6 +460,8 @@ mkPGWithOpt' cont classes tups =
         addToOpts a@AdHocOptLists{..} i CommAndAssoc = a{ commAndAssoc = i : commAndAssoc }
         addToOpts a@AdHocOptLists{..} i SecondAndThirdArgDifferent = a{ secondAndThirdArgDifferent = i : secondAndThirdArgDifferent }
         addToOpts a@AdHocOptLists{..} i FirstAndSecondArgDifferent = a{ firstAndSecondArgDifferent = i : firstAndSecondArgDifferent }
+        addToOpts a@AdHocOptLists{..} i FirstArgOfFirstArgUsed = a{ firstArgOfFirstArgUsed = i : firstArgOfFirstArgUsed }
+        addToOpts a@AdHocOptLists{..} i SecondArgOfFirstArgUsed = a{ secondArgOfFirstArgUsed = i : secondArgOfFirstArgUsed }
         addToOpts a@AdHocOptLists{..} i ThirdArgOfThirdArgUsed = a{ thirdArgOfThirdArgUsed = i : thirdArgOfThirdArgUsed }
         addToOpts a@AdHocOptLists{..} i SecondArgOfThirdArgUsed = a{ secondArgOfThirdArgUsed = i : secondArgOfThirdArgUsed }
         addToOpts a@AdHocOptLists{..} i Idempotent = a{ idempotent = i : idempotent }
