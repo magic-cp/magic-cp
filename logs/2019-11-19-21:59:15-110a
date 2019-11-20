@@ -1,0 +1,19 @@
+2019-11-19-21:59:15
+110a
+WithOptimizations
+WithoutAbsents
+
+String to String
+
+True []
+False []
+iF [NotConstantAsFirstArg,SecondAndThirdArgDifferent]
+(&&) [NotConstantAsFirstArg,NotConstantAsSecondArg,CommAndAssoc,FirstAndSecondArgDifferent]
+(== '7') [NotConstantAsFirstArg]
+(== '4') [NotConstantAsFirstArg]
+list_para [NotConstantAsFirstArg,ThirdArgOfThirdArgUsed]
+(||) [NotConstantAsFirstArg,NotConstantAsSecondArg,CommAndAssoc,FirstAndSecondArgDifferent]
+"NO" []
+"YES" []
+
+

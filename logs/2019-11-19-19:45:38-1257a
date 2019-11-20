@@ -1,0 +1,16 @@
+2019-11-19-19:45:38
+1257a
+WithOptimizations
+WithoutAbsents
+
+Test cases of Four Ints to Int
+
+True []
+False []
+iF [NotConstantAsFirstArg,SecondAndThirdArgDifferent]
+(&&) [NotConstantAsFirstArg,NotConstantAsSecondArg,CommAndAssoc,FirstAndSecondArgDifferent]
+(>=) [FirstAndSecondArgDifferent]
+0 []
+(1 +) []
+
+

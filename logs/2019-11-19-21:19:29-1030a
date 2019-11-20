@@ -1,0 +1,24 @@
+2019-11-19-21:19:29
+1030a
+WithOptimizations
+WithoutAbsents
+
+[Int] (ignoring size) to String
+
+True []
+False []
+iF [NotConstantAsFirstArg,SecondAndThirdArgDifferent]
+(&&) [NotConstantAsFirstArg,NotConstantAsSecondArg,CommAndAssoc,FirstAndSecondArgDifferent]
+(== 1) [NotConstantAsFirstArg]
+(== 0) [NotConstantAsFirstArg]
+foldl [FirstArgOfFirstArgUsed,SecondArgOfFirstArgUsed]
+(||) [NotConstantAsFirstArg,NotConstantAsSecondArg,CommAndAssoc,FirstAndSecondArgDifferent]
+"EASY" []
+"HARD" []
+
+
+Expression submited: \a -> foldl (\b c -> iF ((== 1) c) "HARD" b) "EASY" a
+Time: 0.022s
+Expressions tried: 3
+Verdict: Accepted
+

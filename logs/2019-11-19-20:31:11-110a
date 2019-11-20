@@ -1,0 +1,32 @@
+2019-11-19-20:31:11
+110a
+WithOptimizations
+WithoutAbsents
+
+String to String
+
+True []
+False []
+iF [NotConstantAsFirstArg,SecondAndThirdArgDifferent]
+(&&) [NotConstantAsFirstArg,NotConstantAsSecondArg,CommAndAssoc,FirstAndSecondArgDifferent]
+\x_6989586621679121602 -> (x_6989586621679121602 == '4') || (x_6989586621679121602 == '7') [NotConstantAsFirstArg]
+list_para [NotConstantAsFirstArg,ThirdArgOfThirdArgUsed]
+"NO" []
+"YES" []
+
+
+Expression submited: \a -> list_para a "YES" (\b c d -> list_para c d (\_ _ g -> iF ((\x_6989586621679121602 -> (x_6989586621679121602 == '4') || (x_6989586621679121602 == '7')) b) g "NO"))
+Time: 0.756s
+Expressions tried: 796
+Verdict: Rejected 65398779 "Wrong answer on test 4"
+
+Expression submited: \a -> iF (list_para a True (\b c d -> (\x_6989586621679121602 -> (x_6989586621679121602 == '4') || (x_6989586621679121602 == '7')) (list_para c b (\e _ g -> iF d g e)))) "YES" "NO"
+Time: 23.206s
+Expressions tried: 11969
+Verdict: Rejected 65398829 "Wrong answer on test 6"
+
+Expression submited: \a -> iF (list_para a True (\b c d -> list_para c (d && (\x_6989586621679121602 -> (x_6989586621679121602 == '4') || (x_6989586621679121602 == '7')) b) (\_ _ g -> iF g False True))) "NO" "YES"
+Time: 178.281s
+Expressions tried: 89348
+Verdict: Rejected 65398945 "Wrong answer on test 7"
+

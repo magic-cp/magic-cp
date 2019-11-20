@@ -1,0 +1,26 @@
+2019-11-20-14:21:42
+1257a
+WithOptimizations
+WithoutAbsents
+
+Test cases of Four Ints to Int
+
+True []
+False []
+iF [NotConstantAsFirstArg,SecondAndThirdArgDifferent]
+0 []
+(1 +) []
+nat_para [NotConstantAsFirstArg,SecondArgOfThirdArgUsed]
+0 []
+(1 +) []
+nat_para [NotConstantAsFirstArg,SecondArgOfThirdArgUsed]
+hd [NotConstantAsFirstArg]
+(+) [CommAndAssoc]
+(+) [CommAndAssoc]
+(&&) [NotConstantAsFirstArg,NotConstantAsSecondArg,CommAndAssoc,FirstAndSecondArgDifferent]
+flip (-) 1 [NotConstantAsFirstArg]
+(-) [NotConstantAsFirstArg,NotConstantAsSecondArg]
+min [NotConstantAsFirstArg,NotConstantAsSecondArg]
+abs [NotConstantAsFirstArg]
+
+

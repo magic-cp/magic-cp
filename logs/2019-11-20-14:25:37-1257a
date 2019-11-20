@@ -1,0 +1,36 @@
+2019-11-20-14:25:37
+1257a
+WithOptimizations
+WithAbsents
+
+Test cases of Four Ints to Int
+
+True []
+False []
+iF [NotConstantAsFirstArg,SecondAndThirdArgDifferent]
+0 []
+(1 +) []
+nat_para [NotConstantAsFirstArg,SecondArgOfThirdArgUsed]
+0 []
+(1 +) []
+nat_para [NotConstantAsFirstArg,SecondArgOfThirdArgUsed]
+hd [NotConstantAsFirstArg]
+(+) [CommAndAssoc]
+(+) [CommAndAssoc]
+(&&) [NotConstantAsFirstArg,NotConstantAsSecondArg,CommAndAssoc,FirstAndSecondArgDifferent]
+flip (-) 1 [NotConstantAsFirstArg]
+(-) [NotConstantAsFirstArg,NotConstantAsSecondArg]
+min [NotConstantAsFirstArg,NotConstantAsSecondArg]
+abs [NotConstantAsFirstArg]
+
+
+Expression submited: \_ _ c _ -> flip (-) 1 c
+Time: 0.001s
+Expressions tried: 11
+Verdict: Rejected 65441191 "Wrong answer on test 2"
+
+Expression submited: \a b c d -> min (flip (-) 1 a) (b + abs (d - c))
+Time: 385.495s
+Expressions tried: 6152688
+Verdict: Accepted
+

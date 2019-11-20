@@ -1,0 +1,29 @@
+2019-11-19-22:00:01
+110a
+WithOptimizations
+WithoutAbsents
+
+String to String
+
+True []
+False []
+iF [NotConstantAsFirstArg,SecondAndThirdArgDifferent]
+(&&) [NotConstantAsFirstArg,NotConstantAsSecondArg,CommAndAssoc,FirstAndSecondArgDifferent]
+(== '7') [NotConstantAsFirstArg]
+(== '4') [NotConstantAsFirstArg]
+list_para [NotConstantAsFirstArg,ThirdArgOfThirdArgUsed]
+(||) [NotConstantAsFirstArg,NotConstantAsSecondArg,CommAndAssoc,FirstAndSecondArgDifferent]
+"NO" []
+"YES" []
+
+
+Expression submited: \a -> list_para a "NO" (\b _ d -> iF ((== '7') b) "YES" (list_para d "NO" (\_ _ g -> g)))
+Time: 0.822s
+Expressions tried: 1244
+Verdict: Rejected 65400786 "Wrong answer on test 4"
+
+Expression submited: \a -> iF (list_para a True (\_ c d -> list_para c True (\e _ g -> iF d ((== '7') e) g))) "YES" "NO"
+Time: 20.861s
+Expressions tried: 15571
+Verdict: Rejected 65400806 "Wrong answer on test 6"
+

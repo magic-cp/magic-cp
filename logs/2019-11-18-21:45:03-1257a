@@ -1,0 +1,14 @@
+2019-11-18-21:45:03
+1257a
+WithOptimizations
+WithoutAbsents
+
+Test cases of Four Ints to Int
+
+(+) [CommAndAssoc]
+flip (-) 1 [NotConstantAsFirstArg]
+(-) [NotConstantAsFirstArg,NotConstantAsSecondArg]
+min [NotConstantAsFirstArg,NotConstantAsSecondArg]
+abs [NotConstantAsFirstArg]
+
+

@@ -1,0 +1,21 @@
+2019-11-18-22:06:59
+1186a
+WithOptimizations
+WithoutAbsents
+
+Three Ints to String
+
+(+) [CommAndAssoc]
+True []
+False []
+iF [NotConstantAsFirstArg,SecondAndThirdArgDifferent]
+(&&) [NotConstantAsFirstArg,NotConstantAsSecondArg,CommAndAssoc,FirstAndSecondArgDifferent]
+(>=) [FirstAndSecondArgDifferent]
+flip (-) 1 [NotConstantAsFirstArg]
+(-) [NotConstantAsFirstArg,NotConstantAsSecondArg]
+min [NotConstantAsFirstArg,NotConstantAsSecondArg]
+abs [NotConstantAsFirstArg]
+"No" []
+"Yes" []
+
+

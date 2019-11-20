@@ -1,0 +1,42 @@
+2019-11-19-22:30:08
+110a
+WithoutOptimizations
+WithoutAbsents
+
+String to String
+
+True
+False
+iF
+[]
+(:)
+list_para
+0
+(1 +)
+nat_para
+0
+(1 +)
+nat_para
+hd
+(+)
+(+)
+(&&)
+(== '7')
+(== '4')
+foldl
+show . (length . filter (\x_6989586621679050633 -> (x_6989586621679050633 == '4') || (x_6989586621679050633 == '7')))
+(||)
+"NO"
+"YES"
+
+
+Expression submited: \a -> iF (list_para a True (\b _ _ -> (== '7') b)) "YES" "NO"
+Time: 3.459s
+Expressions tried: 52048
+Verdict: Rejected 65401298 "Wrong answer on test 4"
+
+Expression submited: \a -> iF (list_para ((show . (length . filter (\x_6989586621679050633 -> (x_6989586621679050633 == '4') || (x_6989586621679050633 == '7')))) a) True (\b _ _ -> (== '7') b)) "YES" "NO"
+Time: 21.229s
+Expressions tried: 338020
+Verdict: Rejected 65401307 "Wrong answer on test 7"
+

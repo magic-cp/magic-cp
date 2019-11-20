@@ -1,0 +1,24 @@
+2019-11-19-20:25:15
+110a
+WithOptimizations
+WithoutAbsents
+
+String to String
+
+True []
+False []
+iF [NotConstantAsFirstArg,SecondAndThirdArgDifferent]
+[] []
+(:) []
+list_para [NotConstantAsFirstArg,ThirdArgOfThirdArgUsed]
+(&&) [NotConstantAsFirstArg,NotConstantAsSecondArg,CommAndAssoc,FirstAndSecondArgDifferent]
+\x_6989586621679121544 -> (x_6989586621679121544 == '4') || (x_6989586621679121544 == '7') [NotConstantAsFirstArg]
+"NO" []
+"YES" []
+
+
+Expression submited: \a -> list_para a "YES" (\b c d -> list_para c d (\_ _ g -> iF ((\x_6989586621679121544 -> (x_6989586621679121544 == '4') || (x_6989586621679121544 == '7')) b) g "NO"))
+Time: 4.802s
+Expressions tried: 3526
+Verdict: Rejected 65398646 "Wrong answer on test 4"
+

@@ -1,0 +1,20 @@
+2019-11-19-21:09:05
+110a
+WithOptimizations
+WithoutAbsents
+
+String to String
+
+True []
+False []
+iF [NotConstantAsFirstArg,SecondAndThirdArgDifferent]
+(&&) [NotConstantAsFirstArg,NotConstantAsSecondArg,CommAndAssoc,FirstAndSecondArgDifferent]
+(== '4') [NotConstantAsFirstArg]
+(== '7') [NotConstantAsFirstArg]
+foldl []
+show . (length . filter (\x_6989586621679120731 -> (x_6989586621679120731 == '4') || (x_6989586621679120731 == '7'))) []
+(||) [NotConstantAsFirstArg,NotConstantAsSecondArg,CommAndAssoc,FirstAndSecondArgDifferent]
+"NO" []
+"YES" []
+
+
