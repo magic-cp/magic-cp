@@ -14,6 +14,7 @@ import System.Process( readProcess )
 import System.Posix.Directory( changeWorkingDirectory )
 
 import CF.CFConfig
+import           Debug.Trace                    ( trace )
 
 data Verdict = Accepted | Rejected Int String deriving Show
 
@@ -63,6 +64,7 @@ submitSolution CFConfig{..} problemId = do
   output <- readProcess (cftool_path </> "cf") ["submit"] ""
   changeWorkingDirectory project_root
   let submission = read $ drop 2 $ dropWhile (/= ':') $ last $ filter ("#:" `isInfixOf`) $ lines output
+  --trace output $ return ()
   let status = last $ filter ("status:" `isInfixOf`) $ lines output
   if "Accepted" `isInfixOf` status
      then return Accepted

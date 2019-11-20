@@ -37,9 +37,9 @@ newLogger log_root (cId, pId) wOps wAbs = do
   write (show wAbs)
   write ""
 
-logParser :: ParseInputOutput b => b -> IO ()
-logParser hoge = do
-  write $ parserName hoge
+logParser :: ParseInputOutput b => b -> WithTestCases -> IO ()
+logParser hoge wTC = do
+  write $ parserName hoge wTC
   write ""
 
 logPrimitives :: String -> IO ()

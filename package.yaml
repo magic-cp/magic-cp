@@ -3,6 +3,7 @@ library:
   - src
   exposed-modules:
   - CF
+  - CF.CFConfig
   - MagicCP
   - MagicCP.SearchOptions
 

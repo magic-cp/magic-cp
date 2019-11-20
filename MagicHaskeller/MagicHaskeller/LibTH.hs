@@ -90,7 +90,9 @@ mkPGWithDefaults custom =
 
 mkPGWithDefaultsOpts :: [PrimitiveWithOpt] -> (ProgGen, [(Exp, [AdHocOptimizations])])
 mkPGWithDefaultsOpts customOpts =
-  let primList = boolOpt ++ listOpt ++ natOpt ++ naturalOpt ++ headOpt ++ plusIntOpt ++ plusIntegerOpt ++ customOpts
+  --let primList = boolOpt ++ listOpt ++ natOpt ++ naturalOpt ++ headOpt ++ plusIntOpt ++ plusIntegerOpt ++ customOpts
+  let primList = boolOpt ++ natOpt ++ naturalOpt ++ headOpt ++ plusIntOpt ++ plusIntegerOpt ++ customOpts
+  --let primList = boolOpt ++ customOpts
    in (mkPGWithOpt primList, [ (exp, optList) | ((_, exp, _), optList) <- primList])
 
 
