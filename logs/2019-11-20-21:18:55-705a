@@ -1,0 +1,23 @@
+2019-11-20-21:18:55
+705a
+WithOptimizations
+WithoutAbsents
+
+Int to String
+
+(== 0) . (`mod` 2) [NotConstantAsFirstArg]
+iF [NotConstantAsFirstArg,SecondAndThirdArgDifferent]
+flip (-) 1 [NotConstantAsFirstArg]
+(-) [NotConstantAsFirstArg,NotConstantAsSecondArg]
+nat_para [NotConstantAsFirstArg,SecondArgOfThirdArgUsed]
+"I love it" [NotConstantAsFirstArg]
+"I hate it" [NotConstantAsFirstArg]
+("I hate that " ++) [NotConstantAsFirstArg]
+("I love that " ++) [NotConstantAsFirstArg]
+
+
+Expression submited: \a -> nat_para (flip (-) 1 a) "I hate it" (\b c -> ("I hate that " ++) (iF (((== 0) . (`mod` 2)) b) "I love it" (("I love that " ++) (iF (((== 0) . (`mod` 2)) b) c "I hate it"))))
+Time: 137.955s
+Expressions tried: 1262147
+Verdict: Rejected 65457015 "Wrong answer on test 4"
+

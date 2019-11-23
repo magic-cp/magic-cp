@@ -1,0 +1,16 @@
+2019-11-20-20:32:33
+1030a
+WithOptimizations
+WithoutAbsents
+
+[Int] (ignoring size) to String
+
+flip (-) 1 [NotConstantAsFirstArg]
+(-) [NotConstantAsFirstArg,NotConstantAsSecondArg]
+abs [NotConstantAsFirstArg]
+min [NotConstantAsFirstArg,NotConstantAsSecondArg]
+(+) [CommAndAssoc]
+"EASY" []
+"HARD" []
+
+

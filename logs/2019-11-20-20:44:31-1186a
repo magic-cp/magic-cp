@@ -1,0 +1,38 @@
+2019-11-20-20:44:31
+1186a
+WithOptimizations
+WithoutAbsents
+
+Three Ints to String
+
+iF [NotConstantAsFirstArg,SecondAndThirdArgDifferent]
+(>=) [FirstAndSecondArgDifferent]
+"No" []
+"Yes" []
+
+
+Expression submited: \a b c -> iF (c >= b) "No" (iF (c >= a) "Yes" "No")
+Time: 0.053s
+Expressions tried: 2
+Verdict: Rejected 65456166 "Wrong answer on test 4"
+
+Expression submited: \a b c -> iF (b >= c) "Yes" (iF (c >= a) "No" "Yes")
+Time: 0.056s
+Expressions tried: 13
+Verdict: Rejected 65456182 "Wrong answer on test 5"
+
+Expression submited: \a b c -> iF (b >= c) "Yes" (iF (b >= a) "Yes" "No")
+Time: 0.059s
+Expressions tried: 30
+Verdict: Rejected 65456220 "Wrong answer on test 7"
+
+Expression submited: \a b c -> iF (c >= b) (iF (b >= a) "Yes" "No") "Yes"
+Time: 0.061s
+Expressions tried: 52
+Verdict: Rejected 65456239 "Wrong answer on test 8"
+
+Expression submited: \a b c -> iF (c >= a) (iF (b >= a) "Yes" "No") "No"
+Time: 0.066s
+Expressions tried: 115
+Verdict: Accepted
+

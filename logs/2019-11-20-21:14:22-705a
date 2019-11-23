@@ -1,0 +1,27 @@
+2019-11-20-21:14:22
+705a
+WithOptimizations
+WithoutAbsents
+
+Int to String
+
+(== 0) . (`mod` 2) [NotConstantAsFirstArg]
+iF [NotConstantAsFirstArg,SecondAndThirdArgDifferent]
+flip (-) 1 [NotConstantAsFirstArg]
+(-) [NotConstantAsFirstArg,NotConstantAsSecondArg]
+nat_para [NotConstantAsFirstArg,SecondArgOfThirdArgUsed]
+\n_6989586621679051817 -> iF ((n_6989586621679051817 `mod` 2) == 0) "I love it" "I hate it" [NotConstantAsFirstArg]
+("I hate that " ++) [NotConstantAsFirstArg]
+("I love that " ++) [NotConstantAsFirstArg]
+
+
+Expression submited: \a -> nat_para (flip (-) 1 a) ((\n_6989586621679051817 -> iF ((n_6989586621679051817 `mod` 2) == 0) "I love it" "I hate it") a) (\b c -> ("I hate that " ++) (iF (((== 0) . (`mod` 2)) b) c (("I love that " ++) ((\n_6989586621679051817 -> iF ((n_6989586621679051817 `mod` 2) == 0) "I love it" "I hate it") b))))
+Time: 4.604s
+Expressions tried: 64734
+Verdict: Rejected 65456869 "Wrong answer on test 4"
+
+Expression submited: \a -> nat_para (flip (-) 1 a) ((\n_6989586621679051817 -> iF ((n_6989586621679051817 `mod` 2) == 0) "I love it" "I hate it") a) (\b c -> iF (((== 0) . (`mod` 2)) (b - a)) (("I hate that " ++) c) (("I love that " ++) c))
+Time: 18.795s
+Expressions tried: 237783
+Verdict: Accepted
+
