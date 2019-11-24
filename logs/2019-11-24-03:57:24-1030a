@@ -1,0 +1,27 @@
+2019-11-24-03:57:24
+1030a
+WithoutOptimizations
+WithoutAbsents
+
+[Int] (ignoring size) to String
+
+foldl
+hd
+(==)
+0
+(1 +)
+iF
+"EASY"
+"HARD"
+
+
+Expression submited: \a -> iF (0 == foldl (\_ c -> c) 0 a) "EASY" "HARD"
+Time: 0.062s
+Expressions tried: 356
+Verdict: Rejected 65616418 "Wrong answer on test 6"
+
+Expression submited: \a -> foldl (\b c -> iF (0 == c) b "HARD") "EASY" a
+Time: 0.066s
+Expressions tried: 471
+Verdict: Accepted
+

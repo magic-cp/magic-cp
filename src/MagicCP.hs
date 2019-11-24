@@ -2,8 +2,6 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-
 
 module MagicCP where
 
@@ -88,27 +86,31 @@ pprintUC =  pprint . everywhere (mkT unqCons)
 unqCons :: TH.Name -> TH.Name
 unqCons n = mkName (nameBase n)
 
+data WithOutputConstants = WithOutputConstants | WithoutOutputConstants
+
 solveWithAllParsers
   :: WithOptimizations
   -> WithAbsents
+  -> WithOutputConstants
   -> CFConfig
   -> [PrimitiveWithOpt]
   -> ProblemId
   -> IO (Maybe Exp)
-solveWithAllParsers wOps wAbs cfg lib pId = do
+solveWithAllParsers wOps wAbs wOC cfg lib pId = do
   let l =
-        [ solveWithLimits (solvev0 wOps wAbs WithoutTestCases cfg lib
+        [ solveWithLimits (solvev0 wOps wAbs wOC WithoutTestCases cfg lib
             (undefined :: Int -> Int -> Int -> String)) pId
-        , solveWithLimits (solvev0 wOps wAbs WithTestCases cfg lib
+        , solveWithLimits (solvev0 wOps wAbs wOC WithTestCases cfg lib
             (undefined :: Int -> Int -> Int -> Int -> Int)) pId
-        , solveWithLimits (solvev0 wOps wAbs WithTestCases cfg lib
+        , solveWithLimits (solvev0 wOps wAbs wOC WithTestCases cfg lib
             (undefined :: Int -> Int -> String)) pId
-        , solveWithLimits (solvev0 wOps wAbs WithoutTestCases cfg lib
+        , solveWithLimits (solvev0 wOps wAbs wOC WithoutTestCases cfg lib
             (undefined :: [Int] -> String)) pId
-        , solveWithLimits (solvev0 wOps wAbs WithoutTestCases cfg lib
+        , solveWithLimits (solvev0 wOps wAbs wOC WithoutTestCases cfg lib
             (undefined :: Int -> [Int] -> String)) pId
-        --, solveWithLimits (solvev0 wOps wAbs WithoutTestCases cfg lib (undefined :: Int -> String)) pId
-        , solveWithLimits (solvev0 wOps wAbs WithoutTestCases cfg lib
+        --, solveWithLimits (solvev0 wOps wAbs wOC WithoutTestCases cfg lib
+            --(undefined :: Int -> String)) pId
+        , solveWithLimits (solvev0 wOps wAbs wOC WithoutTestCases cfg lib
             (undefined :: String -> String)) pId
         ]
   solveUntilJust l
@@ -124,7 +126,7 @@ solveWithAllParsers wOps wAbs cfg lib pId = do
 solveWithLimits :: (ProblemId -> IO Exp) -> ProblemId -> IO (Maybe Exp)
 solveWithLimits solve pId = do
   tid <- myThreadId
-  let timeout = 60*12
+  let timeout = 60*30
       memoPerc = 80
   bracket
     ( forkIO $ checkLimits tid timeout memoPerc )
@@ -151,17 +153,21 @@ solvev0
   :: forall b . (Typeable b, ParseInputOutput b)
   => WithOptimizations
   -> WithAbsents
+  -> WithOutputConstants
   -> WithTestCases
   -> CFConfig
   -> [PrimitiveWithOpt]
   -> b
   -> ProblemId
   -> IO Exp
-solvev0 wOps wAbs wTC cfg customLibrary hoge pId@(cId, _) = do
+solvev0 wOps wAbs wOC wTC cfg customLibrary hoge pId@(cId, _) = do
   putStrLn "Parsing problem"
   ios <- getInputOutput cfg pId
   let pred = fromJust' (getPredicate wTC 0 ios :: Maybe (b -> Bool))
-      custom = getConstantPrimitives (typeOf hoge) (concatMap (words . snd) ios)
+      custom = case wOC of
+              WithOutputConstants ->
+                getConstantPrimitives (typeOf hoge) (concatMap (words . snd) ios)
+              WithoutOutputConstants -> []
       (md, prims) = if wOps == WithOptimizations
               then let (md', lst) = mkPGWithDefaultsOpts $
                         customLibrary ++ zip custom (repeat [])
@@ -241,8 +247,8 @@ solvev0 wOps wAbs wTC cfg customLibrary hoge pId@(cId, _) = do
               f cfg mpto pred ts
         Just False ->
           f cfg mpto pred ts
-        Nothing ->
-          --hPutStrLn stderr ("timeout on "++pprintUC e)
+        Nothing -> do
+          hPutStrLn stderr ("timeout or error on "++pprintUC e)
           f cfg mpto pred ts
     submitBeep = callCommand "beep -f 800 -l 20 -d 200 -n -f 800 -l 30"
     acceptedBeep = callCommand "beep -f 800 -l 20 -d 200 -n -f 1200 -l 30"

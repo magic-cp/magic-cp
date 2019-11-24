@@ -1,0 +1,27 @@
+2019-11-23-23:24:21
+1030a
+WithoutOptimizations
+WithAbsents
+
+[Int] (ignoring size) to String
+
+list_para
+hd
+(==)
+0
+(1 +)
+iF
+"EASY"
+"HARD"
+
+
+Expression submited: \a -> list_para a "EASY" (\_ c d -> list_para c d (\_ _ _ -> "HARD"))
+Time: 0.075s
+Expressions tried: 18
+Verdict: Rejected 65609084 "Wrong answer on test 3"
+
+Expression submited: \a -> list_para a "EASY" (\b _ d -> iF (0 == b) d "HARD")
+Time: 0.241s
+Expressions tried: 31
+Verdict: Accepted
+

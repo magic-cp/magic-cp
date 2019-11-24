@@ -85,15 +85,13 @@ plusIntegerOpt = $(pOptSingle [| ((+) :: (->) Integer ((->) Integer Integer), [C
 
 mkPGWithDefaults :: [Primitive] -> (ProgGen, [Exp])
 mkPGWithDefaults custom =
-  let primList = bool ++ list ++ nat ++ natural ++ $(p [| hd :: (->) [Int] Int |]) ++ plusInt ++ plusInteger ++ custom
-   in (mkPG primList, [ exp | (_, exp, _) <- primList])
+  --let primList = bool ++ list ++ nat ++ natural ++ $(p [| hd :: (->) [Int] Int |]) ++ plusInt ++ plusInteger ++ custom
+  (mkPG custom, [ exp | (_, exp, _) <- custom])
 
 mkPGWithDefaultsOpts :: [PrimitiveWithOpt] -> (ProgGen, [(Exp, [AdHocOptimizations])])
 mkPGWithDefaultsOpts customOpts =
   --let primList = boolOpt ++ listOpt ++ natOpt ++ naturalOpt ++ headOpt ++ plusIntOpt ++ plusIntegerOpt ++ customOpts
-  let primList = boolOpt ++ natOpt ++ naturalOpt ++ headOpt ++ plusIntOpt ++ plusIntegerOpt ++ customOpts
-  --let primList = boolOpt ++ customOpts
-   in (mkPGWithOpt primList, [ (exp, optList) | ((_, exp, _), optList) <- primList])
+  (mkPGWithOpt customOpts, [ (exp, optList) | ((_, exp, _), optList) <- customOpts])
 
 
 initialize, init075, inittv1 :: IO ()

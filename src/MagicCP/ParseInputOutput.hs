@@ -19,7 +19,7 @@ p1 &&& p2 = \x -> p1 x && p2 x
 
 data WithTestCases = WithTestCases | WithoutTestCases deriving Show
 
-class Typeable a => ParseInputOutput a where
+class ParseInputOutput a where
   getSinglePredicate :: WithTestCases -> Parser -> (String, String) -> Maybe (a -> Bool)
   getSinglePredicate WithoutTestCases p (i, o) = getSinglePredicateNOTC p (i, o)
   getSinglePredicate WithTestCases p (i, o) = do

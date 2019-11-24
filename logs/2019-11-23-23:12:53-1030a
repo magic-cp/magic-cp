@@ -1,0 +1,17 @@
+2019-11-23-23:12:53
+1030a
+WithoutOptimizations
+WithoutAbsents
+
+[Int] with size to String
+
+list_para
+hd
+(==)
+0
+(1 +)
+iF
+"EASY"
+"HARD"
+
+

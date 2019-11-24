@@ -1,0 +1,28 @@
+2019-11-24-05:46:22
+110a
+WithOptimizations
+WithAbsents
+
+String to String
+
+(==) [CommAndAssoc,FirstAndSecondArgDifferent]
+foldl [FirstArgOfFirstArgUsed,SecondArgOfFirstArgUsed]
+iF [NotConstantAsFirstArg,SecondAndThirdArgDifferent]
+(||) [NotConstantAsFirstArg,NotConstantAsSecondArg,CommAndAssoc,FirstAndSecondArgDifferent]
+(== '4') []
+(== '7') []
+show . (length . filter (\x_6989586621679050611 -> (x_6989586621679050611 == '4') || (x_6989586621679050611 == '7'))) []
+"NO" []
+"YES" []
+
+
+Expression submited: \a -> foldl (\b c -> iF ((== '7') c) "YES" b) "NO" ((show . (length . filter (\x_6989586621679050611 -> (x_6989586621679050611 == '4') || (x_6989586621679050611 == '7')))) a)
+Time: 0.074s
+Expressions tried: 349
+Verdict: Rejected 65619692 "Wrong answer on test 7"
+
+Expression submited: \a -> foldl (\b c -> iF ((== '4') c || (== '7') c) "YES" b) "NO" ((show . (length . filter (\x_6989586621679050611 -> (x_6989586621679050611 == '4') || (x_6989586621679050611 == '7')))) a)
+Time: 1.750s
+Expressions tried: 18272
+Verdict: Accepted
+

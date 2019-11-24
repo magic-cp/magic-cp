@@ -1,0 +1,20 @@
+2019-11-24-05:34:40
+1257b
+WithoutOptimizations
+WithAbsents
+
+Test cases of Two Ints to String
+
+(>=)
+iF
+1
+3
+"NO"
+"YES"
+
+
+Expression submited: \a b -> iF (1 >= b) "YES" (iF (iF (3 >= b) 1 3 >= a) "NO" "YES")
+Time: 39.289s
+Expressions tried: 581780
+Verdict: Accepted
+

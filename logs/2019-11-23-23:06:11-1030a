@@ -1,0 +1,15 @@
+2019-11-23-23:06:11
+1030a
+WithOptimizations
+WithoutAbsents
+
+[Int] (ignoring size) to String
+
+(==) [CommAndAssoc,FirstAndSecondArgDifferent]
+0 []
+(1 +) []
+iF [NotConstantAsFirstArg,SecondAndThirdArgDifferent]
+"EASY" []
+"HARD" []
+
+

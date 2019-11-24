@@ -1,0 +1,17 @@
+2019-11-24-05:00:27
+705a
+WithOptimizations
+WithoutAbsents
+
+String to String
+
+(== 0) . (`mod` 2) [NotConstantAsFirstArg]
+iF [NotConstantAsFirstArg,SecondAndThirdArgDifferent]
+flip (-) 1 [NotConstantAsFirstArg]
+(-) [NotConstantAsFirstArg,NotConstantAsSecondArg]
+nat_para [NotConstantAsFirstArg,SecondArgOfThirdArgUsed]
+\n_6989586621679051732 -> iF ((n_6989586621679051732 `mod` 2) == 0) "I love it" "I hate it" [NotConstantAsFirstArg]
+("I hate that " ++) [NotConstantAsFirstArg]
+("I love that " ++) [NotConstantAsFirstArg]
+
+

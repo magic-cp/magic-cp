@@ -1,0 +1,22 @@
+2019-11-23-23:11:49
+1030a
+WithOptimizations
+WithAbsents
+
+[Int] (ignoring size) to String
+
+list_para [NotConstantAsFirstArg,ThirdArgOfThirdArgUsed]
+hd [NotConstantAsFirstArg]
+(==) [CommAndAssoc,FirstAndSecondArgDifferent]
+0 []
+(1 +) []
+iF [NotConstantAsFirstArg,SecondAndThirdArgDifferent]
+"EASY" []
+"HARD" []
+
+
+Expression submited: \a -> list_para a "EASY" (\b _ d -> iF (b == 0) d "HARD")
+Time: 0.136s
+Expressions tried: 42
+Verdict: Accepted
+
