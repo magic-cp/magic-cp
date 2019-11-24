@@ -1,0 +1,23 @@
+2019-11-24-22:49:59
+59a
+WithoutOptimizations
+WithAbsents
+
+String to String
+
+iF
+(>=)
+[]
+\f_6989586621679053539 -> length . filter f_6989586621679053539
+isUpper
+isLower
+toUpper
+toLower
+map
+
+
+Expression submited: \a -> map (\b -> iF ((\f_6989586621679053539 -> length . filter f_6989586621679053539) (\c -> isLower c) a >= (\f_6989586621679053539 -> length . filter f_6989586621679053539) (\c -> isUpper c) a) (toLower b) (toUpper b)) a
+Time: 144.499s
+Expressions tried: 2212007
+Verdict: Accepted
+

@@ -1,0 +1,20 @@
+2019-11-24-22:31:13
+59a
+WithoutOptimizations
+WithAbsents
+
+String to String
+
+iF
+(>=)
+length . filter isUpper
+length . filter isLower
+map toUpper
+map toLower
+
+
+Expression submited: \a -> iF ((length . filter isLower) a >= (length . filter isUpper) a) (map toLower a) (map toUpper a)
+Time: 0.029s
+Expressions tried: 582
+Verdict: Accepted
+

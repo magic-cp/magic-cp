@@ -1,0 +1,23 @@
+2019-11-24-22:46:19
+59a
+WithOptimizations
+WithAbsents
+
+String to String
+
+iF [NotConstantAsFirstArg,SecondAndThirdArgDifferent]
+(>=) [FirstAndSecondArgDifferent]
+[] []
+\f_6989586621679053539 -> length . filter f_6989586621679053539 [NotConstantAsSecondArg]
+isUpper []
+isLower []
+toUpper []
+toLower []
+map [NotConstantAsSecondArg,FirstArgOfFirstArgUsed]
+
+
+Expression submited: \a -> map (\b -> iF ((\f_6989586621679053539 -> length . filter f_6989586621679053539) (\c -> isLower c) a >= (\f_6989586621679053539 -> length . filter f_6989586621679053539) (\c -> isUpper c) a) (toLower b) (toUpper b)) a
+Time: 63.084s
+Expressions tried: 878169
+Verdict: Accepted
+

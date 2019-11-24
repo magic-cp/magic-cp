@@ -1,0 +1,23 @@
+2019-11-24-20:15:49
+705a
+WithoutOptimizations
+WithAbsents
+
+Int to String
+
+(== 0) . (`mod` 2)
+iF
+flip (-) 1
+(-)
+nat_para
+0
+\n_6989586621679051904 -> iF ((n_6989586621679051904 `mod` 2) == 0) "I love it" "I hate it"
+("I hate that " ++)
+("I love that " ++)
+
+
+Expression submited: \a -> nat_para (flip (-) 1 a) ((\n_6989586621679051904 -> iF ((n_6989586621679051904 `mod` 2) == 0) "I love it" "I hate it") a) (\b c -> ("I hate that " ++) (nat_para b c (\_ _ -> ("I love that " ++) ((\n_6989586621679051904 -> iF ((n_6989586621679051904 `mod` 2) == 0) "I love it" "I hate it") a))))
+Time: 82.581s
+Expressions tried: 1279241
+Verdict: Rejected 65681444 "Wrong answer on test 4"
+

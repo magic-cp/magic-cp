@@ -1,0 +1,20 @@
+2019-11-24-22:17:13
+281a
+WithOptimizations
+WithoutAbsents
+
+String to String
+
+hd [NotConstantAsFirstArg]
+tail [NotConstantAsFirstArg]
+(:) [NotConstantAsFirstArg]
+[] []
+(++) [NotConstantAsFirstArg,NotConstantAsSecondArg]
+toUpper []
+
+
+Expression submited: \a -> toUpper (hd a) : tail a
+Time: 0.007s
+Expressions tried: 29
+Verdict: Accepted
+

@@ -1,0 +1,20 @@
+2019-11-24-22:29:40
+59a
+WithOptimizations
+WithoutAbsents
+
+String to String
+
+iF [NotConstantAsFirstArg,SecondAndThirdArgDifferent]
+(>=) [FirstAndSecondArgDifferent]
+length . filter isUpper []
+length . filter isLower []
+map toUpper []
+map toLower []
+
+
+Expression submited: \a -> iF ((length . filter isLower) a >= (length . filter isUpper) a) (map toLower a) (map toUpper a)
+Time: 0.028s
+Expressions tried: 531
+Verdict: Accepted
+

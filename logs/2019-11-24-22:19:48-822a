@@ -1,0 +1,25 @@
+2019-11-24-22:19:48
+822a
+WithOptimizations
+WithoutAbsents
+
+Two Ints to Int
+
+min [NotConstantAsFirstArg,NotConstantAsSecondArg]
+nat_para [NotConstantAsFirstArg,SecondArgOfThirdArgUsed]
+1 []
+(*) [CommAndAssoc]
+(1 +) []
+gcd [NotConstantAsFirstArg,NotConstantAsSecondArg]
+
+
+Expression submited: \a b -> nat_para b ((1 +) ((1 +) a)) (\_ d -> d)
+Time: 0.016s
+Expressions tried: 173
+Verdict: Rejected 65685116 "Wrong answer on test 2"
+
+Expression submited: \a b -> nat_para (min b a) 1 (\c d -> d * (1 +) c)
+Time: 8.008s
+Expressions tried: 43272
+Verdict: Accepted
+

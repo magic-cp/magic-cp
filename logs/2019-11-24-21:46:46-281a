@@ -1,0 +1,18 @@
+2019-11-24-21:46:46
+281a
+WithoutOptimizations
+WithoutAbsents
+
+String to String
+
+hd
+tail
+(:)
+toUpper
+
+
+Expression submited: \a -> toUpper (hd a) : tail a
+Time: 0.005s
+Expressions tried: 12
+Verdict: Accepted
+

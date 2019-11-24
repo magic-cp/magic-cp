@@ -1,0 +1,25 @@
+2019-11-24-22:22:32
+822a
+WithoutOptimizations
+WithoutAbsents
+
+Two Ints to Int
+
+min
+nat_para
+1
+(*)
+(1 +)
+gcd
+
+
+Expression submited: \a b -> nat_para 1 b (\_ _ -> (1 +) ((1 +) a))
+Time: 0.033s
+Expressions tried: 365
+Verdict: Rejected 65685158 "Wrong answer on test 2"
+
+Expression submited: \a b -> nat_para (min b a) 1 (\c d -> d * (1 +) c)
+Time: 29.802s
+Expressions tried: 314506
+Verdict: Accepted
+
