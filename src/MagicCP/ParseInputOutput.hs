@@ -98,12 +98,12 @@ instance ParseInputOutput (String -> String) where
   getSinglePredicateNOTC 0 (i, o) = do
     let los = lines o
     when (length los /= 1) Nothing
-    Just (\f -> f i == head los)
+    Just (\f -> f (head $ lines i) == head los)
   parserDeclarations _ =
     [d|
     uncurry' = id
     parser :: String -> String
-    parser = id
+    parser = head . lines
       |]
   parserNameNOTC _ = "String to String"
 

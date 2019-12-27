@@ -29,7 +29,7 @@ import MagicHaskeller.Options
 import qualified Data.IntMap as IM
 import Data.Hashable
 
-import Prelude hiding (gcd, enumFromThenTo)
+import Prelude hiding (enumFromThenTo)
 
 
 -- Nat paramorphism
@@ -47,9 +47,6 @@ succOnlyForNumbers = False -- This is False, because we now use succ :: Char->Ch
 last' = (\x xs -> last (x:xs))
 -- init xs = zipWith const xs (drop 1 xs)
 -- gcd in the latest library is total, but with older versions gcd 0 0 causes an error.
-gcd x y =  gcd' (abs x) (abs y)
-  where gcd' a 0  =  a
-        gcd' a b  =  gcd' b (a `rem` b)
 
 -- This definition does not work correctly for Fractional numbers.
 -- Maybe @[l,m..n]@ could be used for other cases than 'EQ' even if the original enumFromThenTo is hidden. YMMV, though.
@@ -83,12 +80,12 @@ headOpt = $(pOptSingle [| (hd :: (->) [Int] Int, [NotConstantAsFirstArg]) |])
 plusIntOpt = $(pOptSingle [| ((+) :: (->) Int ((->) Int Int), [CommAndAssoc]) |])
 plusIntegerOpt = $(pOptSingle [| ((+) :: (->) Integer ((->) Integer Integer), [CommAndAssoc]) |])
 
-mkPGWithDefaults :: [Primitive] -> (ProgGen, [Exp])
+mkPGWithDefaults :: ProgramGenerator pg => [Primitive] -> (pg, [Exp])
 mkPGWithDefaults custom =
   --let primList = bool ++ list ++ nat ++ natural ++ $(p [| hd :: (->) [Int] Int |]) ++ plusInt ++ plusInteger ++ custom
   (mkPG custom, [ exp | (_, exp, _) <- custom])
 
-mkPGWithDefaultsOpts :: [PrimitiveWithOpt] -> (ProgGen, [(Exp, [AdHocOptimizations])])
+mkPGWithDefaultsOpts :: ProgramGenerator pg => [PrimitiveWithOpt] -> (pg, [(Exp, [AdHocOptimizations])])
 mkPGWithDefaultsOpts customOpts =
   --let primList = boolOpt ++ listOpt ++ natOpt ++ naturalOpt ++ headOpt ++ plusIntOpt ++ plusIntegerOpt ++ customOpts
   (mkPGWithOpt customOpts, [ (exp, optList) | ((_, exp, _), optList) <- customOpts])

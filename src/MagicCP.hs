@@ -48,6 +48,7 @@ import MagicCP.ParseInputOutput
 
 import MagicHaskeller hiding ( TH(..) )
 import MagicHaskeller.ProgGen
+import MagicHaskeller.ProgGenSF
 import MagicHaskeller.ProgramGenerator
 import MagicHaskeller.LibTH( mkPGWithDefaultsOpts, mkPGWithDefaults )
 import MagicHaskeller.LibTHDefinitions
@@ -75,6 +76,7 @@ generateFile CFConfig{..} (cId, pIndex) hoge wTC e = do
   writeFile fileName $
     "-- " <> show time <> "\n" <>
     "import Data.Maybe\n" <>
+    "import Data.Char\n" <>
     "import Control.Monad\n" <>
     "import Text.Read\n" <>
     pprintUC program
@@ -102,6 +104,8 @@ solveWithAllParsers wOps wAbs wOC cfg lib pId = do
             (undefined :: Int -> Int -> Int -> String)) pId
         , solveWithLimits (solvev0 wOps wAbs wOC WithTestCases cfg lib
             (undefined :: Int -> Int -> Int -> Int -> Int)) pId
+        , solveWithLimits (solvev0 wOps wAbs wOC WithoutTestCases cfg lib
+            (undefined :: Int -> Int -> Int)) pId
         , solveWithLimits (solvev0 wOps wAbs wOC WithTestCases cfg lib
             (undefined :: Int -> Int -> String)) pId
         , solveWithLimits (solvev0 wOps wAbs wOC WithoutTestCases cfg lib
@@ -168,7 +172,8 @@ solvev0 wOps wAbs wOC wTC cfg customLibrary hoge pId@(cId, _) = do
               WithOutputConstants ->
                 getConstantPrimitives (typeOf hoge) (concatMap (words . snd) ios)
               WithoutOutputConstants -> []
-      (md, prims) = if wOps == WithOptimizations
+      (md :: ProgGenSF, prims) = if wOps == WithOptimizations
+      --(md :: ProgGen, prims) = if wOps == WithOptimizations
               then let (md', lst) = mkPGWithDefaultsOpts $
                         customLibrary ++ zip custom (repeat [])
                     in (md', concatMap (\(prim, ops) ->
@@ -182,11 +187,17 @@ solvev0 wOps wAbs wOC wTC cfg customLibrary hoge pId@(cId, _) = do
   Logger.logParser hoge wTC
   Logger.logPrimitives prims
 
+  Logger.write "ProgGenSF"
+  --Logger.write "ProgGen"
+
   putStrLn "Starting search!"
+
 
   Timer.reset
   Timer.start
   ECnt.reset
+  --Logger.write "F"
+  --let et = everythingF md (wAbs == WithAbsents)
   let et = everything md (wAbs == WithAbsents)
       mpto = timeout $ opt $ extractCommon md
   f cfg mpto pred (concat et)
@@ -248,7 +259,7 @@ solvev0 wOps wAbs wOC wTC cfg customLibrary hoge pId@(cId, _) = do
         Just False ->
           f cfg mpto pred ts
         Nothing -> do
-          hPutStrLn stderr ("timeout or error on "++pprintUC e)
+          --hPutStrLn stderr ("timeout or error on "++pprintUC e)
           f cfg mpto pred ts
     submitBeep = callCommand "beep -f 800 -l 20 -d 200 -n -f 800 -l 30"
     acceptedBeep = callCommand "beep -f 800 -l 20 -d 200 -n -f 1200 -l 30"

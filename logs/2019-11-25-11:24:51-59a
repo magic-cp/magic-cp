@@ -1,0 +1,19 @@
+2019-11-25-11:24:51
+59a
+WithoutOptimizations
+WithAbsents
+
+String to String
+
+iF
+(>=)
+[]
+\f_6989586621679053549 -> length . filter f_6989586621679053549
+isUpper
+isLower
+toUpper
+toLower
+map
+
+
+ProgGenSF

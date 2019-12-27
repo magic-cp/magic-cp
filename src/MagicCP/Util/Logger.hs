@@ -1,4 +1,4 @@
-module MagicCP.Util.Logger(newLogger, logParser, logPrimitives, logSubmission) where
+module MagicCP.Util.Logger(newLogger, logParser, logPrimitives, logSubmission, write) where
 
 import MagicCP.SearchOptions
 import MagicCP.ParseInputOutput
