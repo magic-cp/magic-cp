@@ -1,8 +1,14 @@
+
+# Created by https://www.toptal.com/developers/gitignore/api/haskell
+# Edit at https://www.toptal.com/developers/gitignore?templates=haskell
+
+### Haskell ###
 dist
 dist-*
 cabal-dev
 *.o
 *.hi
+*.hie
 *.chi
 *.chs.h
 *.dyn_o
@@ -16,15 +22,10 @@ cabal.sandbox.config
 *.hp
 *.eventlog
 .stack-work/
-.stack-work-profile/
 cabal.project.local
 cabal.project.local~
 .HTF/
 .ghc.environment.*
+logs
 
-cf-tool
-parsed/
-config.cfg
-venv/
-__pycache__
-profiling_examples
+# End of https://www.toptal.com/developers/gitignore/api/haskell
