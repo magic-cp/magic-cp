@@ -1,8 +1,7 @@
 module MagicCP.Util.ExpressionCnt where
 
-import           Data.IORef                     ( IORef, newIORef, writeIORef
-                                                , readIORef, modifyIORef )
-import           System.IO.Unsafe               ( unsafePerformIO )
+import Data.IORef       (IORef, modifyIORef, newIORef, readIORef, writeIORef)
+import System.IO.Unsafe (unsafePerformIO)
 
 
 totalExps :: IORef Integer

@@ -1,18 +1,23 @@
 module MagicCP.Util.Logger(newLogger, logParser, logPrimitives, logSubmission, write) where
 
-import MagicCP.SearchOptions
-import MagicCP.ParseInputOutput
 import CF
 import CF.CFToolWrapper
+import MagicCP.ParseInputOutput
+import MagicCP.SearchOptions
 
-import           Data.IORef                     ( IORef, newIORef, writeIORef
-                                                , readIORef, modifyIORef )
-import           System.IO.Unsafe               ( unsafePerformIO )
-import           System.FilePath.Posix          ( (</>) )
-import           System.Directory               ( createDirectoryIfMissing )
+import Data.IORef
+    ( IORef
+    , modifyIORef
+    , newIORef
+    , readIORef
+    , writeIORef
+    )
+import System.Directory      (createDirectoryIfMissing)
+import System.FilePath.Posix ((</>))
+import System.IO.Unsafe      (unsafePerformIO)
 
-import           Data.Time.Clock                ( getCurrentTime )
-import           Text.Printf                    ( printf )
+import Data.Time.Clock (getCurrentTime)
+import Text.Printf     (printf)
 
 logFile :: IORef FilePath
 {-# NOINLINE logFile  #-}

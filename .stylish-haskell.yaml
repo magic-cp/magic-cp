@@ -1,0 +1,11 @@
+steps:
+  - imports:
+      align: group
+      pad_module_names: true
+      long_list_align: multiline
+  - language_pragmas:
+      align: true
+      remove_redundant: false
+      language_prefix: LANGUAGE
+language_extensions:
+  - TemplateHaskell

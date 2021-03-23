@@ -1,20 +1,29 @@
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards   #-}
 module CF.CFHTML( getLastTestCase2 ) where
 
 import CF.CFConfig
 
-import Data.List( isSuffixOf )
-import Data.Text( Text, pack, unpack )
+import Data.List (isSuffixOf)
+import Data.Text (Text, pack, unpack)
 
-import Text.HTML.DOM( parseLBS )
-import Text.XML.Cursor( Cursor, fromDocument, child, content, attributeIs
-                      , element, (>=>), ($//), (&|), (&//)
-                      )
+import Text.HTML.DOM   (parseLBS)
+import Text.XML.Cursor
+    ( Cursor
+    , attributeIs
+    , child
+    , content
+    , element
+    , fromDocument
+    , ($//)
+    , (&//)
+    , (&|)
+    , (>=>)
+    )
 
-import Network.HTTP.Conduit( simpleHttp )
-import           System.Process                 ( readProcess )
-import           System.FilePath.Posix          ( (</>) )
+import Network.HTTP.Conduit  (simpleHttp)
+import System.FilePath.Posix ((</>))
+import System.Process        (readProcess)
 
 -- TODO for TLEs we don't get the jury's answer and this breaks (last of empty).
 getLastTestCase :: Int -> Int -> IO (Maybe (String, String))

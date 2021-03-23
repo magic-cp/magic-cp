@@ -8,7 +8,7 @@ import Debug.Trace
 import CF.CFAPI
 import CF.CFConfig
 import CF.CFToolWrapper
-import           Text.Read                      ( readMaybe )
+import Text.Read        (readMaybe)
 
 type ProblemId = (Int, Char)
 data Problem = Problem {problemId :: ProblemId, rating :: Int} deriving Show

@@ -1,11 +1,14 @@
 module MagicCP.Util.Timer where
 
-import           Data.IORef                     ( IORef, newIORef, writeIORef
-                                                , readIORef, modifyIORef )
-import           System.Clock                   ( TimeSpec(..), Clock(Realtime)
-                                                , toNanoSecs, fromNanoSecs
-                                                , getTime )
-import           System.IO.Unsafe               ( unsafePerformIO )
+import Data.IORef       (IORef, modifyIORef, newIORef, readIORef, writeIORef)
+import System.Clock
+    ( Clock (Realtime)
+    , TimeSpec (..)
+    , fromNanoSecs
+    , getTime
+    , toNanoSecs
+    )
+import System.IO.Unsafe (unsafePerformIO)
 
 
 totalTime :: IORef Integer

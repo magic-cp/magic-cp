@@ -1,58 +1,54 @@
-{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE RankNTypes          #-}
+{-# LANGUAGE RecordWildCards     #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TemplateHaskell     #-}
 
 module MagicCP where
 
 import qualified Language.Haskell.TH as TH
 
-import           Control.Monad                  ( when
-                                                , mplus
-                                                , liftM2
-                                                )
-import           Control.Exception
-import           Control.Concurrent             ( myThreadId
-                                                , forkIO
-                                                , killThread
-                                                , threadDelay
-                                                , throwTo
-                                                )
-import Data.Array( elems )
-import Data.Char( toLower )
+import Control.Concurrent
+    ( forkIO
+    , killThread
+    , myThreadId
+    , threadDelay
+    , throwTo
+    )
+import Control.Exception
+import Control.Monad         (liftM2, mplus, when)
+import Data.Array            (elems)
+import Data.Char             (toLower)
+import Data.Generics         (Data, everywhere, mkT)
 import Data.List
-import Data.Generics(everywhere, mkT, Data)
-import Data.Time.Clock( getCurrentTime )
-import           Data.Maybe                     ( fromJust )
+import Data.Maybe            (fromJust)
+import Data.Time.Clock       (getCurrentTime)
 import Debug.Trace
-import System.FilePath.Posix( (</>) )
-import           System.IO                      ( stderr
-                                                , hPutStrLn
-                                                )
-import           System.Process                 ( callCommand )
+import System.FilePath.Posix ((</>))
+import System.IO             (hPutStrLn, stderr)
+import System.Process        (callCommand)
 import Text.Printf
 
-import Unsafe.Coerce(unsafeCoerce)
+import Unsafe.Coerce (unsafeCoerce)
 
 import CF
 import CF.CFConfig
-import CF.CFToolWrapper
 import CF.CFHTML
+import CF.CFToolWrapper
 
-import MagicCP.SearchOptions
-import MagicCP.Util.Memory
-import qualified MagicCP.Util.Logger as Logger
-import qualified MagicCP.Util.Timer as Timer
+import           MagicCP.ParseInputOutput
+import           MagicCP.SearchOptions
 import qualified MagicCP.Util.ExpressionCnt as ECnt
-import MagicCP.ParseInputOutput
+import qualified MagicCP.Util.Logger        as Logger
+import           MagicCP.Util.Memory
+import qualified MagicCP.Util.Timer         as Timer
 
-import MagicHaskeller hiding ( TH(..) )
+import MagicHaskeller                  hiding (TH (..))
+import MagicHaskeller.LibTH            (mkPGWithDefaults, mkPGWithDefaultsOpts)
+import MagicHaskeller.LibTHDefinitions
 import MagicHaskeller.ProgGen
 import MagicHaskeller.ProgGenSF
 import MagicHaskeller.ProgramGenerator
-import MagicHaskeller.LibTH( mkPGWithDefaultsOpts, mkPGWithDefaults )
-import MagicHaskeller.LibTHDefinitions
-import MagicHaskeller.TimeOut( maybeWithTO2 )
+import MagicHaskeller.TimeOut          (maybeWithTO2)
 
 
 import MagicCP.ParserDefinitions
@@ -137,9 +133,7 @@ solveWithLimits solve pId = do
     killThread
     ( \_ -> Just <$> solve pId )
     --`catch` \(ErrorCall _) -> do
-    `catch` \(SomeException _) -> do
-      callCommand "beep -f 800 -l 30 -d 200 -n -f 600 -l 20 -n -f 300 -l 20 -n -f 100 -l 50"
-      --putStrLn s
+    `catch` \(SomeException _) ->
       return Nothing
   where
   checkLimits tid tout memLimit = do
@@ -215,13 +209,12 @@ solvev0 wOps wAbs wOC wTC cfg customLibrary hoge pId@(cId, _) = do
       result <- maybeWithTO2 mpto (pred a)
       case result of
         Just True -> do
-          trace "found solution to predicate" $ return ()
+          putStrLn "found solution to predicate"
           Timer.pause
           generateFile cfg pId hoge wTC e
           testVerd <- testSolution cfg pId
           case testVerd of
             Accepted -> do
-              submitBeep
               secs <- Timer.getTotalSecs
               es <- ECnt.getTotalExps
               putStrLn $ printf "Submitting to codeforces (%.3fs, %d exps)" secs es
@@ -229,7 +222,6 @@ solvev0 wOps wAbs wOC wTC cfg customLibrary hoge pId@(cId, _) = do
               Logger.logSubmission (pprintUC e) secs es submitVerd
               case submitVerd of
                 Accepted -> do
-                  acceptedBeep
                   putStrLn $ "Solution accepted in codeforces:\n" <>
                     pprintUC e
                   secs <- Timer.getTotalSecs
@@ -238,7 +230,6 @@ solvev0 wOps wAbs wOC wTC cfg customLibrary hoge pId@(cId, _) = do
                   putStrLn $ printf "Expressions tried: %d" es
                   return e
                 Rejected subm msg -> do
-                  rejectedBeep
                   putStrLn $ "sumbission #" <> show subm <> " failed with: " <>
                     drop 2 (dropWhile (/= ':') msg)
 
@@ -258,12 +249,8 @@ solvev0 wOps wAbs wOC wTC cfg customLibrary hoge pId@(cId, _) = do
               f cfg mpto pred ts
         Just False ->
           f cfg mpto pred ts
-        Nothing -> do
-          --hPutStrLn stderr ("timeout or error on "++pprintUC e)
+        Nothing ->
           f cfg mpto pred ts
-    submitBeep = callCommand "beep -f 800 -l 20 -d 200 -n -f 800 -l 30"
-    acceptedBeep = callCommand "beep -f 800 -l 20 -d 200 -n -f 1200 -l 30"
-    rejectedBeep = callCommand "beep -f 800 -l 20 -d 200 -n -f 600 -l 30"
     fromJust' (Just x) = x
     fromJust' _ = error $ "Wrong parser: " ++ parserName hoge wTC
 

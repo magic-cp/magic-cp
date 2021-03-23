@@ -1,20 +1,23 @@
 {-# LANGUAGE RecordWildCards #-}
 module CF.CFToolWrapper(getInputOutput, getCurrentInputOutput, Verdict(..), testSolution, submitSolution) where
 
-import Control.Monad( liftM2 )
+import Control.Monad (liftM2)
 
-import Data.Char( toLower )
-import Data.List( partition, isPrefixOf, sort, isInfixOf )
+import Data.Char (toLower)
+import Data.List (isInfixOf, isPrefixOf, partition, sort)
 
-import System.Directory( createDirectoryIfMissing, removePathForcibly
-                       , renameDirectory ,listDirectory
-                       )
-import System.FilePath.Posix( (</>) )
-import System.Process( readProcess )
-import System.Posix.Directory( changeWorkingDirectory )
+import System.Directory
+    ( createDirectoryIfMissing
+    , listDirectory
+    , removePathForcibly
+    , renameDirectory
+    )
+import System.FilePath.Posix  ((</>))
+import System.Posix.Directory (changeWorkingDirectory)
+import System.Process         (readProcess)
 
 import CF.CFConfig
-import           Debug.Trace                    ( trace )
+import Debug.Trace (trace)
 
 data Verdict = Accepted | Rejected Int String deriving Show
 

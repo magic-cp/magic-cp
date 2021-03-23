@@ -2,10 +2,10 @@
 module CF.CFAPI(getAPIProblems, APIProblem(..)) where
 
 import Data.Aeson
+import Data.Aeson.TH
 import Data.List
 import Data.Maybe
 import Network.Curl.Aeson
-import Data.Aeson.TH
 
 data APIResponse = APIResponse
   { status :: String

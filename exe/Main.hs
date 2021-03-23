@@ -1,15 +1,15 @@
 {-# LANGUAGE TemplateHaskell #-}
 
-import MagicCP
 import CF.CFConfig
-import Text.Printf
+import MagicCP
 import MagicHaskeller
 import MagicHaskeller.LibTH
+import Text.Printf
 
+import Control.Concurrent    (threadDelay)
+import Data.Char
 import MagicCP.SearchOptions
-import           Control.Concurrent             ( threadDelay )
-import           System.Mem                     ( performGC )
-import           Data.Char
+import System.Mem            (performGC)
 
 testsolve wOps wAbs wOC cfg pId lib = do
   printf "\n##############################\n%s %s\n" (show wOps) (show wAbs)

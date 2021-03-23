@@ -1,12 +1,12 @@
-{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleInstances   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TemplateHaskell     #-}
 module MagicCP.ParseInputOutput where
 
-import           Control.Monad                  ( when )
-import           Text.Read                      ( readMaybe )
-import           Debug.Trace                    ( trace )
-import           Data.Typeable
+import Control.Monad (when)
+import Data.Typeable
+import Debug.Trace   (trace)
+import Text.Read     (readMaybe)
 
 import Language.Haskell.TH
 

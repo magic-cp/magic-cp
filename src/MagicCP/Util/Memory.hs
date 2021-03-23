@@ -1,6 +1,6 @@
 module MagicCP.Util.Memory where
 
-import System.Process( readProcess )
+import System.Process (readProcess)
 
 getMemoUsage :: IO Float
 getMemoUsage = (100 -) <$> getFreeMemo
