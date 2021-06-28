@@ -1,18 +1,20 @@
 module MagicCP.Util.ExpressionCnt where
 
-import Data.IORef       (IORef, modifyIORef, newIORef, readIORef, writeIORef)
-import System.IO.Unsafe (unsafePerformIO)
+import Data.IORef (IORef)
+
+import qualified Data.IORef
+import qualified System.IO.Unsafe
 
 
 totalExps :: IORef Integer
 {-# NOINLINE totalExps  #-}
-totalExps = unsafePerformIO (newIORef 0)
+totalExps = System.IO.Unsafe.unsafePerformIO (Data.IORef.newIORef 0)
 
 cntExp :: IO ()
-cntExp = modifyIORef totalExps (+ 1)
+cntExp = Data.IORef.modifyIORef totalExps (+ 1)
 
 reset :: IO ()
-reset  = writeIORef totalExps 0
+reset  = Data.IORef.writeIORef totalExps 0
 
 getTotalExps :: IO Integer
-getTotalExps = readIORef totalExps
+getTotalExps = Data.IORef.readIORef totalExps

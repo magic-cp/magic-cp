@@ -3,14 +3,11 @@
 {-# LANGUAGE TemplateHaskell     #-}
 module MagicCP.ParseInputOutput where
 
-import Control.Monad (when)
-import Data.Typeable
-import Debug.Trace   (trace)
-import Text.Read     (readMaybe)
+import Language.Haskell.TH (DecsQ)
 
-import Language.Haskell.TH
-
-import MagicCP.ParserDefinitions
+import qualified Control.Monad
+import qualified MagicCP.ParserDefinitions as ParserDefinitions
+import qualified Text.Read
 
 type Parser = Int
 
@@ -20,13 +17,15 @@ p1 &&& p2 = \x -> p1 x && p2 x
 data WithTestCases = WithTestCases | WithoutTestCases deriving Show
 
 class ParseInputOutput a where
+  -- TODO: The type signature for this should be:
+  -- getSinglePredicate :: WithTestCases -> Parser -> ([String], String)
   getSinglePredicate :: WithTestCases -> Parser -> (String, String) -> Maybe (a -> Bool)
   getSinglePredicate WithoutTestCases p (i, o) = getSinglePredicateNOTC p (i, o)
   getSinglePredicate WithTestCases p (i, o) = do
     let is = tail $ lines i
         os = lines o
-    when (length is == 0) Nothing
-    when (length is /= length os) Nothing
+    Control.Monad.when (null is) Nothing
+    Control.Monad.when (length is /= length os) Nothing
     foldl1 (&&&) <$> mapM (getSinglePredicate WithoutTestCases p) (zip is os)
 
   getSinglePredicateNOTC :: Parser -> (String, String) -> Maybe (a -> Bool)
@@ -55,26 +54,28 @@ class ParseInputOutput a where
 
   parserNameNOTC :: a -> String
 
-$(parseTwoIntsDec)
-$(parseThreeIntsDec)
-$(parseFourIntsDec)
+$(ParserDefinitions.parseTwoIntsDec)
+$(ParserDefinitions.parseThreeIntsDec)
+$(ParserDefinitions.parseFourIntsDec)
 
-$(parseIntListWithSizeDec)
-$(parseIntListIgnoreSizeDec)
+$(ParserDefinitions.parseIntListWithSizeDec)
+$(ParserDefinitions.parseIntListIgnoreSizeDec)
 
 instance ParseInputOutput (Int -> [Int] -> String) where
   getSinglePredicateNOTC 0 (i, o) = do
     (n, as) <- parseIntListWithSize i
     let los = lines o
-    when (length los /= 1) Nothing
+    Control.Monad.when (length los /= 1) Nothing
     return (\f -> f n as == head los)
+  getSinglePredicateNOTC i _ = error $ mkParserNotImplMsg i "Int -> [Int] -> String"
+
   parserDeclarations _ = concat <$> sequence [
     [d|
     uncurry' = uncurry
     parser :: String -> (Int, [Int])
     parser = fromJust . parseIntListWithSize
       |],
-    parseIntListWithSizeDec
+    ParserDefinitions.parseIntListWithSizeDec
                                              ]
   parserNameNOTC _ = "[Int] with size to String"
 
@@ -82,23 +83,26 @@ instance ParseInputOutput ([Int] -> String) where
   getSinglePredicateNOTC 0 (i, o) = do
     as <- parseIntListIgnoreSize i
     let los = lines o
-    when (length los /= 1) Nothing
+    Control.Monad.when (length los /= 1) Nothing
     return (\f -> f as == head los)
+  getSinglePredicateNOTC i _ = error $ mkParserNotImplMsg i "[Int] -> String"
   parserDeclarations _ = concat <$> sequence [
     [d|
     uncurry' = id
     parser :: String -> [Int]
     parser = fromJust . parseIntListIgnoreSize
       |],
-    parseIntListIgnoreSizeDec
+    ParserDefinitions.parseIntListIgnoreSizeDec
                                              ]
   parserNameNOTC _ = "[Int] (ignoring size) to String"
 
 instance ParseInputOutput (String -> String) where
   getSinglePredicateNOTC 0 (i, o) = do
     let los = lines o
-    when (length los /= 1) Nothing
+    Control.Monad.when (length los /= 1) Nothing
     Just (\f -> f (head $ lines i) == head los)
+  getSinglePredicateNOTC i _ = error $ mkParserNotImplMsg i "String -> String"
+
   parserDeclarations _ =
     [d|
     uncurry' = id
@@ -109,10 +113,12 @@ instance ParseInputOutput (String -> String) where
 
 instance ParseInputOutput (Int -> String) where
   getSinglePredicateNOTC 0 (i, o) = do
-    ni <- readMaybe i
+    ni <- Text.Read.readMaybe i
     let los = lines o
-    when (length los /= 1) Nothing
+    Control.Monad.when (length los /= 1) Nothing
     return (\f -> f ni == head los)
+  getSinglePredicateNOTC i _ = error $ mkParserNotImplMsg i "Int -> String"
+
   parserDeclarations _ =
     [d|
     uncurry' = id
@@ -125,15 +131,17 @@ instance ParseInputOutput (Int -> Int -> String) where
   getSinglePredicateNOTC 0 (i, o) = do
     (a, b) <- parseTwoInts i
     let los = lines o
-    when (length los /= 1) Nothing
+    Control.Monad.when (length los /= 1) Nothing
     return (\f -> f a b == head los)
+  getSinglePredicateNOTC i _ = error $ mkParserNotImplMsg i "Int -> Int -> String"
+
   parserDeclarations _ = concat <$> sequence [
     [d|
     uncurry' f (a,b) = f a b
     parser :: String -> (Int, Int)
     parser = fromJust . parseTwoInts
       |],
-    parseTwoIntsDec
+    ParserDefinitions.parseTwoIntsDec
                                              ]
   parserNameNOTC _ = "Two Ints to String"
 
@@ -141,15 +149,19 @@ instance ParseInputOutput (Int -> Int -> Int -> String) where
   getSinglePredicateNOTC 0 (i, o) = do
     (a, b, c) <- parseThreeInts i
     let los = lines o
-    when (length los /= 1) Nothing
+    Control.Monad.when (length los /= 1) Nothing
     return (\f -> f a b c == head los)
+
+  getSinglePredicateNOTC i _ =
+    error $ mkParserNotImplMsg i "Int -> Int -> Int -> String"
+
   parserDeclarations _ = concat <$> sequence [
     [d|
     uncurry' f (a,b,c) = f a b c
     parser :: String -> (Int, Int, Int)
     parser = fromJust . parseThreeInts
       |],
-    parseThreeIntsDec
+    ParserDefinitions.parseThreeIntsDec
                                              ]
   parserNameNOTC _ = "Three Ints to String"
 
@@ -157,15 +169,17 @@ instance ParseInputOutput (Int -> Int -> Int) where
   getSinglePredicateNOTC 0 (i, o) = do
     (a, b) <- parseTwoInts i
     let los = lines o
-    when (length los /= 1) Nothing
+    Control.Monad.when (length los /= 1) Nothing
     return (\f -> f a b == read (head los))
+  getSinglePredicateNOTC i _ = error $ mkParserNotImplMsg i "Int -> Int -> Int"
+
   parserDeclarations _ = concat <$> sequence [
     [d|
     uncurry' f (a,b) = show $ f a b
     parser :: String -> (Int, Int)
     parser = fromJust . parseTwoInts
       |],
-    parseTwoIntsDec
+    ParserDefinitions.parseTwoIntsDec
                                              ]
   parserNameNOTC _ = "Two Ints to Int"
 
@@ -173,14 +187,23 @@ instance ParseInputOutput (Int -> Int -> Int -> Int -> Int) where
   getSinglePredicateNOTC 0 (i, o) = do
     (a, b, c, d) <- parseFourInts i
     let los = lines o
-    when (length los /= 1) Nothing
+    Control.Monad.when (length los /= 1) Nothing
     return (\f -> f a b c d == read (head los))
+
+  getSinglePredicateNOTC i _ =
+    error $ mkParserNotImplMsg i "Int -> Int -> Int -> Int -> Int"
+
   parserDeclarations _ = concat <$> sequence [
     [d|
     uncurry' f (a,b,c,d) = show $ f a b c d
     parser :: String -> (Int, Int, Int, Int)
     parser = fromJust . parseFourInts
       |],
-    parseFourIntsDec
+    ParserDefinitions.parseFourIntsDec
                                              ]
   parserNameNOTC _ = "Four Ints to Int"
+
+
+mkParserNotImplMsg :: Parser -> String -> String
+mkParserNotImplMsg p s =
+  "Parser #" <> show p <> " for " <> s <> " is not implemented"

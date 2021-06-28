@@ -7,6 +7,9 @@ library:
   - MagicCP
   - MagicCP.SearchOptions
 
+ghc-options:
+  - -Wall
+
 executable:
   main: Main.hs
   source-dirs: exe

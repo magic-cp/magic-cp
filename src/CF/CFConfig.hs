@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE RecordWildCards     #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module CF.CFConfig
@@ -6,10 +7,12 @@ module CF.CFConfig
   , getCFConfig
   )where
 
-import Control.Exception
+import Control.Exception       (SomeException)
+import Data.Configurator       (Worth (..))
+import Data.Configurator.Types ()
 
-import Data.Configurator
-import Data.Configurator.Types
+import qualified Control.Exception as Exception
+import qualified Data.Configurator as Configurator
 
 data CFConfig = CFConfig
   { cftool_path :: FilePath
@@ -20,20 +23,16 @@ data CFConfig = CFConfig
 
 getCFConfig :: IO CFConfig
 getCFConfig = do
-  cfg <- try $ do
-    cfg <- load [Required "config.cfg"]
-    cftool_path <- require cfg "cf-tool-path"
-    project_root <- require cfg "project-root"
-    cf_parse_dir <- require cfg "cf-parse-dir"
-    log_root <- require cfg "log-root"
-    return $ CFConfig { cftool_path = cftool_path
-                      , project_root = project_root
-                      , cfparse_dir = cf_parse_dir
-                      , log_root = log_root
-                      }
+  cfg <- Exception.try $ do
+    cfg <- Configurator.load [Required "config.cfg"]
+    cftool_path <- Configurator.require cfg "cf-tool-path"
+    project_root <- Configurator.require cfg "project-root"
+    cfparse_dir <- Configurator.require cfg "cf-parse-dir"
+    log_root <- Configurator.require cfg "log-root"
+    return $ CFConfig {..}
   case cfg of
     Right cfg' -> return cfg'
     Left (e :: SomeException) -> do
       putStrLn $ "Exception thrown while loading config.cfg file.\n"
               <> "Read README for more information."
-      throw e
+      Exception.throw e

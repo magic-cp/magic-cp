@@ -1,11 +1,15 @@
 {-# LANGUAGE TemplateHaskell #-}
 module CF.CFAPI(getAPIProblems, APIProblem(..)) where
 
-import Data.Aeson
-import Data.Aeson.TH
-import Data.List
-import Data.Maybe
-import Network.Curl.Aeson
+import Data.Aeson         (Options (..))
+import Data.Aeson.TH      ()
+import Network.Curl.Aeson ()
+
+import qualified Data.Aeson
+import qualified Data.Aeson.TH
+import qualified Data.List
+import qualified Data.Maybe
+import qualified Network.Curl.Aeson as Curl.Aeson
 
 data APIResponse = APIResponse
   { status :: String
@@ -30,14 +34,14 @@ data APIProblem = APIProblem
   , tags :: [String]
   } deriving (Show)
 
-$(deriveJSON defaultOptions ''APIProblem)
-$(deriveJSON defaultOptions{fieldLabelModifier = drop 3} ''APIProblemStatistics)
-$(deriveJSON defaultOptions ''APIResponseProblems)
-$(deriveJSON defaultOptions ''APIResponse)
+$(Data.Aeson.TH.deriveJSON Data.Aeson.defaultOptions ''APIProblem)
+$(Data.Aeson.TH.deriveJSON Data.Aeson.defaultOptions{fieldLabelModifier = drop 3} ''APIProblemStatistics)
+$(Data.Aeson.TH.deriveJSON Data.Aeson.defaultOptions ''APIResponseProblems)
+$(Data.Aeson.TH.deriveJSON Data.Aeson.defaultOptions ''APIResponse)
 
 getAPIProblems :: IO [APIProblem]
 getAPIProblems  = do
-  problems <- problems . result <$>
-                curlAesonGet "codeforces.com/api/problemset.problems"
-  return $ sortOn rating $
-      filter (\p -> isJust (rating p) && isJust (contestId p)) problems
+  cfProblems <- problems . result <$>
+                Curl.Aeson.curlAesonGet "codeforces.com/api/problemset.problems"
+  return $ Data.List.sortOn rating $
+      filter (\p -> Data.Maybe.isJust (rating p) && Data.Maybe.isJust (contestId p)) cfProblems

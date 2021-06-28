@@ -3,16 +3,19 @@ module MagicCP.ParserDefinitions where
 
 import Language.Haskell.TH
 
+import qualified Control.Monad
+import qualified Text.Read
+
 parseIntListWithSizeDec :: DecsQ
 parseIntListWithSizeDec  =
   [d|
   parseIntListWithSize :: String -> Maybe (Int, [Int])
   parseIntListWithSize i = do
     let ls = lines i
-    when (length ls /= 2) Nothing
+    Control.Monad.when (length ls /= 2) Nothing
     let [l1, l2] = ls
-    n <- readMaybe l1 :: Maybe Int
-    as <- mapM readMaybe $ words l2 :: Maybe [Int]
+    n <- Text.Read.readMaybe l1 :: Maybe Int
+    as <- mapM Text.Read.readMaybe $ words l2 :: Maybe [Int]
     return (n, as)
     |]
 
@@ -22,11 +25,11 @@ parseIntListIgnoreSizeDec  =
   parseIntListIgnoreSize :: String -> Maybe [Int]
   parseIntListIgnoreSize i = do
     let ls = lines i
-    when (length ls /= 2) Nothing
+    Control.Monad.when (length ls /= 2) Nothing
     let [l1, l2] = ls
-    n <- readMaybe l1 :: Maybe Int
-    as <- mapM readMaybe $ words l2 :: Maybe [Int]
-    when (length as /= n) Nothing
+    n <- Text.Read.readMaybe l1 :: Maybe Int
+    as <- mapM Text.Read.readMaybe $ words l2 :: Maybe [Int]
+    Control.Monad.when (length as /= n) Nothing
     return as
     |]
 
@@ -35,9 +38,9 @@ parseTwoIntsDec =
   [d|
   parseTwoInts :: String -> Maybe (Int, Int)
   parseTwoInts i = do
-    when (length (lines i) /= 1) Nothing
-    ns <- mapM readMaybe $ words i :: Maybe [Int]
-    when (length ns /= 2) Nothing
+    Control.Monad.when (length (lines i) /= 1) Nothing
+    ns <- mapM Text.Read.readMaybe $ words i :: Maybe [Int]
+    Control.Monad.when (length ns /= 2) Nothing
     let [a, b] = ns
     return (a, b)
     |]
@@ -47,9 +50,9 @@ parseThreeIntsDec  =
   [d|
   parseThreeInts :: String -> Maybe (Int, Int, Int)
   parseThreeInts i = do
-    when (length (lines i) /= 1) Nothing
-    ns <- mapM readMaybe $ words i :: Maybe [Int]
-    when (length ns /= 3) Nothing
+    Control.Monad.when (length (lines i) /= 1) Nothing
+    ns <- mapM Text.Read.readMaybe $ words i :: Maybe [Int]
+    Control.Monad.when (length ns /= 3) Nothing
     let [a, b, c] = ns
     return (a, b, c)
     |]
@@ -59,9 +62,9 @@ parseFourIntsDec =
   [d|
   parseFourInts :: String -> Maybe (Int, Int, Int, Int)
   parseFourInts i = do
-    when (length (lines i) /= 1) Nothing
-    ns <- mapM readMaybe $ words i :: Maybe [Int]
-    when (length ns /= 4) Nothing
+    Control.Monad.when (length (lines i) /= 1) Nothing
+    ns <- mapM Text.Read.readMaybe $ words i :: Maybe [Int]
+    Control.Monad.when (length ns /= 4) Nothing
     let [a, b, c, d] = ns
     return (a, b, c, d)
     |]

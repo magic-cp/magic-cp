@@ -1,41 +1,35 @@
 module MagicCP.Util.Logger(newLogger, logParser, logPrimitives, logSubmission, write) where
 
-import CF
-import CF.CFToolWrapper
-import MagicCP.ParseInputOutput
-import MagicCP.SearchOptions
+import CF                       (ProblemId)
+import CF.CFToolWrapper         (Verdict (..))
+import Data.IORef               (IORef)
+import MagicCP.ParseInputOutput (ParseInputOutput (..), WithTestCases)
+import MagicCP.SearchOptions    (WithAbsents, WithOptimizations)
+import System.FilePath.Posix    ((</>))
 
-import Data.IORef
-    ( IORef
-    , modifyIORef
-    , newIORef
-    , readIORef
-    , writeIORef
-    )
-import System.Directory      (createDirectoryIfMissing)
-import System.FilePath.Posix ((</>))
-import System.IO.Unsafe      (unsafePerformIO)
-
-import Data.Time.Clock (getCurrentTime)
-import Text.Printf     (printf)
+import qualified Data.IORef
+import qualified Data.Time.Clock
+import qualified System.Directory
+import qualified System.IO.Unsafe
+import qualified Text.Printf      as Printf
 
 logFile :: IORef FilePath
 {-# NOINLINE logFile  #-}
-logFile = unsafePerformIO (newIORef "")
+logFile = System.IO.Unsafe.unsafePerformIO (Data.IORef.newIORef "")
 
 write :: String -> IO ()
 write s = do
-  file <- readIORef  logFile
+  file <- Data.IORef.readIORef  logFile
   appendFile file s
   appendFile file "\n"
 
 newLogger :: FilePath -> ProblemId -> WithOptimizations -> WithAbsents -> IO ()
 newLogger log_root (cId, pId) wOps wAbs = do
-  createDirectoryIfMissing True log_root
-  time <- words . takeWhile (/= '.') . show <$> getCurrentTime
+  System.Directory.createDirectoryIfMissing True log_root
+  time <- words . takeWhile (/= '.') . show <$> Data.Time.Clock.getCurrentTime
   let time' = head time ++ "-" ++ time!!1
       file = log_root </> (time' ++ "-" ++ show cId ++ [pId])
-  writeIORef logFile file
+  Data.IORef.writeIORef logFile file
   write time'
   write (show cId ++ [pId])
   write (show wOps)
@@ -53,12 +47,12 @@ logPrimitives prims = do
   write ""
 
 logSubmission :: String -> Double -> Integer -> Verdict -> IO ()
-logSubmission exp time exps verd = do
-  write $ "Expression submited: " ++ exp
-  write $ printf "Time: %.3fs" time
-  write $ printf "Expressions tried: %d" exps
+logSubmission expression time exps verd = do
+  write $ "Expression submited: " ++ expression
+  write $ Printf.printf "Time: %.3fs" time
+  write $ Printf.printf "Expressions tried: %d" exps
   case verd of
-    Accepted -> write $ printf "Verdict: %s" (show verd)
-    Rejected subm msg -> write $ printf "Verdict: %s" (show (Rejected subm (drop 2 (dropWhile (/= ':') msg))))
+    Accepted -> write $ Printf.printf "Verdict: %s" (show verd)
+    Rejected subm msg -> write $ Printf.printf "Verdict: %s" (show (Rejected subm (drop 2 (dropWhile (/= ':') msg))))
   write ""
 
