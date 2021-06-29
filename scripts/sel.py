@@ -14,11 +14,17 @@ try:
         EC.presence_of_element_located((By.XPATH, "//div[@class='tests-placeholder']/div[3]"))
     )
 finally:
-    inp = driver.find_elements_by_class_name('input-view')[-1].find_element_by_class_name('input').text
-    ans = driver.find_elements_by_class_name('answer-view')[-1].find_element_by_class_name('answer').text
-    print(inp)
-    print('##ENDOFINPUT##')
-    print(ans)
+    inputs = driver.find_elements_by_css_selector('.input-view .input')[1:]
+    outputs = driver.find_elements_by_css_selector('.answer-view .answer')[1:]
+    elems = list(zip(inputs, outputs))
+    for i in range(len(elems)):
+        inp, ans = elems[i]
+        print(inp.text)
+        print('##ENDOFINPUT##')
+        print(ans.text)
+
+        if i != len(elems) - 1:
+            print('##ENDOFCASE##')
 
     driver.close()
 

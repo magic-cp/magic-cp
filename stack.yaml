@@ -25,6 +25,7 @@ extra-deps:
 - deepseq-1.4.4.0
 - data-default-class-0.1.2.0
 - clock-0.8
+- split-0.2.3.4@sha256:048c75891d63a03828f97667214aaaf0e67b7dcbfec297753e39939ffda6f51a,2647
 
 
 # Override default flag values for local packages and extra-deps

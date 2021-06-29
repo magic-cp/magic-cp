@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: dd3f13acec2ac1269eb8b5d56a2d11e240d445ca4c7446ec42ba433a1394ab94
+-- hash: 713f6ed545ddbcf0de9561a237511c9a4653757fca9b679a30d29f30c0432ea6
 
 name:           MagicCP
 version:        0.0.0
@@ -44,6 +44,7 @@ library
     , html-conduit
     , http-conduit
     , process
+    , split
     , syb
     , template-haskell
     , text
@@ -74,6 +75,7 @@ executable MagicCP
     , html-conduit
     , http-conduit
     , process
+    , split
     , syb
     , template-haskell
     , text

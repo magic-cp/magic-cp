@@ -37,4 +37,5 @@ dependencies:
 - text
 - unix
 - xml-conduit
+- split
 name: MagicCP

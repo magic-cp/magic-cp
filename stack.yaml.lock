@@ -60,6 +60,13 @@ packages:
       sha256: d9ac8ce6a19812fe74cb1e74228e6e624eda19021ff4d12e24611f88abacd38a
   original:
     hackage: clock-0.8
+- completed:
+    hackage: split-0.2.3.4@sha256:048c75891d63a03828f97667214aaaf0e67b7dcbfec297753e39939ffda6f51a,2647
+    pantry-tree:
+      size: 439
+      sha256: 72c550dd427dc15a2195e16c84bdb4712060fe601d87e95674154b44403550d9
+  original:
+    hackage: split-0.2.3.4@sha256:048c75891d63a03828f97667214aaaf0e67b7dcbfec297753e39939ffda6f51a,2647
 snapshots:
 - completed:
     size: 523443
