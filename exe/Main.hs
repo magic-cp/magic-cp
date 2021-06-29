@@ -56,15 +56,25 @@ main = do
   --testsolve WithoutOptimizations WithoutAbsents WithOutputConstants cfg (1186, 'a') lib1186a'
   --testsolve WithoutOptimizations WithAbsents WithOutputConstants cfg (1186, 'a') lib1186a'
 
-  -- testsolve WithOptimizations WithoutAbsents WithOutputConstants cfg (110, 'a') lib110a'
-  -- testsolve WithOptimizations WithAbsents WithOutputConstants cfg (110, 'a') lib110a'
-  -- testsolve WithoutOptimizations WithoutAbsents WithOutputConstants cfg (110, 'a') lib110a'
-  -- testsolve WithoutOptimizations WithAbsents WithOutputConstants cfg (110, 'a') lib110a'
+  -- testsolve WithOptimizations WithoutAbsents WithOutputConstants cfg (110, 'a') lib110a
+  -- testsolve WithOptimizations WithAbsents WithOutputConstants cfg (110, 'a') lib110a
+  -- testsolve WithoutOptimizations WithoutAbsents WithOutputConstants cfg (110, 'a') lib110a
+  -- testsolve WithoutOptimizations WithAbsents WithOutputConstants cfg (110, 'a') lib110a
 
-  testsolve WithOptimizations WithoutAbsents WithOutputConstants cfg (1030, 'a') lib1030a
-  testsolve WithOptimizations WithAbsents WithOutputConstants cfg (1030, 'a') lib1030a
-  testsolve WithoutOptimizations WithoutAbsents WithOutputConstants cfg (1030, 'a') lib1030a
-  testsolve WithoutOptimizations WithAbsents WithOutputConstants cfg (1030, 'a') lib1030a
+  -- testsolve WithOptimizations WithoutAbsents WithOutputConstants cfg (1030, 'a') lib1030a
+  -- testsolve WithOptimizations WithAbsents WithOutputConstants cfg (1030, 'a') lib1030a
+  -- testsolve WithoutOptimizations WithoutAbsents WithOutputConstants cfg (1030, 'a') lib1030a
+  -- testsolve WithoutOptimizations WithAbsents WithOutputConstants cfg (1030, 'a') lib1030a
+
+  testsolve WithOptimizations WithoutAbsents WithoutOutputConstants cfg (282, 'a') lib282a
+  -- testsolve WithOptimizations WithAbsents WithOutputConstants cfg (282, 'a') lib282a
+  -- testsolve WithoutOptimizations WithoutAbsents WithOutputConstants cfg (282, 'a') lib282a
+
+  -- testsolve WithOptimizations WithoutAbsents WithOutputConstants cfg (1186, 'a') lib1186a'
+  -- testsolve WithoutOptimizations WithoutAbsents WithOutputConstants cfg (1186, 'a') lib1186a'
+
+  -- testsolve WithOptimizations WithoutAbsents WithOutputConstants cfg (1186, 'a') lib1186a
+  -- testsolve WithoutOptimizations WithoutAbsents WithOutputConstants cfg (1186, 'a') lib1186a
 
   --testsolve WithOptimizations WithoutAbsents WithOutputConstants cfg (1257, 'a') lib1257a
   --testsolve WithOptimizations WithAbsents WithOutputConstants cfg (1257, 'a') lib1257a
@@ -112,13 +122,13 @@ headIntP = $(MH.pOptSingle [|
   (head :: [Int] -> Int, [NotConstantAsFirstArg])
         |])
 headCharP = $(MH.pOptSingle [|
-  (head :: [Char] -> Char, [NotConstantAsFirstArg])
+  (head :: String -> Char, [NotConstantAsFirstArg])
         |])
 tailCharP = $(MH.pOptSingle [|
-  (tail :: [Char] -> [Char], [NotConstantAsFirstArg])
+  (tail :: String -> String, [NotConstantAsFirstArg])
         |])
 concatCharP = $(MH.pOptSingle [|
-  ((:) :: Char -> [Char] -> [Char], [NotConstantAsFirstArg])
+  ((:) :: Char -> String -> String, [NotConstantAsFirstArg])
         |])
 headP = $(MH.pOptSingle [|
   (head :: [a] -> a, [NotConstantAsFirstArg])
@@ -133,7 +143,7 @@ emptyListP = $(MH.pOptSingle [|
   ([] :: [a], [])
         |])
 joinCharP = $(MH.pOptSingle [|
-  ((++) :: [Char] -> [Char] -> [Char], [NotConstantAsFirstArg, NotConstantAsSecondArg])
+  ((++) :: String -> String -> String, [NotConstantAsFirstArg, NotConstantAsSecondArg])
         |])
 
 
@@ -153,16 +163,16 @@ isEvenP = $(MH.pOptSingle [|
   (((== 0) . (`mod` 2)) :: Int -> Bool, [ NotConstantAsFirstArg ])
         |])
 minusOneP = $(MH.pOptSingle [|
-  ((flip (-) 1) :: Int->Int, [ NotConstantAsFirstArg ])
+  (flip (-) 1 :: Int->Int, [ NotConstantAsFirstArg ])
         |])
 minusP = $(MH.pOptSingle [|
   ((-) :: Int -> Int -> Int, [ NotConstantAsFirstArg, NotConstantAsSecondArg ])
         |])
 minP = $(MH.pOptSingle [|
-  ((min) :: Int -> Int -> Int, [ NotConstantAsFirstArg, NotConstantAsSecondArg ])
+  (min :: Int -> Int -> Int, [ NotConstantAsFirstArg, NotConstantAsSecondArg ])
         |])
 absP = $(MH.pOptSingle [|
-  ((abs) :: Int -> Int, [ NotConstantAsFirstArg ])
+  (abs :: Int -> Int, [ NotConstantAsFirstArg ])
         |])
 eqIntP = $(MH.pOptSingle [|
   ((==) :: Int -> Int -> Bool, [ CommAndAssoc
@@ -200,16 +210,16 @@ lib1186a' = iFP ++ greaterOrEqP
 lib705a, lib705a' :: [PrimitiveWithOpt]
 lib705a = isEvenP ++ iFP ++ minusOneP ++ minusP ++ natParaP ++
   $(MH.pOpt [|
-  ( ((\n -> LibTH.iF ((n `mod` 2) == 0) "I love it" "I hate it") :: Int -> [Char] , [NotConstantAsFirstArg])
-  , (("I hate that " ++) :: [Char] -> [Char], [NotConstantAsFirstArg])
-  , (("I love that " ++) :: [Char] -> [Char], [NotConstantAsFirstArg])
+  ( ((\n -> LibTH.iF ((n `mod` 2) == 0) "I love it" "I hate it") :: Int -> String , [NotConstantAsFirstArg])
+  , (("I hate that " ++) :: String -> String, [NotConstantAsFirstArg])
+  , (("I love that " ++) :: String -> String, [NotConstantAsFirstArg])
   )|])
 lib705a' = isEvenP ++ iFP ++ minusOneP ++ minusP ++ natParaP ++
   $(MH.pOpt [| (
-    ("I love it" :: [Char], [])
-  , ("I hate it" :: [Char], [])
-  , (("I hate that " ++) :: [Char] -> [Char], [NotConstantAsFirstArg])
-  , (("I love that " ++) :: [Char] -> [Char], [NotConstantAsFirstArg])
+    ("I love it" :: String, [])
+  , ("I hate it" :: String, [])
+  , (("I hate that " ++) :: String -> String, [NotConstantAsFirstArg])
+  , (("I love that " ++) :: String -> String, [NotConstantAsFirstArg])
   )|])
 
 lib959a :: [PrimitiveWithOpt]
@@ -231,14 +241,14 @@ lib110a = eqCharP ++ foldP ++ iFP ++ orP ++
   $(MH.pOpt [| (
     ((== '4') :: Char -> Bool, [])
   , ((== '7') :: Char -> Bool, [])
-  , (show . (length . filter (\x -> (x == '4') || (x == '7'))) :: [Char] -> [Char], [])
+  , (show . (length . filter (\x -> (x == '4') || (x == '7'))) :: String -> String, [])
   )|])
 lib110a' = eqCharP ++ foldP ++ iFP ++ orP ++
   $(MH.pOpt [| (
     ('4' :: Char, [])
   , ('7' :: Char, [])
-  , (show . (length . filter (\x -> (x == '4') || (x == '7'))) :: [Char] -> [Char], [])
-  --, ((\f x -> show $ (length . filter f) x) :: (Char -> Bool) -> [Char] -> [Char], [])
+  , (show . (length . filter (\x -> (x == '4') || (x == '7'))) :: String -> String, [])
+  --, ((\f x -> show $ (length . filter f) x) :: (Char -> Bool) -> String -> String, [])
   )|])
 
 lib281a, lib281a' :: [PrimitiveWithOpt]
@@ -258,10 +268,17 @@ lib822a = minP ++ natParaP ++ oneP ++ productP ++ plusOneP ++ gcdP
 lib59a :: [PrimitiveWithOpt]
 lib59a = iFP ++ greaterOrEqP ++ emptyListP ++
   $(MH.pOpt [| (
-    ((\f -> length . filter f) :: (Char -> Bool) -> [Char] -> Int, [NotConstantAsSecondArg])
+    ((\f -> length . filter f) :: (Char -> Bool) -> String -> Int, [NotConstantAsSecondArg])
   , (Data.Char.isUpper :: Char -> Bool, [])
   , (Data.Char.isLower :: Char -> Bool, [])
   , (Data.Char.toUpper :: Char -> Char, [])
   , (Data.Char.toLower :: Char -> Char, [])
   , (map :: (a -> b) -> [a] -> [b], [NotConstantAsSecondArg, FirstArgOfFirstArgUsed])
+  )|])
+
+lib282a :: [PrimitiveWithOpt]
+lib282a = foldP <> zeroP <>
+  $(MH.pOpt [| (
+    (show :: Int -> String, [NotConstantAsFirstArg]),
+    ((\acc op -> acc + LibTH.iF (op `elem` ["--X", "X--"]) (-1) 1) :: Int -> String -> Int, [NotConstantAsFirstArg, NotConstantAsSecondArg])
   )|])

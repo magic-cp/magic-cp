@@ -1,4 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE ViewPatterns    #-}
 module MagicCP.ParserDefinitions where
 
 import Language.Haskell.TH
@@ -67,4 +68,12 @@ parseFourIntsDec =
     Control.Monad.when (length ns /= 4) Nothing
     let [a, b, c, d] = ns
     return (a, b, c, d)
+    |]
+
+parseStringsWithoutSizeDec :: DecsQ
+parseStringsWithoutSizeDec =
+  [d|
+  parseStringsWithoutSize :: String -> Maybe [String]
+  parseStringsWithoutSize (lines -> _ : s) = Just s
+  parseStringsWithoutSize _ = Nothing
     |]

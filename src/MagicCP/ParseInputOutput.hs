@@ -3,6 +3,7 @@
 {-# LANGUAGE TemplateHaskell     #-}
 {-# LANGUAGE RecordWildCards     #-}
 {-# LANGUAGE NamedFieldPuns      #-}
+{-# LANGUAGE ViewPatterns        #-}
 
 module MagicCP.ParseInputOutput where
 
@@ -76,6 +77,8 @@ $(ParserDefinitions.parseFourIntsDec)
 
 $(ParserDefinitions.parseIntListWithSizeDec)
 $(ParserDefinitions.parseIntListIgnoreSizeDec)
+
+$(ParserDefinitions.parseStringsWithoutSizeDec)
 
 instance ParseInputOutput (Int -> [Int] -> String) where
   getSinglePredicateNOTC (i, o) = Map.fromList $ Data.Maybe.catMaybes [p]
@@ -241,4 +244,17 @@ instance ParseInputOutput (Int -> Int -> Int -> Int -> Int) where
                                              ]
 
   parserNameNOTC _ = "Four Ints to Int"
+
+
+instance ParseInputOutput ([String] -> String) where
+  getSinglePredicateNOTC 0 (parseStringsWithoutSize -> Just i, o) =
+    return $ \f -> f i == o
+
+  getSinglePredicateNOTC i _ =
+    error $ mkParserNotImplMsg i "[String] -> String"
+
+  parserDeclarations _ = concat <$> sequence
+    [ ParserDefinitions.parseStringsWithoutSizeDec ]
+
+  parserNameNOTC _ = "List of String to String"
 

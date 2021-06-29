@@ -13,11 +13,9 @@ esac
 machineName="$(uname -m)"
 
 # Install third party dependencies
-
 if [ "$machine" = "Linux" ]; then
-
   echo "ℹ️ Installing apt dependencies..."
-  sudo apt-get install libcurl4-openssl-dev -y
+  sudo apt-get install libcurl4-openssl-dev unzip -y
 elif [ "$machine" = "Mac" ]; then
 
   echo "Installing brew dependencies..."
@@ -52,6 +50,18 @@ log-root = "$PWD/logs"
 EOF
 echo "✅ config.cfg file generated"
 
+
+echo "ℹ️ Checking if google-chrome is installed..."
+if ! command -v google-chrome &> /dev/null
+then
+  echo "❌ google-chrome is not installed. Installing..."
+  wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list \
+    && apt-get update -qqy && apt-get -qqy install
+  [ command -v google-chrome &> /dev/null ] && echo "✅ google-chrome was succesfully installed"
+else
+  echo "✅ google-chrome is installed"
+fi
 
 echo "ℹ️ Checking if chromedriver is installed..."
 if ! command -v chromedriver &> /dev/null
@@ -115,7 +125,7 @@ fi
 
 echo "ℹ️ Configuring authentication details for cf"
 echo "   Please, choose option number 0 and set your codeforces credentials"
-cf config
+./bin/cf config
 
 echo "ℹ️ Overwriting ~/.cf/config"
 mkdir -p $HOME/.cf/
