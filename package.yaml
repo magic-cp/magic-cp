@@ -38,4 +38,5 @@ dependencies:
 - unix
 - xml-conduit
 - split
+- containers
 name: MagicCP
