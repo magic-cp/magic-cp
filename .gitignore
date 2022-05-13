@@ -30,6 +30,7 @@ logs/
 bin/
 cf/
 config.cfg
+.DS_Store
 .vscode
 .local
 

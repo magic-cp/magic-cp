@@ -5,6 +5,13 @@
 
 packages:
 - completed:
+    hackage: containers-0.6.0.1@sha256:258f4bb14fa2da960b52c28f2f5d4b3c766342a0a7ee462127bb259f5981de6a,16457
+    pantry-tree:
+      size: 4933
+      sha256: 81e9127628f38510397b1160c624616f903a0bc29045883b5a7c5239096e2d5f
+  original:
+    hackage: containers-0.6.0.1
+- completed:
     hackage: curl-aeson-0.0.4@sha256:bef1581078e922f012ed5259d86481be2658bad00e9bc052f16a13604744af1a,1346
     pantry-tree:
       size: 220

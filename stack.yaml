@@ -17,6 +17,7 @@ extra-deps:
   # - mueval-0.9.3
   # - exceptions-0.10.2
   # - show-0.6
+- containers-0.6.0.1
 - curl-aeson-0.0.4
 - exceptions-0.10.2
 - http-conduit-2.3.7.1

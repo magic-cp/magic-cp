@@ -7,13 +7,14 @@ module MagicCP where
 
 import qualified Language.Haskell.TH as TH
 
+import Data.Map (Map)
 import CF                       (ProblemId)
 import CF.CFConfig              (CFConfig (..))
 import CF.CFToolWrapper         (Verdict (..))
 import Control.Concurrent       (ThreadId)
 import Control.Exception        (SomeException (..), catch)
 import Data.Generics            (Data)
-import MagicCP.ParseInputOutput (ParseInputOutput, WithTestCases (..))
+import MagicCP.ParseInputOutput (ParseInputOutput, WithTestCases (..), Predicate(..))
 import MagicCP.SearchOptions    (WithAbsents (..), WithOptimizations (..))
 import MagicHaskeller.LibTH
     ( Exp (..)
@@ -23,7 +24,7 @@ import MagicHaskeller.LibTH
     , Primitive
     , PrimitiveWithOpt
     , ProgGen
-    , ProgGenSF
+    -- , ProgGenSF
     , Type (..)
     , TypeRep
     , Typeable
@@ -53,6 +54,7 @@ import qualified MagicHaskeller.LibTHDefinitions as LibTHDefinitions
 import qualified MagicHaskeller.ProgramGenerator as ProgramGenerator
 import qualified MagicHaskeller.TimeOut          as TimeOut
 import qualified Text.Printf                     as Printf
+import qualified Data.Map as Map
 
 checkInitialized :: IO ()
 checkInitialized = do
@@ -97,25 +99,31 @@ solveWithAllParsers
   -> ProblemId
   -> IO (Maybe Exp)
 solveWithAllParsers wOps wAbs wOC cfg lib pId = do
-  let l =
-        [ solveWithLimits (solvev0 wOps wAbs wOC WithoutTestCases cfg lib
-            (undefined :: Int -> Int -> Int -> String)) pId
-        , solveWithLimits (solvev0 wOps wAbs wOC WithTestCases cfg lib
-            (undefined :: Int -> Int -> Int -> Int -> Int)) pId
-        , solveWithLimits (solvev0 wOps wAbs wOC WithoutTestCases cfg lib
-            (undefined :: Int -> Int -> Int)) pId
-        , solveWithLimits (solvev0 wOps wAbs wOC WithTestCases cfg lib
-            (undefined :: Int -> Int -> String)) pId
-        , solveWithLimits (solvev0 wOps wAbs wOC WithoutTestCases cfg lib
-            (undefined :: [Int] -> String)) pId
-        , solveWithLimits (solvev0 wOps wAbs wOC WithoutTestCases cfg lib
-            (undefined :: Int -> [Int] -> String)) pId
-        , solveWithLimits (solvev0 wOps wAbs wOC WithoutTestCases cfg lib
-            (undefined :: Int -> String)) pId
-        , solveWithLimits (solvev0 wOps wAbs wOC WithoutTestCases cfg lib
-            (undefined :: String -> String)) pId
-        ]
-  solveUntilJust l
+  initialInputOutputs <- CFToolWrapper.getInputOutput cfg pId
+  case initialInputOutputs of
+    [] -> do
+      putStrLn "No input/outputs found. Perhaps try to login again?"
+      return Nothing
+    _ -> do
+      let fs =
+            [ solveWithLimits (solvev0 wOps wAbs wOC WithoutTestCases cfg lib
+                (undefined :: Int -> Int -> Int -> String))
+            , solveWithLimits (solvev0 wOps wAbs wOC WithTestCases cfg lib
+                (undefined :: Int -> Int -> Int -> Int -> Int))
+            , solveWithLimits (solvev0 wOps wAbs wOC WithoutTestCases cfg lib
+                (undefined :: Int -> Int -> Int))
+            , solveWithLimits (solvev0 wOps wAbs wOC WithTestCases cfg lib
+                (undefined :: Int -> Int -> String))
+            , solveWithLimits (solvev0 wOps wAbs wOC WithoutTestCases cfg lib
+                (undefined :: [Int] -> String))
+            , solveWithLimits (solvev0 wOps wAbs wOC WithoutTestCases cfg lib
+                (undefined :: Int -> [Int] -> String))
+            , solveWithLimits (solvev0 wOps wAbs wOC WithoutTestCases cfg lib
+                (undefined :: Int -> String))
+            , solveWithLimits (solvev0 wOps wAbs wOC WithoutTestCases cfg lib
+                (undefined :: String -> String))
+            ]
+      solveUntilJust $ map (\f -> f pId initialInputOutputs) fs
   where
     solveUntilJust :: [IO (Maybe Exp)] -> IO (Maybe Exp)
     solveUntilJust [] = return Nothing
@@ -125,17 +133,22 @@ solveWithAllParsers wOps wAbs wOC cfg lib pId = do
         Just _ -> return me
         Nothing -> solveUntilJust l
 
-solveWithLimits :: (ProblemId -> IO Exp) -> ProblemId -> IO (Maybe Exp)
-solveWithLimits solve pId = do
+solveWithLimits
+  :: (ProblemId -> [(String, String)] -> IO (Maybe Exp))
+  -> ProblemId
+  -> [(String, String)]
+  -> IO (Maybe Exp)
+solveWithLimits solve pId ios = do
   tid <- Control.Concurrent.myThreadId
   let timeout = 60*30
       memoPerc = 80
   Control.Exception.bracket
     ( Control.Concurrent.forkIO $ checkLimits tid timeout memoPerc )
     Control.Concurrent.killThread
-    ( \_ -> Just <$> solve pId )
+    ( \_ -> solve pId ios )
     --`catch` \(ErrorCall _) -> do
-    `catch` \(SomeException _) ->
+    `catch` \(SomeException e) -> do
+      print e
       return Nothing
   where
   checkLimits :: ThreadId -> Int -> Float -> IO ()
@@ -161,33 +174,19 @@ solvev0
   -> [PrimitiveWithOpt]
   -> b
   -> ProblemId
-  -> IO Exp
-solvev0 wOps wAbs wOC wTC cfg customLibrary hoge pId@(cId, _) = do
+  -> [(String, String)]
+  -> IO (Maybe Exp)
+solvev0 wOps wAbs wOC wTC cfg customLibrary hoge pId@(cId, _) ios = do
   putStrLn $ "Parsing problem using " <> ParseInputOutput.parserNameNOTC hoge
-  ios <- CFToolWrapper.getInputOutput cfg pId
   print ios
-  let initialPred = makePred ios
-      custom = case wOC of
-              WithOutputConstants ->
-                getConstantPrimitives (LibTH.typeOf hoge) (concatMap (words . snd) ios)
-              WithoutOutputConstants -> []
-      (md :: ProgGen, prims) = if wOps == WithOptimizations
-      --(md :: ProgGen, prims) = if wOps == WithOptimizations
-              then let (md', lst) = LibTH.mkPGWithDefaultsOpts $
-                        customLibrary ++ zip custom (repeat [])
-                    in (md', concatMap (\(prim, ops) ->
-                          pprintUC prim ++ " " ++ show ops ++ "\n") lst)
-              else let (md', lst) = LibTH.mkPGWithDefaults $
-                        map fst customLibrary ++ custom
-                    in (md', concatMap (\prim -> pprintUC prim ++ "\n") lst)
-  initialPred `seq` return ()
+  let initialPredicates = makePred ios
 
   Logger.newLogger (log_root cfg) pId wOps wAbs
   Logger.logParser hoge wTC
   Logger.logPrimitives prims
 
-  Logger.write "ProgGenSF"
-  --Logger.write "ProgGen"
+  -- Logger.write "ProgGenSF"
+  Logger.write "ProgGen"
 
   putStrLn "Starting search!"
 
@@ -195,25 +194,48 @@ solvev0 wOps wAbs wOC wTC cfg customLibrary hoge pId@(cId, _) = do
   Timer.reset
   Timer.start
   ECnt.reset
-  --Logger.write "F"
-  --let et = everythingF md (wAbs == WithAbsents)
-  let et = LibTH.everything md (wAbs == WithAbsents)
-      mpto = LibTH.timeout $ ProgramGenerator.opt $ ProgramGenerator.extractCommon md
-  f mpto initialPred (concat et)
-  where
-    makePred :: [(String, String)] -> b -> Bool
-    makePred inputOutputs = fromJust' (ParseInputOutput.getPredicate wTC 0 inputOutputs :: Maybe (b -> Bool))
 
-    f :: Maybe Int
-      -> (b -> Bool)
+  go $ Map.elems initialPredicates
+  where
+
+    custom = case wOC of
+      WithOutputConstants ->
+        getConstantPrimitives (LibTH.typeOf hoge) (concatMap (words . snd) ios)
+      WithoutOutputConstants -> []
+
+    (md :: ProgGen, prims) = if wOps == WithOptimizations
+    --(md :: ProgGenSF, prims) = if wOps == WithOptimizations
+            then let (md', lst) = LibTH.mkPGWithDefaultsOpts $
+                      customLibrary ++ zip custom (repeat [])
+                  in (md', concatMap (\(prim, ops) ->
+                        pprintUC prim ++ " " ++ show ops ++ "\n") lst)
+            else let (md', lst) = LibTH.mkPGWithDefaults $
+                      map fst customLibrary ++ custom
+                  in (md', concatMap (\prim -> pprintUC prim ++ "\n") lst)
+
+    et = LibTH.everything md (wAbs == WithAbsents)
+    mpto = LibTH.timeout $ ProgramGenerator.opt $ ProgramGenerator.extractCommon md
+
+    go :: [Predicate b] -> IO (Maybe Exp)
+    go [] = error "solvev0: go: empty list"
+    go (p:ps) = do
+        res <- submitToCf p (concat et)
+        case res of
+          Nothing -> go ps
+          e -> return e
+
+    makePred :: [(String, String)] -> Map String (Predicate b)
+    makePred inputOutputPairs = ParseInputOutput.getPredicate wTC inputOutputPairs :: Map String (Predicate b)
+
+    submitToCf :: Predicate b
       -> [(Exp, b)]
-      -> IO Exp
-    f mpto predicate ((e, a):ts) = do
+      -> IO (Maybe Exp)
+    submitToCf predicate@Predicate{..} ((e, a):ts) = do
       ECnt.cntExp
       es <- ECnt.getTotalExps
       putStrLn $ "Expression #" <> show es
       putStrLn $ "Generated expression " <> pprintUC e
-      result <- TimeOut.maybeWithTO2 mpto (predicate a)
+      result <- TimeOut.maybeWithTO2 mpto (predicateFun a)
       case result of
         Just True -> do
           putStrLn "found solution to predicate"
@@ -223,19 +245,19 @@ solvev0 wOps wAbs wOC wTC cfg customLibrary hoge pId@(cId, _) = do
           case testVerd of
             Accepted -> do
               secs <- Timer.getTotalSecs
-              es <- ECnt.getTotalExps
-              putStrLn $ Printf.printf "Submitting to codeforces (%.3fs, %d exps)" secs es
+              es' <- ECnt.getTotalExps
+              putStrLn $ Printf.printf "Submitting to codeforces (%.3fs, %d exps)" secs es'
               submitVerd <- CFToolWrapper.submitSolution cfg pId
               Logger.logSubmission (pprintUC e) secs es submitVerd
               case submitVerd of
                 Accepted -> do
                   putStrLn $ "Solution accepted in codeforces:\n" <>
                     pprintUC e
-                  secs <- Timer.getTotalSecs
-                  putStrLn $ Printf.printf "Time: %.3fs" secs
-                  es <- ECnt.getTotalExps
-                  putStrLn $ Printf.printf "Expressions tried: %d" es
-                  return e
+                  secs' <- Timer.getTotalSecs
+                  putStrLn $ Printf.printf "Time: %.3fs" secs'
+                  es'' <- ECnt.getTotalExps
+                  putStrLn $ Printf.printf "Expressions tried: %d" es''
+                  return $ Just e
                 Rejected subm msg -> do
                   putStrLn $ "sumbission #" <> show subm <> " failed with: " <>
                     drop 2 (dropWhile (/= ':') msg)
@@ -244,19 +266,22 @@ solvev0 wOps wAbs wOC wTC cfg customLibrary hoge pId@(cId, _) = do
                   putStrLn $ "Got " <> show (length newTestCases) <> " new test cases"
                   print newTestCases
                   Timer.start
-                  f mpto (makePred newTestCases) ts
+                  let newPredicates = makePred newTestCases
+                  case predicateId `Map.lookup` newPredicates of
+                    Nothing -> return Nothing
+                    Just p -> submitToCf p ts
             Rejected{} -> do
               putStrLn "Failed Sample Tests"
               Timer.start
-              f mpto predicate ts
+              submitToCf predicate ts
         Just False -> do
           putStrLn "Failed"
-          f mpto predicate ts
+          submitToCf predicate ts
         Nothing -> do
           putStrLn "Timed out"
-          f mpto predicate ts
-    fromJust' (Just x) = x
-    fromJust' _ = error $ "Wrong parser: " ++ ParseInputOutput.parserName hoge wTC
+          submitToCf predicate ts
+
+    submitToCf _ _ = return Nothing
 
 
 getConstantPrimitives :: TypeRep -> [String] -> [Primitive]

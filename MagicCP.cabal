@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.33.0.
+-- This file has been generated from package.yaml by hpack version 0.34.4.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 713f6ed545ddbcf0de9561a237511c9a4653757fca9b679a30d29f30c0432ea6
+-- hash: 5e2ff13654219dab0d6212f685c68dad2df96c4a1550d40be3f107a041599332
 
 name:           MagicCP
 version:        0.0.0
@@ -38,6 +38,7 @@ library
     , bytestring
     , clock
     , configurator
+    , containers
     , curl-aeson
     , directory
     , filepath
@@ -69,6 +70,7 @@ executable MagicCP
     , bytestring
     , clock
     , configurator
+    , containers
     , curl-aeson
     , directory
     , filepath

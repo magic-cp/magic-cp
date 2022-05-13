@@ -1,42 +1,58 @@
 {-# LANGUAGE FlexibleInstances   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell     #-}
+{-# LANGUAGE RecordWildCards     #-}
+{-# LANGUAGE NamedFieldPuns      #-}
+
 module MagicCP.ParseInputOutput where
 
 import Language.Haskell.TH (DecsQ)
+import Data.Map (Map)
 
 import qualified Control.Monad
 import qualified MagicCP.ParserDefinitions as ParserDefinitions
 import qualified Text.Read
+import qualified Data.Maybe
+import qualified Data.Map as Map
 
-type Parser = Int
-
-(&&&) :: (b -> Bool) -> (b -> Bool) -> (b -> Bool)
-p1 &&& p2 = \x -> p1 x && p2 x
+(&&&) :: Predicate b -> Predicate b -> Predicate b
+Predicate {predicateFun = p1, ..} &&& Predicate {predicateFun = p2} =
+  Predicate {predicateFun = \x -> p1 x && p2 x, ..}
 
 data WithTestCases = WithTestCases | WithoutTestCases deriving Show
 
+{-| A "Predicate a" holds a predicate applier, to test a solution
+    against our inputs/outputs pairs, and an id to identify the way
+    the parser used to get this predicate
+-}
+data Predicate a = Predicate
+  { predicateFun :: a -> Bool
+  , predicateId :: String
+  }
+
 class ParseInputOutput a where
-  -- TODO: The type signature for this should be:
-  -- getSinglePredicate :: WithTestCases -> Parser -> ([String], String)
-  getSinglePredicate :: WithTestCases -> Parser -> (String, String) -> Maybe (a -> Bool)
-  getSinglePredicate WithoutTestCases p (i, o) = getSinglePredicateNOTC p (i, o)
-  getSinglePredicate WithTestCases p (i, o) = do
+  getSinglePredicateNOTC :: (String, String) -> Map String (Predicate a)
+  parserDeclarations :: a -> DecsQ
+
+  getSinglePredicate :: WithTestCases -> (String, String) -> Map String (Predicate a)
+  getSinglePredicate WithoutTestCases (i, o) = getSinglePredicateNOTC (i, o)
+  getSinglePredicate WithTestCases (i, o) =
     let is = tail $ lines i
         os = lines o
-    Control.Monad.when (null is) Nothing
-    Control.Monad.when (length is /= length os) Nothing
-    foldl1 (&&&) <$> mapM (getSinglePredicate WithoutTestCases p) (zip is os)
+        inputEmpty = null is
+        outputInputLengthMismatch = null is
+    in  if inputEmpty || outputInputLengthMismatch
+        then Map.empty
+        else
+          Map.unionsWith (&&&) $ zipWith (curry (getSinglePredicate WithoutTestCases)) is os
 
-  getSinglePredicateNOTC :: Parser -> (String, String) -> Maybe (a -> Bool)
 
-  getPredicate :: WithTestCases -> Parser -> [(String, String)] -> Maybe (a -> Bool)
-  getPredicate wTC parser l = foldl1 (&&&) <$> mapM (getSinglePredicate wTC parser) l
+  getPredicate :: WithTestCases -> [(String, String)] -> Map String (Predicate a)
+  getPredicate wTC l = Map.unionsWith (&&&) $ map (getSinglePredicate wTC) l
 
-  extendPredicate :: WithTestCases -> Parser -> (a -> Bool) -> (String, String) -> Maybe (a -> Bool)
-  extendPredicate wTC parser p io = (p &&&) <$> getSinglePredicate wTC parser io
+  extendPredicate :: WithTestCases -> Predicate a -> (String, String) -> Map String (Predicate a)
+  extendPredicate wTC p io = (p &&&) <$> getSinglePredicate wTC io
 
-  parserDeclarations :: a -> DecsQ
 
   mainParserDeclarations :: a -> WithTestCases -> DecsQ
   mainParserDeclarations _ WithoutTestCases =
@@ -48,9 +64,9 @@ class ParseInputOutput a where
     main = getContents >>= \c -> mapM_ (putStrLn . uncurry' solve . parser) . tail . lines $ c
     |]
 
-  parserName :: a -> WithTestCases -> String
-  parserName a WithTestCases = "Test cases of " ++ parserName a WithoutTestCases
-  parserName a WithoutTestCases = parserNameNOTC a
+  -- parserName :: a -> WithTestCases -> String
+  -- parserName a WithTestCases = "Test cases of " ++ parserName a WithoutTestCases
+  -- parserName a WithoutTestCases = parserNameNOTC a
 
   parserNameNOTC :: a -> String
 
@@ -62,12 +78,15 @@ $(ParserDefinitions.parseIntListWithSizeDec)
 $(ParserDefinitions.parseIntListIgnoreSizeDec)
 
 instance ParseInputOutput (Int -> [Int] -> String) where
-  getSinglePredicateNOTC 0 (i, o) = do
-    (n, as) <- parseIntListWithSize i
-    let los = lines o
-    Control.Monad.when (length los /= 1) Nothing
-    return (\f -> f n as == head los)
-  getSinglePredicateNOTC i _ = error $ mkParserNotImplMsg i "Int -> [Int] -> String"
+  getSinglePredicateNOTC (i, o) = Map.fromList $ Data.Maybe.catMaybes [p]
+    where
+      p = do
+        (n, as) <- parseIntListWithSize i
+        let los = lines o
+        Control.Monad.when (length los /= 1) Nothing
+        let predicateFun = (\f -> f n as == head los)
+        let predicateId = "first-line-int-n-ints-follow"
+        return (predicateId, Predicate{..})
 
   parserDeclarations _ = concat <$> sequence [
     [d|
@@ -80,12 +99,16 @@ instance ParseInputOutput (Int -> [Int] -> String) where
   parserNameNOTC _ = "[Int] with size to String"
 
 instance ParseInputOutput ([Int] -> String) where
-  getSinglePredicateNOTC 0 (i, o) = do
-    as <- parseIntListIgnoreSize i
-    let los = lines o
-    Control.Monad.when (length los /= 1) Nothing
-    return (\f -> f as == head los)
-  getSinglePredicateNOTC i _ = error $ mkParserNotImplMsg i "[Int] -> String"
+  getSinglePredicateNOTC (i, o) = Map.fromList $ Data.Maybe.catMaybes [p]
+    where
+      p = do
+        as <- parseIntListIgnoreSize i
+        let los = lines o
+        Control.Monad.when (length los /= 1) Nothing
+        let predicateFun = (\f -> f as == head los)
+        let predicateId = "n-ints-follow"
+        return (predicateId, Predicate{..})
+
   parserDeclarations _ = concat <$> sequence [
     [d|
     uncurry' = id
@@ -97,11 +120,14 @@ instance ParseInputOutput ([Int] -> String) where
   parserNameNOTC _ = "[Int] (ignoring size) to String"
 
 instance ParseInputOutput (String -> String) where
-  getSinglePredicateNOTC 0 (i, o) = do
-    let los = lines o
-    Control.Monad.when (length los /= 1) Nothing
-    Just (\f -> f (head $ lines i) == head los)
-  getSinglePredicateNOTC i _ = error $ mkParserNotImplMsg i "String -> String"
+  getSinglePredicateNOTC (i, o) = Map.fromList $ Data.Maybe.catMaybes [p]
+    where
+      p = do
+        let los = lines o
+        Control.Monad.when (length los /= 1) Nothing
+        let predicateFun = (\f -> f (head $ lines i) == head los)
+        let predicateId = "whole-input"
+        return (predicateId, Predicate{..})
 
   parserDeclarations _ =
     [d|
@@ -112,12 +138,15 @@ instance ParseInputOutput (String -> String) where
   parserNameNOTC _ = "String to String"
 
 instance ParseInputOutput (Int -> String) where
-  getSinglePredicateNOTC 0 (i, o) = do
-    ni <- Text.Read.readMaybe i
-    let los = lines o
-    Control.Monad.when (length los /= 1) Nothing
-    return (\f -> f ni == head los)
-  getSinglePredicateNOTC i _ = error $ mkParserNotImplMsg i "Int -> String"
+  getSinglePredicateNOTC (i, o) = Map.fromList $ Data.Maybe.catMaybes [p]
+    where
+      p = do
+        ni <- Text.Read.readMaybe i
+        let los = lines o
+        Control.Monad.when (length los /= 1) Nothing
+        let predicateFun = (\f -> f ni == head los)
+        let predicateId = "single-int-string"
+        return (predicateId, Predicate{..})
 
   parserDeclarations _ =
     [d|
@@ -128,12 +157,15 @@ instance ParseInputOutput (Int -> String) where
   parserNameNOTC _ = "Int to String"
 
 instance ParseInputOutput (Int -> Int -> String) where
-  getSinglePredicateNOTC 0 (i, o) = do
-    (a, b) <- parseTwoInts i
-    let los = lines o
-    Control.Monad.when (length los /= 1) Nothing
-    return (\f -> f a b == head los)
-  getSinglePredicateNOTC i _ = error $ mkParserNotImplMsg i "Int -> Int -> String"
+  getSinglePredicateNOTC (i, o) = Map.fromList $ Data.Maybe.catMaybes [p]
+    where
+      p = do
+        (a, b) <- parseTwoInts i
+        let los = lines o
+        Control.Monad.when (length los /= 1) Nothing
+        let predicateFun = (\f -> f a b == head los)
+        let predicateId = "two-ints-string"
+        return (predicateId, Predicate{..})
 
   parserDeclarations _ = concat <$> sequence [
     [d|
@@ -146,14 +178,15 @@ instance ParseInputOutput (Int -> Int -> String) where
   parserNameNOTC _ = "Two Ints to String"
 
 instance ParseInputOutput (Int -> Int -> Int -> String) where
-  getSinglePredicateNOTC 0 (i, o) = do
-    (a, b, c) <- parseThreeInts i
-    let los = lines o
-    Control.Monad.when (length los /= 1) Nothing
-    return (\f -> f a b c == head los)
-
-  getSinglePredicateNOTC i _ =
-    error $ mkParserNotImplMsg i "Int -> Int -> Int -> String"
+  getSinglePredicateNOTC (i, o) = Map.fromList $ Data.Maybe.catMaybes [p]
+    where
+      p = do
+        (a, b, c) <- parseThreeInts i
+        let los = lines o
+        Control.Monad.when (length los /= 1) Nothing
+        let predicateFun = (\f -> f a b c == head los)
+        let predicateId = "three-ints-string"
+        return (predicateId, Predicate{..})
 
   parserDeclarations _ = concat <$> sequence [
     [d|
@@ -166,12 +199,15 @@ instance ParseInputOutput (Int -> Int -> Int -> String) where
   parserNameNOTC _ = "Three Ints to String"
 
 instance ParseInputOutput (Int -> Int -> Int) where
-  getSinglePredicateNOTC 0 (i, o) = do
-    (a, b) <- parseTwoInts i
-    let los = lines o
-    Control.Monad.when (length los /= 1) Nothing
-    return (\f -> f a b == read (head los))
-  getSinglePredicateNOTC i _ = error $ mkParserNotImplMsg i "Int -> Int -> Int"
+  getSinglePredicateNOTC (i, o) = Map.fromList $ Data.Maybe.catMaybes [p]
+    where
+      p = do
+        (a, b) <- parseTwoInts i
+        let los = lines o
+        Control.Monad.when (length los /= 1) Nothing
+        let predicateFun = (\f -> f a b == read (head los))
+        let predicateId = "two-ints-to-int"
+        return (predicateId, Predicate{..})
 
   parserDeclarations _ = concat <$> sequence [
     [d|
@@ -184,14 +220,16 @@ instance ParseInputOutput (Int -> Int -> Int) where
   parserNameNOTC _ = "Two Ints to Int"
 
 instance ParseInputOutput (Int -> Int -> Int -> Int -> Int) where
-  getSinglePredicateNOTC 0 (i, o) = do
-    (a, b, c, d) <- parseFourInts i
-    let los = lines o
-    Control.Monad.when (length los /= 1) Nothing
-    return (\f -> f a b c d == read (head los))
+  getSinglePredicateNOTC (i, o) = Map.fromList $ Data.Maybe.catMaybes [p]
+    where
+      p = do
+        (a, b, c, d) <- parseFourInts i
+        let los = lines o
+        Control.Monad.when (length los /= 1) Nothing
+        let predicateFun = (\f -> f a b c d == read (head los))
+        let predicateId = "four-ints-to-int"
+        return (predicateId, Predicate{..})
 
-  getSinglePredicateNOTC i _ =
-    error $ mkParserNotImplMsg i "Int -> Int -> Int -> Int -> Int"
 
   parserDeclarations _ = concat <$> sequence [
     [d|
@@ -201,9 +239,6 @@ instance ParseInputOutput (Int -> Int -> Int -> Int -> Int) where
       |],
     ParserDefinitions.parseFourIntsDec
                                              ]
+
   parserNameNOTC _ = "Four Ints to Int"
 
-
-mkParserNotImplMsg :: Parser -> String -> String
-mkParserNotImplMsg p s =
-  "Parser #" <> show p <> " for " <> s <> " is not implemented"
