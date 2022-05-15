@@ -247,11 +247,15 @@ instance ParseInputOutput (Int -> Int -> Int -> Int -> Int) where
 
 
 instance ParseInputOutput ([String] -> String) where
-  getSinglePredicateNOTC 0 (parseStringsWithoutSize -> Just i, o) =
-    return $ \f -> f i == o
-
-  getSinglePredicateNOTC i _ =
-    error $ mkParserNotImplMsg i "[String] -> String"
+  getSinglePredicateNOTC (i, o) = Map.fromList $ Data.Maybe.catMaybes [p]
+    where
+      p = do
+        let los = lines o
+        tailLines <- parseStringsWithoutSize i
+        Control.Monad.when (length los /= 1) Nothing
+        let predicateFun = (\f -> f tailLines == head los)
+        let predicateId = "n-strings-follow"
+        return (predicateId, Predicate{..})
 
   parserDeclarations _ = concat <$> sequence
     [ ParserDefinitions.parseStringsWithoutSizeDec ]
