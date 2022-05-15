@@ -155,10 +155,10 @@ bool = $(p [| (True, False, iF :: (->) Bool ((->) a ((->) a a))) |] )
 -- | 'postprocess' replaces uncommon functions like catamorphisms with well-known functions.
 postprocess :: Exp -> Exp
 postprocess (AppE (AppE (AppE (InfixE (Just e1) (VarE name) (Just e2)) e3) e4) e5) | nameBase name == "." = postprocess $ ((e1 `AppE` (e2 `AppE` e3)) `AppE` e4) `AppE` e5   -- ad hoc pattern:S
-postprocess (AppE (AppE (AppE (AppE (ConE name) e1) e2) e3) e4) | nameBase name == "(,,,)" = postprocess $ TupE [e1, e2, e3, e4]
+postprocess (AppE (AppE (AppE (AppE (ConE name) e1) e2) e3) e4) | nameBase name == "(,,,)" = postprocess $ TupE [Just e1, Just e2, Just e3, Just e4]
 postprocess (AppE (AppE (AppE (AppE (VarE name) e1) e2) e3) e4) | nameBase name == "flip"  = postprocess $ ((e1 `AppE` e3) `AppE` e2) `AppE` e4
 postprocess (AppE (InfixE (Just e1) (VarE name) (Just e2)) e3) | nameBase name == "." = postprocess $ e1 `AppE` (e2 `AppE` e3)
-postprocess (AppE (e@(AppE (AppE (ConE name) p) t)) f) | nameBase name == "(,,)" = postprocess $ TupE [p,t,f]
+postprocess (AppE (e@(AppE (AppE (ConE name) p) t)) f) | nameBase name == "(,,)" = postprocess $ TupE [Just p, Just t, Just f]
 postprocess (AppE (e@(AppE (AppE (VarE name) p) t)) f)
     = case nameBase name of
         "iF"       -> CondE ppp ppt ppf
@@ -173,7 +173,7 @@ postprocess (AppE (e@(AppE (AppE (VarE name) p) t)) f)
   where ppp = postprocess p
         ppt = postprocess t
         ppf = postprocess f
-postprocess (AppE f@(AppE (ConE name) lj) e) | nameBase name == "(,)" = postprocess $ TupE [lj, e]
+postprocess (AppE f@(AppE (ConE name) lj) e) | nameBase name == "(,)" = postprocess $ TupE [Just lj, Just e]
 postprocess (AppE f@(AppE (VarE name) lj) e)
     = case nameBase name of "drop" -> case pplj of LitE (IntegerL j) | j<=0 -> ppe
                                                                      | j> 0 -> ppdrop j e
@@ -267,7 +267,7 @@ postprocess (InfixE me1 op me2)
 
 postprocess (LamE pats e)       = ppLambda pats (postprocess e)
 
-postprocess (TupE es)           = TupE (map postprocess es)
+postprocess (TupE es)           = TupE (map (fmap postprocess) es)
 postprocess (ListE es)          = ListE (map postprocess es)
 postprocess (SigE e ty)         = postprocess e `SigE` ty
 postprocess e = e
@@ -383,7 +383,14 @@ postprocessQ (InfixE me1 op me2) = let fmapM f Nothing  = return Nothing
                                        fmapM f (Just x) = fmap Just (f x)
                                    in liftM2 (\e1 e2 -> InfixE e1 op e2) (fmapM postprocessQ me1) (fmapM postprocessQ me2)
 postprocessQ (LamE pats e) = fmap (LamE pats) (postprocessQ e)
-postprocessQ (TupE es) = fmap TupE (mapM postprocessQ es)
+postprocessQ (TupE es) = fmap TupE (mapM f es)
+  where
+    f :: Maybe Exp -> Q (Maybe Exp)
+    f Nothing  = return Nothing
+    f (Just e) = do
+      e' <- postprocessQ e
+      return $ Just e'
+
 postprocessQ (ListE es) = fmap ListE (mapM postprocessQ es)
 postprocessQ (SigE e ty) = fmap (`SigE` ty) (postprocessQ e)
 postprocessQ e = return e

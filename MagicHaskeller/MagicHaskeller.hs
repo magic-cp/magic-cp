@@ -200,11 +200,16 @@ import Debug.Trace
 mkCurriedDecls :: String -> ExpQ -> ExpQ -> DecsQ
 mkCurriedDecls tag funq eq = do e <- eq
                                 fun <- funq
-                                case e of TupE es -> fmap concat $ mapM (mcd fun) es
+                                case e of TupE es -> fmap concat $ mapM (mcd' fun) es
                                           _       -> mcd fun e
-   where mcd :: Exp -> Exp -> DecsQ
-         mcd fun v@(VarE name) = let nb = nameBase name
-                                 in return [ValD (VarP $ mkName $ nb++tag) (NormalB (AppE fun v)) []]
+  where
+    mcd :: Exp -> Exp -> DecsQ
+    mcd fun v@(VarE name) = let nb = nameBase name
+                            in return [ValD (VarP $ mkName $ nb++tag) (NormalB (AppE fun v)) []]
+          
+    mcd' :: Exp -> (Maybe Exp) -> DecsQ
+    mcd' fun (Just v@(VarE name)) = mcd fun v
+    -- mcd' fun (Just )
 --   where mcd :: Exp -> DecsQ
 --         mcd v@(VarE name) = let nb = nameBase name
 --                             in [d| $(return $ VarP $ mkName $ nb++tag) = $(funq) $(return v) |]
@@ -260,8 +265,12 @@ mkMTH n leq = [| mkMD $n $(m leq) |]
 -- | 'p' is used to convert your primitive component set into the internal form.
 p :: TH.ExpQ -- ^ Quote a tuple of primitive components here.
      -> TH.ExpQ -- ^ This becomes @[Primitive]@ when spliced.
-p eq = eq >>= \e -> case e of TupE es -> (return . ListE) =<< (mapM p1 es)
+p eq = eq >>= \e -> case e of TupE es -> (return . ListE) =<< (mapM p1Maybe es)
                               _       -> (return . ListE . return) =<< p1 e      -- This default pattern should also be defined, because it takes two (or more) to tuple!
+
+p1Maybe :: Maybe TH.Exp -> TH.ExpQ
+p1Maybe (Just e) = p1 e
+-- p1Maybe Nothing = [| Nothing |]
 
 pOpt :: TH.ExpQ -- ^ Quote a tuple of primitive components here.
      -> TH.ExpQ -- ^ This becomes @[Primitive]@ when spliced.
@@ -269,17 +278,20 @@ pOpt eq = do
   TupE es <- eq
   es <- mapM p1Opt es
   return (ListE es)
+
 pOptSingle
   :: TH.ExpQ -- ^ Quote a tuple of primitive components here.
   -> TH.ExpQ -- ^ This becomes @[Primitive]@ when spliced.
 pOptSingle eq = do
   TupE [e, opts] <- eq
-  ePrim <- p1 e
-  return (ListE [TupE [ePrim, opts]])
-p1Opt :: TH.Exp -> TH.ExpQ
-p1Opt (TupE [e, opts]) = do
-  ePrim <- p1 e
-  return (TupE [ePrim, opts])
+  ePrim <- p1Maybe e
+  return (ListE [TupE [Just ePrim, opts]])
+
+
+p1Opt :: Maybe TH.Exp -> TH.ExpQ
+p1Opt (Just (TupE [e, opts])) = do
+  ePrim <- p1Maybe e
+  return (TupE [Just ePrim, opts])
 
 
 p1 :: TH.Exp -> TH.ExpQ

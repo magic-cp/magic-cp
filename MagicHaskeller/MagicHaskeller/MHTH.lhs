@@ -38,7 +38,6 @@ expToExpExp (InfixE Nothing   e Nothing)   = [| InfixE Nothing                  
 expToExpExp (InfixE (Just e0) e Nothing)   = [| InfixE (Just $(expToExpExp e0)) $(expToExpExp e) Nothing |]
 expToExpExp (InfixE Nothing   e (Just e1)) = [| InfixE Nothing                  $(expToExpExp e) (Just $(expToExpExp e1)) |]
 expToExpExp (InfixE (Just e0) e (Just e1)) = [| InfixE (Just $(expToExpExp e0)) $(expToExpExp e) (Just $(expToExpExp e1)) |]
-expToExpExp (TupE es) = [| TupE $((return . ListE) =<< mapM expToExpExp es) |]
 expToExpExp (CondE e0 e1 e2) = [| CondE $(expToExpExp e0) $(expToExpExp e1) $(expToExpExp e2) |]
 expToExpExp (ListE es) = [| ListE $((return . ListE) =<< mapM expToExpExp es) |]
 expToExpExp e@(LitE (CharL c))     = [| LitE (CharL     $(return e)) |]
@@ -46,6 +45,11 @@ expToExpExp e@(LitE (StringL s))   = [| LitE (StringL   $(return e)) |]
 expToExpExp e@(LitE (IntegerL c))  = [| LitE (IntegerL  $(return e)) |]
 expToExpExp e@(LitE (RationalL s)) = [| LitE (RationalL $(return e)) |]
 expToExpExp (SigE e t)             = [| SigE $(expToExpExp e) $(typeToExpType t) |]
+expToExpExp (TupE es) = [| TupE $((return . ListE) =<< mapM f es) |]
+  where
+    f :: Maybe Exp -> ExpQ
+    f (Just e) = [| Just $(expToExpExp e) |]
+    f Nothing  = [| Nothing |]
 expToExpExp e = [| VarE (mkName $(return $ LitE (StringL (show e)))) |]
 
 {-
