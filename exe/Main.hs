@@ -37,10 +37,10 @@ main = do
   putStrLn "please (ContestId, problemLetter)"
   --pId <- read <$> getLine :: IO (Int, Char)
   cfg <- CFConfig.getCFConfig
-  --testsolve WithOptimizations WithoutAbsents WithoutOutputConstants cfg (59, 'a') lib59a
-  --testsolve WithOptimizations WithAbsents WithoutOutputConstants cfg (59, 'a') lib59a
-  --testsolve WithoutOptimizations WithoutAbsents WithoutOutputConstants cfg (59, 'a') lib59a
-  --testsolve WithoutOptimizations WithAbsents WithoutOutputConstants cfg (59, 'a') lib59a
+  -- testsolve WithOptimizations WithoutAbsents WithoutOutputConstants cfg (59, 'a') lib59a
+  -- testsolve WithOptimizations WithAbsents WithoutOutputConstants cfg (59, 'a') lib59a
+  -- testsolve WithoutOptimizations WithoutAbsents WithoutOutputConstants cfg (59, 'a') lib59a
+  -- testsolve WithoutOptimizations WithAbsents WithoutOutputConstants cfg (59, 'a') lib59a
 
   --testsolve WithOptimizations WithoutAbsents WithoutOutputConstants cfg (822, 'a') lib822a
   --testsolve WithOptimizations WithAbsents WithoutOutputConstants cfg (822, 'a') lib822a
@@ -61,10 +61,10 @@ main = do
   -- testsolve WithoutOptimizations WithoutAbsents WithOutputConstants cfg (110, 'a') lib110a'
   -- testsolve WithoutOptimizations WithAbsents WithOutputConstants cfg (110, 'a') lib110a'
 
-  testsolve WithOptimizations WithoutAbsents WithOutputConstants cfg (1186, 'a') lib1186a
-  testsolve WithOptimizations WithAbsents WithOutputConstants cfg (1186, 'a') lib1186a
-  testsolve WithoutOptimizations WithoutAbsents WithOutputConstants cfg (1186, 'a') lib1186a
-  testsolve WithoutOptimizations WithAbsents WithOutputConstants cfg (1186, 'a') lib1186a
+  testsolve WithOptimizations WithoutAbsents WithOutputConstants cfg (1030, 'a') lib1030a
+  testsolve WithOptimizations WithAbsents WithOutputConstants cfg (1030, 'a') lib1030a
+  testsolve WithoutOptimizations WithoutAbsents WithOutputConstants cfg (1030, 'a') lib1030a
+  testsolve WithoutOptimizations WithAbsents WithOutputConstants cfg (1030, 'a') lib1030a
 
   --testsolve WithOptimizations WithoutAbsents WithOutputConstants cfg (1257, 'a') lib1257a
   --testsolve WithOptimizations WithAbsents WithOutputConstants cfg (1257, 'a') lib1257a

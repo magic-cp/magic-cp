@@ -5,78 +5,106 @@
 
 packages:
 - completed:
-    hackage: containers-0.6.0.1@sha256:258f4bb14fa2da960b52c28f2f5d4b3c766342a0a7ee462127bb259f5981de6a,16457
     pantry-tree:
-      size: 4933
       sha256: 81e9127628f38510397b1160c624616f903a0bc29045883b5a7c5239096e2d5f
+      size: 4933
+    hackage: containers-0.6.0.1@sha256:258f4bb14fa2da960b52c28f2f5d4b3c766342a0a7ee462127bb259f5981de6a,16457
   original:
     hackage: containers-0.6.0.1
 - completed:
-    hackage: curl-aeson-0.0.4@sha256:bef1581078e922f012ed5259d86481be2658bad00e9bc052f16a13604744af1a,1346
     pantry-tree:
-      size: 220
       sha256: 7895d3314955e5a383c0e3664c7f58753783de18340ad7eae8122399fe7ee56f
+      size: 220
+    hackage: curl-aeson-0.0.4@sha256:bef1581078e922f012ed5259d86481be2658bad00e9bc052f16a13604744af1a,1346
   original:
     hackage: curl-aeson-0.0.4
 - completed:
-    hackage: exceptions-0.10.2@sha256:de2be08eb73e1fb4115135c62f5d5f7ed9bdb9affff318687ac6cc0438b497f0,2360
     pantry-tree:
-      size: 907
-      sha256: fa7427f86f94b5e830b4ed027f7ea2a4f9651da2bf85db9bce3307b97fb7f351
+      sha256: ab075267ac88ff776d0a9ba9594653f91b63723ff9d7ade994719f0683f38fbc
+      size: 908
+    hackage: exceptions-0.10.4@sha256:d3aaa8d112cd53e16b5991bf5e43237ad6cf8277b8bab5cb8ab8e081dbb556f7,2684
   original:
-    hackage: exceptions-0.10.2
+    hackage: exceptions-0.10.4@sha256:d3aaa8d112cd53e16b5991bf5e43237ad6cf8277b8bab5cb8ab8e081dbb556f7,2684
 - completed:
-    hackage: http-conduit-2.3.7.1@sha256:45fa0403c59eab3237b407a86451976d948639a77db4d8ff24f5dd7e6d57b456,2968
     pantry-tree:
-      size: 784
       sha256: 3cc303adfaedac70c7e3809a66b4df1d502da1d7ea886c76311074bff453acdb
+      size: 784
+    hackage: http-conduit-2.3.7.1@sha256:45fa0403c59eab3237b407a86451976d948639a77db4d8ff24f5dd7e6d57b456,2968
   original:
     hackage: http-conduit-2.3.7.1
 - completed:
-    hackage: mueval-0.9.3@sha256:9ecdbdc8f28ed7bc3f6f6cb5c2708e69f3b099db812bd2b8a51730915f7dab9e,2077
     pantry-tree:
-      size: 740
       sha256: 23275f1644942f15e09fa774fa7036dfd219eaf8ea942bb5418208d649e5145c
+      size: 740
+    hackage: mueval-0.9.3@sha256:9ecdbdc8f28ed7bc3f6f6cb5c2708e69f3b099db812bd2b8a51730915f7dab9e,2077
   original:
     hackage: mueval-0.9.3
 - completed:
-    hackage: show-0.6@sha256:073c283f62d56cab2a2de5455125c7fc2d55642bac4cf0e778ed6525226a44ec,903
     pantry-tree:
-      size: 198
       sha256: 3b4495eda11d340bac942b24d34c43c8bfb757c3861e166f94cb1dec897f6042
+      size: 198
+    hackage: show-0.6@sha256:073c283f62d56cab2a2de5455125c7fc2d55642bac4cf0e778ed6525226a44ec,903
   original:
     hackage: show-0.6
 - completed:
-    hackage: deepseq-1.4.4.0@sha256:76902b99ee97fc059311ddb0df9488c54969adf0a212efa39705981761f06b55,2918
     pantry-tree:
-      size: 385
       sha256: edf7ecb1e7195bf2c1b595f462343b8a237351acf73e4d0e66e005fc5baa62f4
+      size: 385
+    hackage: deepseq-1.4.4.0@sha256:76902b99ee97fc059311ddb0df9488c54969adf0a212efa39705981761f06b55,2918
   original:
     hackage: deepseq-1.4.4.0
 - completed:
-    hackage: data-default-class-0.1.2.0@sha256:63e62120b7efd733a5a17cf59ceb43268e9a929c748127172d7d42f4a336e327,542
     pantry-tree:
-      size: 224
       sha256: 5017630b11698aefa65fc61cab84a257ce97833c968d425e1b2d53d6c3b5c096
+      size: 224
+    hackage: data-default-class-0.1.2.0@sha256:63e62120b7efd733a5a17cf59ceb43268e9a929c748127172d7d42f4a336e327,542
   original:
     hackage: data-default-class-0.1.2.0
 - completed:
-    hackage: clock-0.8@sha256:b4ae207e2d3761450060a0d0feb873269233898039c76fceef9cc1a544067767,4113
     pantry-tree:
-      size: 446
       sha256: d9ac8ce6a19812fe74cb1e74228e6e624eda19021ff4d12e24611f88abacd38a
+      size: 446
+    hackage: clock-0.8@sha256:b4ae207e2d3761450060a0d0feb873269233898039c76fceef9cc1a544067767,4113
   original:
     hackage: clock-0.8
 - completed:
-    hackage: split-0.2.3.4@sha256:048c75891d63a03828f97667214aaaf0e67b7dcbfec297753e39939ffda6f51a,2647
     pantry-tree:
-      size: 439
       sha256: 72c550dd427dc15a2195e16c84bdb4712060fe601d87e95674154b44403550d9
+      size: 439
+    hackage: split-0.2.3.4@sha256:048c75891d63a03828f97667214aaaf0e67b7dcbfec297753e39939ffda6f51a,2647
   original:
     hackage: split-0.2.3.4@sha256:048c75891d63a03828f97667214aaaf0e67b7dcbfec297753e39939ffda6f51a,2647
+- completed:
+    pantry-tree:
+      sha256: b250a53bdb56844f047a2927833bb565b936a289abfa85dfc2a63148d776368a
+      size: 19757
+    hackage: Cabal-3.6.3.0@sha256:ff97c442b0c679c1c9876acd15f73ac4f602b973c45bde42b43ec28265ee48f4,12459
+  original:
+    hackage: Cabal-3.6.3.0@sha256:ff97c442b0c679c1c9876acd15f73ac4f602b973c45bde42b43ec28265ee48f4,12459
+- completed:
+    pantry-tree:
+      sha256: 61308af6be2cdb6ba09390d35f3fa1ebb45e3af688bf04922658532398eaa276
+      size: 1976
+    hackage: binary-0.8.9.0@sha256:9cac9a1d86bfa3e7f75cc8bffaa256f3967ebb6d76f67a42f9679384c5c5e18a,6523
+  original:
+    hackage: binary-0.8.9.0@sha256:9cac9a1d86bfa3e7f75cc8bffaa256f3967ebb6d76f67a42f9679384c5c5e18a,6523
+- completed:
+    pantry-tree:
+      sha256: 147ad21b8aa90273721903a6b294cc4ecd660d229d88c4e84c6275bc5d630ae6
+      size: 2630
+    hackage: parsec-3.1.15.1@sha256:8c7a36aaadff12a38817fc3c4ff6c87e3352cffd1a58df640de7ed7a97ad8fa3,4601
+  original:
+    hackage: parsec-3.1.15.1@sha256:8c7a36aaadff12a38817fc3c4ff6c87e3352cffd1a58df640de7ed7a97ad8fa3,4601
+- completed:
+    pantry-tree:
+      sha256: f41504ec5c04a3f3358ef104362f02fdef29cbce4e5e4e6dbd6b6db70c40d4bf
+      size: 7395
+    hackage: text-1.2.5.0@sha256:791f0f6c97ed96113f17ab520cf0efe1a3a4f883a8c85910a5660567c8241c40,7895
+  original:
+    hackage: text-1.2.5.0@sha256:791f0f6c97ed96113f17ab520cf0efe1a3a4f883a8c85910a5660567c8241c40,7895
 snapshots:
 - completed:
-    size: 523443
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/14/0.yaml
-    sha256: 283773e7120f5446d961eab35ea95c9af9c24187cc178537bd29273200a05171
-  original: lts-14.0
+    sha256: 63539429076b7ebbab6daa7656cfb079393bf644971156dc349d7c0453694ac2
+    size: 586296
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/18/18.yaml
+  original: lts-18.18

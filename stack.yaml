@@ -1,4 +1,4 @@
-resolver: lts-14.0
+resolver: lts-18.18
 # resolver: lts-9.21
 # first found lts-3.22
 
@@ -19,7 +19,7 @@ extra-deps:
   # - show-0.6
 - containers-0.6.0.1
 - curl-aeson-0.0.4
-- exceptions-0.10.2
+- exceptions-0.10.4@sha256:d3aaa8d112cd53e16b5991bf5e43237ad6cf8277b8bab5cb8ab8e081dbb556f7,2684
 - http-conduit-2.3.7.1
 - mueval-0.9.3
 - show-0.6
@@ -27,7 +27,10 @@ extra-deps:
 - data-default-class-0.1.2.0
 - clock-0.8
 - split-0.2.3.4@sha256:048c75891d63a03828f97667214aaaf0e67b7dcbfec297753e39939ffda6f51a,2647
-
+- Cabal-3.6.3.0@sha256:ff97c442b0c679c1c9876acd15f73ac4f602b973c45bde42b43ec28265ee48f4,12459
+- binary-0.8.9.0@sha256:9cac9a1d86bfa3e7f75cc8bffaa256f3967ebb6d76f67a42f9679384c5c5e18a,6523
+- parsec-3.1.15.1@sha256:8c7a36aaadff12a38817fc3c4ff6c87e3352cffd1a58df640de7ed7a97ad8fa3,4601
+- text-1.2.5.0@sha256:791f0f6c97ed96113f17ab520cf0efe1a3a4f883a8c85910a5660567c8241c40,7895
 
 # Override default flag values for local packages and extra-deps
 flags: {}

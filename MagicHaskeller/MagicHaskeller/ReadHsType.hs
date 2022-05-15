@@ -9,7 +9,7 @@ import MagicHaskeller.ReadTHType as ReadTHType(plainTV)
 
 -- | @readHsTypeSigs@ reads a module string and returns an Exp that can be supplied to MagicHaskeller.p
 readHsTypeSigs :: String -> TH.Exp
-readHsTypeSigs str = TupE [ mkSigE hsname hsqty
+readHsTypeSigs str = TupE [ Just (mkSigE hsname hsqty)
                             | HsTypeSig _loc hsnames hsqty <- readHsDecls str
                             , hsname <- hsnames ]
 
