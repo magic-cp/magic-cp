@@ -75,6 +75,7 @@ generateFile CFConfig{..} (cId, pIndex) hoge wTC e = do
     ]
   writeFile fileName $
     "-- " <> show time <> "\n" <>
+    "{-# LANGUAGE ViewPatterns #-}\n" <>
     "import Data.Maybe\n" <>
     "import Data.Char\n" <>
     "import Control.Monad\n" <>
@@ -223,7 +224,7 @@ solvev0 wOps wAbs wOC wTC cfg customLibrary hoge pId@(cId, _) ios = do
     mpto = LibTH.timeout $ ProgramGenerator.opt $ ProgramGenerator.extractCommon md
 
     go :: [Predicate b] -> IO (Maybe Exp)
-    go [] = error "solvev0: go: empty list"
+    go [] = error "solvev0: go: empty predicate list"
     go (p:ps) = do
         res <- submitToCf p (concat et)
         case res of

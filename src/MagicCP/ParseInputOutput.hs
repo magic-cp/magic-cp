@@ -257,8 +257,14 @@ instance ParseInputOutput ([String] -> String) where
         let predicateId = "n-strings-follow"
         return (predicateId, Predicate{..})
 
-  parserDeclarations _ = concat <$> sequence
-    [ ParserDefinitions.parseStringsWithoutSizeDec ]
+  parserDeclarations _ = concat <$> sequence [ 
+    [d|
+      uncurry' = id
+      
+      parser :: String -> [String]
+      parser = fromJust . parseStringsWithoutSize
+      |],
+    ParserDefinitions.parseStringsWithoutSizeDec ]
 
   parserNameNOTC _ = "List of String to String"
 

@@ -277,8 +277,8 @@ lib59a = iFP ++ greaterOrEqP ++ emptyListP ++
   )|])
 
 lib282a :: [PrimitiveWithOpt]
-lib282a = foldP <> zeroP <>
-  $(MH.pOpt [| (
-    (show :: Int -> String, [NotConstantAsFirstArg]),
-    ((\acc op -> acc + LibTH.iF (op `elem` ["--X", "X--"]) (-1) 1) :: Int -> String -> Int, [NotConstantAsFirstArg, NotConstantAsSecondArg])
-  )|])
+lib282a = $(MH.pOpt [| (
+  -- ( head :: [a] -> a, [NotConstantAsFirstArg]),
+  ( head :: [[Char]] -> [Char], [NotConstantAsFirstArg]),
+  ((show . foldl (\acc op -> acc + if elem op ["--X", "X--"] then (-1) else 1) 0) :: [[Char]] -> [Char], [NotConstantAsFirstArg])
+  ) |])
