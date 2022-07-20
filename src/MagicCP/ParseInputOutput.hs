@@ -1,19 +1,19 @@
 {-# LANGUAGE FlexibleInstances   #-}
+{-# LANGUAGE NamedFieldPuns      #-}
+{-# LANGUAGE RecordWildCards     #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell     #-}
-{-# LANGUAGE RecordWildCards     #-}
-{-# LANGUAGE NamedFieldPuns      #-}
 
 module MagicCP.ParseInputOutput where
 
+import Data.Map            (Map)
 import Language.Haskell.TH (DecsQ)
-import Data.Map (Map)
 
 import qualified Control.Monad
+import qualified Data.Map                  as Map
+import qualified Data.Maybe
 import qualified MagicCP.ParserDefinitions as ParserDefinitions
 import qualified Text.Read
-import qualified Data.Maybe
-import qualified Data.Map as Map
 
 (&&&) :: Predicate b -> Predicate b -> Predicate b
 Predicate {predicateFun = p1, ..} &&& Predicate {predicateFun = p2} =

@@ -99,15 +99,30 @@ if ! command -v stylish-haskell &> /dev/null
 then
     echo "❌ stylish-haskell is not installed. Installing..."
     mkdir -p $HOME/bin
-    SH_VERSION=v0.12.2.0
-    SH_URL=https://github.com/jaspervdj/stylish-haskell/releases/download/$SH_VERSION/stylish-haskell-$SH_VERSION-darwin-x86_64.tar.gz
-
-    SH_TARBALL=$(mktemp)
+    SH_VERSION=v0.14.2.0
+    SH_ARCHIVE=$(mktemp)
     SH_DIR=$(mktemp -d)
-    wget $SH_URL -O $SH_TARBALL
-    tar -xvf $SH_TARBALL -C $SH_DIR
-    ls $SH_DIR
-    mv $SH_DIR/stylish-haskell-$SH_VERSION-darwin-x86_64/stylish-haskell $HOME/bin/
+
+    if [ "$machine" = "Linux" ]; then
+      SH_FILE_NAME=stylish-haskell-$SH_VERSION-linux-x86_64
+      SH_URL=https://github.com/jaspervdj/stylish-haskell/releases/download/$SH_VERSION/$SH_FILE_NAME.tar.gz
+
+      wget $SH_URL -O $SH_ARCHIVE
+      tar -xvf $SH_ARCHIVE -C $SH_DIR
+      ls $SH_DIR
+
+    elif [ "$machine" = "Mac" ]; then
+      SH_FILE_NAME=stylish-haskell-$SH_VERSION-darwin-x86_64
+      SH_URL=https://github.com/jaspervdj/stylish-haskell/releases/download/$SH_VERSION/$SH_FILE_NAME.zip
+
+      wget $SH_URL -O $SH_ARCHIVE
+      unzip $SH_ARCHIVE -d $SH_DIR
+      ls $SH_DIR
+    fi
+
+    mv $SH_DIR/$SH_FILE_NAME/stylish-haskell $HOME/bin/
+
+
     [ -f $HOME/bin/stylish-haskell ] && echo "✅ stylish-haskell was succesfully installed"
 else
     echo "✅ stylish-haskell is installed"
@@ -119,6 +134,15 @@ cf config
 
 echo "ℹ️ Overwriting ~/.cf/config"
 mkdir -p $HOME/.cf/
+
+# Reason we wrap `ghc`` over `arch` is because `ghc` will be called from cf-tool, which is running thru Rosetta 2 emulation.
+# And GHC installation doesn't play well on Rosetta 2. Forcing the arm64 architecture will make it work.
+if [ "$machineName" = "arm64" ]; then
+  CF_CONFIG_SCRIPT="arch -arm64 ghc $%full%$"
+else
+  CF_CONFIG_SCRIPT="ghc $%full%$"
+fi
+
 cat << EOF > $HOME/.cf/config
 {
   "template": [
@@ -129,7 +153,7 @@ cat << EOF > $HOME/.cf/config
       "suffix": [
         "hs"
       ],
-      "before_script": "ghc $%full%$",
+      "before_script": "$CF_CONFIG_SCRIPT",
       "script": "./$%file%$",
       "after_script": ""
     }

@@ -20,9 +20,10 @@ corre el siguiente comando:
 ./setup-dev.sh
 ```
 
+# Ejecucion
+
 Para correr el proyecto, ejecute el siguiente comando:
 
 ```bash
 stack run -- MagicCP
 ```
-

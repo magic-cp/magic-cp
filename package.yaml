@@ -35,7 +35,6 @@ dependencies:
 - time
 - text
 - text
-- unix
 - xml-conduit
 - split
 - containers
