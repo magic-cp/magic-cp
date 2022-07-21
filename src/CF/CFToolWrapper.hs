@@ -8,7 +8,6 @@ import qualified Control.Monad
 import qualified Data.Char
 import qualified Data.List
 import qualified System.Directory
-import qualified System.Posix.Directory as Posix.Directory
 import qualified System.Process
 
 data Verdict = Accepted | Rejected Int String deriving Show
@@ -19,10 +18,10 @@ problemIdToStrings (cIdInt, pIdChar) = (show cIdInt, [Data.Char.toLower pIdChar]
 getInputOutput :: CFConfig -> (Int, Char) -> IO [(String, String)]
 getInputOutput CFConfig{..} problemId = do
   System.Directory.createDirectoryIfMissing True cfparse_dir
-  Posix.Directory.changeWorkingDirectory cfparse_dir
-  System.Directory.removePathForcibly $ cfparse_dir </> cId </> pId
-  _ <- System.Process.readProcess (cftool_path </> "cf") ["parse", cId, pId] ""
-  Posix.Directory.changeWorkingDirectory project_root
+  System.Directory.withCurrentDirectory cfparse_dir $ do
+    System.Directory.removePathForcibly $ cfparse_dir </> cId </> pId
+    _ <- System.Process.readProcess (cftool_path </> "cf") ["parse", cId, pId] ""
+    return ()
   getCurrentInputOutput
   where
     (cId, pId) = problemIdToStrings problemId
@@ -31,7 +30,6 @@ getInputOutput CFConfig{..} problemId = do
       dir <- System.Directory.listDirectory $ cfparse_dir </> cId </> pId
       let ins = filter ("in" `Data.List.isPrefixOf`) dir
           outs = filter ("ans" `Data.List.isPrefixOf`) dir
-      Posix.Directory.changeWorkingDirectory project_root
       Control.Monad.liftM2 zip (mapM readFile' $ Data.List.sort ins) (mapM readFile' $ Data.List.sort outs)
       where
         readFile' :: FilePath -> IO String
@@ -41,9 +39,8 @@ testSolution :: CFConfig -> (Int, Char) -> IO Verdict
 testSolution CFConfig{..} problemId = do
   let (cId, pId) = problemIdToStrings problemId
 
-  Posix.Directory.changeWorkingDirectory $ cfparse_dir </> cId </> pId
-  output <- System.Process.readProcess (cftool_path </> "cf") ["test"] ""
-  Posix.Directory.changeWorkingDirectory project_root
+  output <- System.Directory.withCurrentDirectory (cfparse_dir </> cId </> pId) $ do
+    System.Process.readProcess (cftool_path </> "cf") ["test"] ""
   if "Failed" `Data.List.isInfixOf` output
      then return $ Rejected 0 output
      else return Accepted
@@ -53,9 +50,8 @@ submitSolution :: CFConfig -> (Int, Char) -> IO Verdict
 submitSolution CFConfig{..} problemId = do
   let (cId, pId) = problemIdToStrings problemId
 
-  Posix.Directory.changeWorkingDirectory $ cfparse_dir </> cId </> pId
-  output <- System.Process.readProcess (cftool_path </> "cf") ["submit"] ""
-  Posix.Directory.changeWorkingDirectory project_root
+  output <- System.Directory.withCurrentDirectory (cfparse_dir </> cId </> pId) $ do
+    System.Process.readProcess (cftool_path </> "cf") ["submit"] ""
   let submission = read
                     $ drop 2 $ dropWhile (/= ':') $ last
                     $ filter ("#:" `Data.List.isInfixOf`) $ lines output

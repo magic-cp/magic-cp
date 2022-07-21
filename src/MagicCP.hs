@@ -7,14 +7,18 @@ module MagicCP where
 
 import qualified Language.Haskell.TH as TH
 
-import Data.Map (Map)
 import CF                       (ProblemId)
 import CF.CFConfig              (CFConfig (..))
 import CF.CFToolWrapper         (Verdict (..))
 import Control.Concurrent       (ThreadId)
 import Control.Exception        (SomeException (..), catch)
 import Data.Generics            (Data)
-import MagicCP.ParseInputOutput (ParseInputOutput, WithTestCases (..), Predicate(..))
+import Data.Map                 (Map)
+import MagicCP.ParseInputOutput
+    ( ParseInputOutput
+    , Predicate (..)
+    , WithTestCases (..)
+    )
 import MagicCP.SearchOptions    (WithAbsents (..), WithOptimizations (..))
 import MagicHaskeller.LibTH
     ( Exp (..)
@@ -41,6 +45,7 @@ import qualified Data.Array                      as Array
 import qualified Data.Char
 import qualified Data.Generics
 import qualified Data.List                       as List
+import qualified Data.Map                        as Map
 import qualified Data.Maybe                      as Maybe
 import qualified Data.Time.Clock                 as Clock
 import qualified Debug.Trace
@@ -54,7 +59,6 @@ import qualified MagicHaskeller.LibTHDefinitions as LibTHDefinitions
 import qualified MagicHaskeller.ProgramGenerator as ProgramGenerator
 import qualified MagicHaskeller.TimeOut          as TimeOut
 import qualified Text.Printf                     as Printf
-import qualified Data.Map as Map
 
 checkInitialized :: IO ()
 checkInitialized = do
