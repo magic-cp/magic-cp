@@ -1,15 +1,21 @@
-module MagicCP.Util.Memory where
+module MagicCP.Util.Memory (MemoryUsage(..), getMemoUsage) where
 
+import qualified System.Posix.Process as Process
 import qualified System.Process
 
-getMemoUsage :: IO Float
-getMemoUsage = (100 -) <$> getFreeMemo
-  where
-    getFreeMemo :: IO Float
-    getFreeMemo = do
-      out <- System.Process.readProcess "free" [] ""
-      let x = (!!1) . map words . lines $ out
-          total = read (x!!1)
-          free = read (last x)
-          percent = free*100/total
-      return percent
+data MemoryUsage = Exceeded Double | NotExceeded Double
+
+instance Show MemoryUsage where
+  show (Exceeded pct) = show pct
+  show (NotExceeded pct) = show pct
+
+getMemoUsage :: IO MemoryUsage
+getMemoUsage = do
+  pid <- show <$> Process.getProcessID
+  out <- System.Process.readProcess "ps" ["-p", pid, "-o", "pmem"] ""
+  case lines out of
+    ["%MEM", pctStr] -> let pct = read pctStr :: Double in return $ if pct >= 80 then Exceeded pct else NotExceeded pct
+    _ -> do
+      putStrLn "Parse error of memory usage"
+      putStrLn out
+      return $ NotExceeded 0

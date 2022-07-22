@@ -20,6 +20,7 @@ import MagicCP.ParseInputOutput
     , WithTestCases (..)
     )
 import MagicCP.SearchOptions    (WithAbsents (..), WithOptimizations (..))
+import MagicCP.Util.Memory      (MemoryUsage (..))
 import MagicHaskeller.LibTH
     ( Exp (..)
     , HValue (..)
@@ -159,11 +160,15 @@ solveWithLimits solve pId ios = do
   checkLimits tid tout memLimit = do
     memusage <- Memory.getMemoUsage
     Control.Monad.when (tout `mod` 300 == 0) $ putStrLn $ "checking limits: " ++ show tout ++ "  " ++ show memusage
-    if memusage > memLimit || tout < 0
-       then do
-         putStrLn "Timed out!!"
-         Control.Concurrent.killThread tid
-       else do
+    case (memusage, tout < 0) of
+      (Exceeded pct, _) -> do
+        putStrLn "Ran out of memory!!"
+        putStrLn ("Percentage of used memory " <> show pct)
+        Control.Concurrent.killThread tid
+      (_, True) -> do
+        putStrLn "Timed out!!"
+        Control.Concurrent.killThread tid
+      _ -> do
         Control.Concurrent.threadDelay 5000000
         checkLimits tid (tout - 5) memLimit
 
